@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \":*)",
+      "Bash(python -c \":*)",
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm 2)",
+      "Bash(npx create-next-app@latest instagram-saved-tracker --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --turbopack)",
+      "Bash(npm install drizzle-orm better-sqlite3 @tanstack/react-query @tanstack/react-query-devtools date-fns)",
+      "Bash(npm install -D drizzle-kit @types/better-sqlite3)",
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(npx shadcn@latest add button card input table badge tabs dialog skeleton toast separator avatar scroll-area dropdown-menu progress textarea label alert sonner -y)",
+      "Bash(npx shadcn@latest add button card input table badge tabs dialog skeleton separator avatar scroll-area dropdown-menu progress textarea label alert sonner -y)",
+      "Bash(npx drizzle-kit push)",
+      "Bash(npx next build)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npm)",
+      "Bash(where node)",
+      "Bash(where npx)",
+      "Bash(npx shadcn@latest add chart)"
+    ]
+  }
+}
