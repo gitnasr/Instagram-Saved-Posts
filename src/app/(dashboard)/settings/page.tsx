@@ -45,7 +45,10 @@ export default function SettingsPage() {
               <CardTitle>User-Agent</CardTitle>
             </CardHeader>
             <CardContent>
-              <UserAgentInput currentValue={userAgentSetting?.value} />
+              <UserAgentInput
+                key={userAgentSetting?.value ?? "default"}
+                currentValue={userAgentSetting?.value}
+              />
             </CardContent>
           </Card>
 
