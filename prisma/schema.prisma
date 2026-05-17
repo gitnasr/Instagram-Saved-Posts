@@ -1,0 +1,153 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum ScrapeStatus {
+  running
+  completed
+  failed
+  cancelled
+  interrupted
+}
+
+model Account {
+  pk                      String  @id @map("_id")
+  username                String  @unique
+  fullName                String  @default("")
+  isVerified              Boolean @default(false)
+  isPrivate               Boolean @default(false)
+  profilePicUrl           String?
+  profilePicHash          String?
+  cloudinaryProfilePicUrl String?
+  savedPostCount          Int     @default(0)
+  notes                   String?
+  firstSeenAt             String
+  lastSeenAt              String
+  lastScrapeOn            String?
+  accountStatus           String?
+  statusChangedAt         String?
+  existsAlso              String?
+  discoveredInRunId       Int?
+
+  @@index([savedPostCount])
+  @@index([lastSeenAt])
+  @@index([firstSeenAt])
+  @@index([discoveredInRunId])
+  @@map("accounts")
+}
+
+model AccountNote {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  accountPk String
+  content   String
+  createdAt String
+
+  @@index([accountPk])
+  @@map("accountNotes")
+}
+
+model AccountStatusHistory {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  accountPk String
+  status    String
+  changedAt String
+
+  @@index([accountPk])
+  @@map("accountStatusHistory")
+}
+
+model AccountUsernameHistory {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  accountPk   String
+  oldUsername String
+  newUsername String
+  scrapeRunId Int?
+  changedAt   String
+
+  @@index([accountPk])
+  @@index([scrapeRunId])
+  @@map("accountUsernameHistory")
+}
+
+model Post {
+  pk                     String  @id @map("_id")
+  id                     String
+  code                   String
+  accountPk              String
+  mediaType              Int
+  takenAt                Int
+  captionText            String?
+  likeCount              Int     @default(0)
+  commentCount           Int     @default(0)
+  thumbnailUrl           String?
+  cloudinaryThumbnailUrl String?
+  thumbnailWidth         Int?
+  thumbnailHeight        Int?
+  carouselMediaCount     Int?
+  scrapeRunId            Int?
+  createdAt              String
+
+  @@index([accountPk])
+  @@index([scrapeRunId])
+  @@index([mediaType])
+  @@index([takenAt])
+  @@map("posts")
+}
+
+model CarouselMedia {
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  postPk        String
+  position      Int
+  mediaType     Int
+  mediaUrl      String
+  width         Int?
+  height        Int?
+  videoUrl      String?
+  videoDuration Float?
+  cloudinaryUrl String?
+
+  @@index([postPk])
+  @@map("carouselMedia")
+}
+
+model ScrapeRun {
+  id                       Int          @id @map("_id")
+  status                   ScrapeStatus @default(running)
+  startedAt                String
+  completedAt              String?
+  totalPostsFound          Int          @default(0)
+  newPostsAdded            Int          @default(0)
+  newAccountsFound         Int          @default(0)
+  pagesScraped             Int          @default(0)
+  errorMessage             String?
+  errorBody                String?
+  checkpointMaxId          String?
+  lostAccountsCount        Int          @default(0)
+  lostAccountPks           String?
+  usernameChangesCount     Int          @default(0)
+  usernameChangeAccountPks String?
+
+  @@index([startedAt])
+  @@map("scrapeRuns")
+}
+
+model Setting {
+  key       String @id @map("_id")
+  value     String
+  updatedAt String
+
+  @@map("settings")
+}
+
+model Counter {
+  id  String @id @map("_id")
+  seq Int
+
+  @@map("counters")
+}

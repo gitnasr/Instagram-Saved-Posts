@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { accounts } from "@/db/schema";
-import { sql } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
 import {
   parseAccountFilters,
-  buildAccountWhereClause,
-  buildAccountOrderClause,
+  buildAccountWhere,
+  buildAccountOrderBy,
+  resolveNoteFilterContext,
 } from "@/lib/account-filters";
 
 export async function GET(request: Request) {
@@ -18,31 +17,27 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   const filters = parseAccountFilters(searchParams);
-  const whereClause = buildAccountWhereClause(filters);
-  const orderClause = buildAccountOrderClause(sort, order);
+  const noteCtx = await resolveNoteFilterContext(filters);
+  const where = buildAccountWhere(filters, noteCtx);
+  const orderBy = buildAccountOrderBy(sort, order);
 
-  const items = db
-    .select()
-    .from(accounts)
-    .where(whereClause)
-    .orderBy(orderClause)
-    .limit(limit)
-    .offset(offset)
-    .all();
-
-  const totalResult = db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(accounts)
-    .where(whereClause)
-    .get();
+  const [items, total] = await Promise.all([
+    prisma.account.findMany({
+      where,
+      orderBy,
+      take: limit,
+      skip: offset,
+    }),
+    prisma.account.count({ where }),
+  ]);
 
   return NextResponse.json({
     items,
     pagination: {
       page,
       limit,
-      total: totalResult?.count ?? 0,
-      totalPages: Math.ceil((totalResult?.count ?? 0) / limit),
+      total,
+      totalPages: Math.ceil(total / limit),
     },
   });
 }

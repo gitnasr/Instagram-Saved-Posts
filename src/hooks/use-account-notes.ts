@@ -39,7 +39,7 @@ export function useDeleteNote(username: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (noteId: number) => {
+    mutationFn: async (noteId: string) => {
       const res = await fetch(`/api/accounts/${username}/notes/${noteId}`, {
         method: "DELETE",
       });

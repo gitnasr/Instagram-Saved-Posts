@@ -35,7 +35,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
     });
   };
 
-  const handleDelete = (noteId: number) => {
+  const handleDelete = (noteId: string) => {
     if (!window.confirm("Delete this note?")) return;
     deleteNote(noteId, {
       onSuccess: () => toast.success("Note deleted"),

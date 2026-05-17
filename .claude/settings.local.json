@@ -33,7 +33,15 @@
       "Bash(findstr LISTENING)",
       "Bash(timeout /t 4 /nobreak)",
       "mcp__Windows-MCP__Wait",
-      "Bash(node -e \"const Database = require\\(''better-sqlite3''\\); const db = new Database\\(''data/instagram.db''\\); const row = db.prepare\\(\"\"SELECT value FROM settings WHERE key = ''cloudinary_api_secret''\"\"\\).get\\(\\); console.log\\(''length:'', row?.value?.length\\); console.log\\(''contains ...:'', row?.value?.includes\\(''...''\\)\\); console.log\\(''last3:'', row?.value?.slice\\(-3\\)\\);\")"
+      "Bash(node -e \"const Database = require\\(''better-sqlite3''\\); const db = new Database\\(''data/instagram.db''\\); const row = db.prepare\\(\"\"SELECT value FROM settings WHERE key = ''cloudinary_api_secret''\"\"\\).get\\(\\); console.log\\(''length:'', row?.value?.length\\); console.log\\(''contains ...:'', row?.value?.includes\\(''...''\\)\\); console.log\\(''last3:'', row?.value?.slice\\(-3\\)\\);\")",
+      "Bash(npm install *)",
+      "Bash(npm uninstall *)",
+      "Bash(npx prisma *)",
+      "Bash(git rm *)",
+      "Bash(node -p \"require\\('@sentry/nextjs/package.json'\\).version\")",
+      "Bash(node -p \"require\\('next/package.json'\\).version\")",
+      "Bash(npx tsc *)",
+      "Bash(DATABASE_URL=\"mongodb://localhost:27017/placeholder\" npm run build)"
     ]
   }
 }

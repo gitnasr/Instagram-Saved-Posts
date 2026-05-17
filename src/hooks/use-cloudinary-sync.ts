@@ -5,6 +5,7 @@ import type { CloudinarySyncProgress } from "@/types";
 
 interface SyncStatusResponse {
   current: CloudinarySyncProgress | null;
+  configured: boolean;
 }
 
 export function useCloudinarySyncStatus() {

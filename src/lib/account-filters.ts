@@ -1,6 +1,5 @@
-import { accounts } from "@/db/schema";
-import { and, eq, gte, lte, like, or, asc, desc, sql } from "drizzle-orm";
-import type { SQL } from "drizzle-orm";
+import type { Prisma } from "@prisma/client";
+import { prisma } from "./prisma";
 
 export interface AccountFilterParams {
   search?: string;
@@ -42,108 +41,141 @@ export function parseAccountFilters(
   };
 }
 
-export function buildAccountWhereClause(
+/**
+ * MongoDB has no cross-collection joins, so note-based filters
+ * (`searchNotes`, `hasNotes`) are resolved by the caller into pk lists
+ * and passed in here.
+ */
+export interface NoteFilterContext {
+  /** pks of accounts whose notes match `search` — only when searchNotes=true */
+  notesSearchMatchPks?: string[];
+  /** pks of accounts that have at least one note — only when hasNotes=true */
+  accountsWithNotesPks?: string[];
+}
+
+/**
+ * Resolves the cross-collection note filters into account-pk lists,
+ * since MongoDB cannot join `accountNotes` to `accounts` in one query.
+ */
+export async function resolveNoteFilterContext(
   filters: AccountFilterParams
-): SQL | undefined {
-  const conditions: SQL[] = [];
+): Promise<NoteFilterContext> {
+  const ctx: NoteFilterContext = {};
 
-  // Search (username + optionally notes)
+  if (filters.search && filters.searchNotes === "true") {
+    const rows = await prisma.accountNote.findMany({
+      where: { content: { contains: filters.search, mode: "insensitive" } },
+      select: { accountPk: true },
+      distinct: ["accountPk"],
+    });
+    ctx.notesSearchMatchPks = rows.map((r) => r.accountPk);
+  }
+
+  if (filters.hasNotes === "true") {
+    const rows = await prisma.accountNote.findMany({
+      select: { accountPk: true },
+      distinct: ["accountPk"],
+    });
+    ctx.accountsWithNotesPks = rows.map((r) => r.accountPk);
+  }
+
+  return ctx;
+}
+
+const insensitive = { mode: "insensitive" } as const;
+
+export function buildAccountWhere(
+  filters: AccountFilterParams,
+  noteCtx: NoteFilterContext = {}
+): Prisma.AccountWhereInput {
+  const and: Prisma.AccountWhereInput[] = [];
+
   if (filters.search) {
+    const or: Prisma.AccountWhereInput[] = [
+      { username: { contains: filters.search, ...insensitive } },
+      { fullName: { contains: filters.search, ...insensitive } },
+    ];
     if (filters.searchNotes === "true") {
-      const searchCondition = or(
-        like(accounts.username, `%${filters.search}%`),
-        like(accounts.fullName, `%${filters.search}%`),
-        sql`EXISTS (SELECT 1 FROM account_notes WHERE account_notes.account_pk = ${accounts.pk} AND account_notes.content LIKE ${"%" + filters.search + "%"})`
-      );
-      if (searchCondition) conditions.push(searchCondition);
-    } else {
-      const searchCondition = or(
-        like(accounts.username, `%${filters.search}%`),
-        like(accounts.fullName, `%${filters.search}%`)
-      );
-      if (searchCondition) conditions.push(searchCondition);
+      or.push({ pk: { in: noteCtx.notesSearchMatchPks ?? [] } });
     }
+    and.push({ OR: or });
   }
 
-  // Verified filter
   if (filters.isVerified === "true") {
-    conditions.push(eq(accounts.isVerified, true));
+    and.push({ isVerified: true });
   } else if (filters.isVerified === "false") {
-    conditions.push(eq(accounts.isVerified, false));
+    and.push({ isVerified: false });
   }
 
-  // Private filter
   if (filters.isPrivate === "true") {
-    conditions.push(eq(accounts.isPrivate, true));
+    and.push({ isPrivate: true });
   } else if (filters.isPrivate === "false") {
-    conditions.push(eq(accounts.isPrivate, false));
+    and.push({ isPrivate: false });
   }
 
-  // Post count range
   if (filters.postCountMin) {
     const min = parseInt(filters.postCountMin);
-    if (!isNaN(min)) conditions.push(gte(accounts.savedPostCount, min));
+    if (!isNaN(min)) and.push({ savedPostCount: { gte: min } });
   }
   if (filters.postCountMax) {
     const max = parseInt(filters.postCountMax);
-    if (!isNaN(max)) conditions.push(lte(accounts.savedPostCount, max));
+    if (!isNaN(max)) and.push({ savedPostCount: { lte: max } });
   }
 
-  // First seen date range
   if (filters.firstSeenFrom) {
-    conditions.push(gte(accounts.firstSeenAt, filters.firstSeenFrom));
+    and.push({ firstSeenAt: { gte: filters.firstSeenFrom } });
   }
   if (filters.firstSeenTo) {
-    conditions.push(lte(accounts.firstSeenAt, filters.firstSeenTo + "T23:59:59"));
+    and.push({ firstSeenAt: { lte: filters.firstSeenTo + "T23:59:59" } });
   }
 
-  // Last seen date range
   if (filters.lastSeenFrom) {
-    conditions.push(gte(accounts.lastSeenAt, filters.lastSeenFrom));
+    and.push({ lastSeenAt: { gte: filters.lastSeenFrom } });
   }
   if (filters.lastSeenTo) {
-    conditions.push(lte(accounts.lastSeenAt, filters.lastSeenTo + "T23:59:59"));
+    and.push({ lastSeenAt: { lte: filters.lastSeenTo + "T23:59:59" } });
   }
 
-  // Manual last scrape date range
   if (filters.lastScrapeFrom) {
-    conditions.push(gte(accounts.lastScrapeOn, filters.lastScrapeFrom));
+    and.push({ lastScrapeOn: { gte: filters.lastScrapeFrom } });
   }
   if (filters.lastScrapeTo) {
-    conditions.push(lte(accounts.lastScrapeOn, filters.lastScrapeTo));
+    and.push({ lastScrapeOn: { lte: filters.lastScrapeTo } });
   }
 
-  // Current account status
   if (filters.accountStatus) {
-    conditions.push(like(accounts.accountStatus, `%${filters.accountStatus}%`));
+    and.push({
+      accountStatus: { contains: filters.accountStatus, ...insensitive },
+    });
   }
 
-  // Linked account alias
   if (filters.existsAlso) {
-    conditions.push(like(accounts.existsAlso, `%${filters.existsAlso}%`));
+    and.push({ existsAlso: { contains: filters.existsAlso, ...insensitive } });
   }
 
-  // Has notes filter (accounts that have at least one note)
   if (filters.hasNotes === "true") {
-    conditions.push(
-      sql`EXISTS (SELECT 1 FROM account_notes WHERE account_notes.account_pk = ${accounts.pk})`
-    );
+    and.push({ pk: { in: noteCtx.accountsWithNotesPks ?? [] } });
   }
 
-  return conditions.length > 0 ? and(...conditions) : undefined;
+  return and.length > 0 ? { AND: and } : {};
 }
 
-export function buildAccountOrderClause(sort: string, order: string) {
-  const sortColumn =
-    sort === "username"
-      ? accounts.username
-      : sort === "last_seen"
-        ? accounts.lastSeenAt
-        : sort === "first_seen"
-          ? accounts.firstSeenAt
-          : sort === "verified"
-            ? accounts.isVerified
-            : accounts.savedPostCount;
+export function buildAccountOrderBy(
+  sort: string,
+  order: string
+): Prisma.AccountOrderByWithRelationInput {
+  const dir: Prisma.SortOrder = order === "asc" ? "asc" : "desc";
 
-  return order === "asc" ? asc(sortColumn) : desc(sortColumn);
+  switch (sort) {
+    case "username":
+      return { username: dir };
+    case "last_seen":
+      return { lastSeenAt: dir };
+    case "first_seen":
+      return { firstSeenAt: dir };
+    case "verified":
+      return { isVerified: dir };
+    default:
+      return { savedPostCount: dir };
+  }
 }

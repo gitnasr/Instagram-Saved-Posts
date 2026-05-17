@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { runScrape, getCurrentScrapeState, detectAndMarkInterruptedRuns } from "@/lib/scraper";
-import { db } from "@/db";
-import { scrapeRuns } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import {
+  runScrape,
+  getCurrentScrapeState,
+  detectAndMarkInterruptedRuns,
+} from "@/lib/scraper";
+import { prisma } from "@/lib/prisma";
 
 export async function POST() {
   try {
@@ -16,15 +18,13 @@ export async function POST() {
 
 export async function GET() {
   // Detect any runs that were "running" when the server restarted
-  detectAndMarkInterruptedRuns();
+  await detectAndMarkInterruptedRuns();
 
   const currentState = getCurrentScrapeState();
-  const history = db
-    .select()
-    .from(scrapeRuns)
-    .orderBy(desc(scrapeRuns.startedAt))
-    .limit(20)
-    .all();
+  const history = await prisma.scrapeRun.findMany({
+    orderBy: { startedAt: "desc" },
+    take: 20,
+  });
 
   return NextResponse.json({ current: currentState, history });
 }

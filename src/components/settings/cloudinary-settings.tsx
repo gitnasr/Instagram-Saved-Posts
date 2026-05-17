@@ -1,49 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { toast } from "sonner";
-import { Cloud, Save, Upload } from "lucide-react";
+import { Cloud, Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import {
   useCloudinarySyncStatus,
   useTriggerCloudinarySync,
 } from "@/hooks/use-cloudinary-sync";
-import type { Setting } from "@/types";
 
-interface CloudinarySettingsProps {
-  settings: Setting[];
-}
-
-function getSettingValue(settings: Setting[], key: string): string {
-  return settings.find((s) => s.key === key)?.value ?? "";
-}
-
-export function CloudinarySettings({ settings }: CloudinarySettingsProps) {
-  const [cloudName, setCloudName] = useState(
-    getSettingValue(settings, "cloudinary_cloud_name")
-  );
-  const [apiKey, setApiKey] = useState(
-    getSettingValue(settings, "cloudinary_api_key")
-  );
-  // Never initialize from masked value — secret field stays empty unless user types a new one
-  const hasExistingSecret = !!getSettingValue(settings, "cloudinary_api_secret");
-  const [apiSecret, setApiSecret] = useState("");
-  const [saving, setSaving] = useState(false);
-
+export function CloudinarySettings() {
   const { data: syncStatus } = useCloudinarySyncStatus();
   const triggerSync = useTriggerCloudinarySync();
 
   const syncState = syncStatus?.current;
+  const configured = syncStatus?.configured ?? false;
   const isSyncing = syncState?.status === "running";
 
   // Toast on sync completion
-  const [prevStatus, setPrevStatus] = useState<string | undefined>();
+  const prevStatusRef = useRef<string | undefined>(undefined);
   useEffect(() => {
+    const prevStatus = prevStatusRef.current;
     if (prevStatus === "running" && syncState?.status === "completed") {
       const total =
         syncState.uploadedAccounts +
@@ -53,39 +40,12 @@ export function CloudinarySettings({ settings }: CloudinarySettingsProps) {
         `Cloudinary sync complete: ${total} items uploaded${syncState.failedUploads > 0 ? `, ${syncState.failedUploads} failed` : ""}`
       );
     } else if (prevStatus === "running" && syncState?.status === "failed") {
-      toast.error(`Cloudinary sync failed: ${syncState.errorMessage ?? "Unknown error"}`);
+      toast.error(
+        `Cloudinary sync failed: ${syncState.errorMessage ?? "Unknown error"}`
+      );
     }
-    setPrevStatus(syncState?.status);
-  }, [syncState?.status, syncState, prevStatus]);
-
-  const saveSetting = async (key: string, value: string) => {
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value }),
-    });
-    if (!res.ok) throw new Error("Failed to save setting");
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const saves = [
-        saveSetting("cloudinary_cloud_name", cloudName.trim()),
-        saveSetting("cloudinary_api_key", apiKey.trim()),
-      ];
-      // Only save secret if user typed a new one (don't overwrite with empty/masked value)
-      if (apiSecret.trim()) {
-        saves.push(saveSetting("cloudinary_api_secret", apiSecret.trim()));
-      }
-      await Promise.all(saves);
-      toast.success("Cloudinary settings saved");
-    } catch {
-      toast.error("Failed to save Cloudinary settings");
-    } finally {
-      setSaving(false);
-    }
-  };
+    prevStatusRef.current = syncState?.status;
+  }, [syncState?.status, syncState]);
 
   const handleSync = () => {
     triggerSync.mutate();
@@ -112,54 +72,30 @@ export function CloudinarySettings({ settings }: CloudinarySettingsProps) {
         </CardTitle>
         <CardDescription>
           Store profile photos and post images on Cloudinary for permanent URLs.
-          Instagram CDN links expire — uploads happen automatically during scraping
-          when credentials are configured.
+          Credentials are provided through deployment environment variables and
+          cannot be edited here. Uploads happen automatically during scraping
+          when configured.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="cloud-name" className="text-sm">
-              Cloud Name
-            </Label>
-            <Input
-              id="cloud-name"
-              placeholder="your-cloud-name"
-              value={cloudName}
-              onChange={(e) => setCloudName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="api-key" className="text-sm">
-              API Key
-            </Label>
-            <Input
-              id="api-key"
-              placeholder="123456789012345"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="api-secret" className="text-sm">
-              API Secret
-            </Label>
-            <Input
-              id="api-secret"
-              type="password"
-              placeholder={hasExistingSecret ? "Secret is saved — leave blank to keep" : "Enter API secret"}
-              value={apiSecret}
-              onChange={(e) => setApiSecret(e.target.value)}
-            />
-          </div>
+        <div className="flex items-center gap-2">
+          {configured ? (
+            <Badge variant="default" className="gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Configured
+            </Badge>
+          ) : (
+            <Badge variant="destructive" className="gap-1">
+              <AlertCircle className="h-3.5 w-3.5" />
+              Not configured
+            </Badge>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {configured
+              ? "Cloudinary env vars are set on this deployment."
+              : "Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET."}
+          </span>
         </div>
-
-        <Button onClick={handleSave} disabled={saving} className="w-full">
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? "Saving..." : "Save Cloudinary Settings"}
-        </Button>
 
         <Separator />
 
@@ -175,7 +111,7 @@ export function CloudinarySettings({ settings }: CloudinarySettingsProps) {
 
           <Button
             onClick={handleSync}
-            disabled={isSyncing || !cloudName || !apiKey || (!apiSecret && !hasExistingSecret)}
+            disabled={isSyncing || !configured}
             variant="outline"
             className="w-full"
           >
@@ -194,7 +130,8 @@ export function CloudinarySettings({ settings }: CloudinarySettingsProps) {
                   Posts: {syncState.uploadedPosts}/{syncState.totalPosts}
                 </span>
                 <span>
-                  Carousel: {syncState.uploadedCarouselItems}/{syncState.totalCarouselItems}
+                  Carousel: {syncState.uploadedCarouselItems}/
+                  {syncState.totalCarouselItems}
                 </span>
               </div>
               {syncState.failedUploads > 0 && (
@@ -207,8 +144,13 @@ export function CloudinarySettings({ settings }: CloudinarySettingsProps) {
 
           {syncState?.status === "completed" && (
             <p className="text-xs text-muted-foreground">
-              Last sync: {syncState.uploadedAccounts + syncState.uploadedPosts + syncState.uploadedCarouselItems} uploaded
-              {syncState.failedUploads > 0 && `, ${syncState.failedUploads} failed`}
+              Last sync:{" "}
+              {syncState.uploadedAccounts +
+                syncState.uploadedPosts +
+                syncState.uploadedCarouselItems}{" "}
+              uploaded
+              {syncState.failedUploads > 0 &&
+                `, ${syncState.failedUploads} failed`}
             </p>
           )}
 

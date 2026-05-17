@@ -51,7 +51,7 @@ export default function SettingsPage() {
 
           <Separator />
 
-          <CloudinarySettings settings={settings ?? []} />
+          <CloudinarySettings />
         </div>
       )}
     </div>

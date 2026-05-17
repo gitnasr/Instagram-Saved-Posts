@@ -1,7 +1,11 @@
-import { db } from "@/db";
-import { accounts, posts, carouselMedia } from "@/db/schema";
-import { getCloudinaryConfig, uploadToCloudinary, isCloudinaryConfigured } from "./cloudinary";
-import { isNull, isNotNull, and, eq } from "drizzle-orm";
+import { prisma } from "./prisma";
+import {
+  getCloudinaryConfig,
+  uploadToCloudinary,
+  isCloudinaryConfigured,
+} from "./cloudinary";
+import { logger } from "./logger";
+import * as Sentry from "@sentry/nextjs";
 import type { CloudinarySyncProgress } from "@/types";
 
 let currentSyncState: CloudinarySyncProgress | null = null;
@@ -17,33 +21,23 @@ export async function runCloudinarySync(): Promise<void> {
 
   const config = getCloudinaryConfig();
   if (!isCloudinaryConfigured(config)) {
-    throw new Error("Cloudinary credentials are not configured. Go to Settings first.");
+    throw new Error(
+      "Cloudinary credentials are not configured. Set Cloudinary env vars."
+    );
   }
 
-  // Query items that need uploading (cloudinary column is NULL, source URL is NOT NULL)
-  const accountsToSync = db
-    .select()
-    .from(accounts)
-    .where(
-      and(isNull(accounts.cloudinaryProfilePicUrl), isNotNull(accounts.profilePicUrl))
-    )
-    .all();
+  // Query items that need uploading (cloudinary field is null, source URL is set)
+  const accountsToSync = await prisma.account.findMany({
+    where: { cloudinaryProfilePicUrl: null, profilePicUrl: { not: null } },
+  });
 
-  const postsToSync = db
-    .select()
-    .from(posts)
-    .where(
-      and(isNull(posts.cloudinaryThumbnailUrl), isNotNull(posts.thumbnailUrl))
-    )
-    .all();
+  const postsToSync = await prisma.post.findMany({
+    where: { cloudinaryThumbnailUrl: null, thumbnailUrl: { not: null } },
+  });
 
-  const carouselToSync = db
-    .select()
-    .from(carouselMedia)
-    .where(
-      and(isNull(carouselMedia.cloudinaryUrl), isNotNull(carouselMedia.mediaUrl))
-    )
-    .all();
+  const carouselToSync = await prisma.carouselMedia.findMany({
+    where: { cloudinaryUrl: null, mediaUrl: { not: "" } },
+  });
 
   currentSyncState = {
     status: "running",
@@ -66,10 +60,10 @@ export async function runCloudinarySync(): Promise<void> {
         config
       );
       if (url) {
-        db.update(accounts)
-          .set({ cloudinaryProfilePicUrl: url })
-          .where(eq(accounts.pk, account.pk))
-          .run();
+        await prisma.account.update({
+          where: { pk: account.pk },
+          data: { cloudinaryProfilePicUrl: url },
+        });
         currentSyncState.uploadedAccounts += 1;
       } else {
         currentSyncState.failedUploads += 1;
@@ -86,10 +80,10 @@ export async function runCloudinarySync(): Promise<void> {
         config
       );
       if (url) {
-        db.update(posts)
-          .set({ cloudinaryThumbnailUrl: url })
-          .where(eq(posts.pk, post.pk))
-          .run();
+        await prisma.post.update({
+          where: { pk: post.pk },
+          data: { cloudinaryThumbnailUrl: url },
+        });
         currentSyncState.uploadedPosts += 1;
       } else {
         currentSyncState.failedUploads += 1;
@@ -111,10 +105,10 @@ export async function runCloudinarySync(): Promise<void> {
         config
       );
       if (url) {
-        db.update(carouselMedia)
-          .set({ cloudinaryUrl: url })
-          .where(eq(carouselMedia.id, item.id))
-          .run();
+        await prisma.carouselMedia.update({
+          where: { id: item.id },
+          data: { cloudinaryUrl: url },
+        });
         currentSyncState.uploadedCarouselItems += 1;
       } else {
         currentSyncState.failedUploads += 1;
@@ -123,10 +117,21 @@ export async function runCloudinarySync(): Promise<void> {
     }
 
     currentSyncState.status = "completed";
+    logger.info(
+      {
+        uploadedAccounts: currentSyncState.uploadedAccounts,
+        uploadedPosts: currentSyncState.uploadedPosts,
+        uploadedCarouselItems: currentSyncState.uploadedCarouselItems,
+        failedUploads: currentSyncState.failedUploads,
+      },
+      "[cloudinary-sync] Sync completed"
+    );
   } catch (error) {
     currentSyncState.status = "failed";
     currentSyncState.errorMessage =
       error instanceof Error ? error.message : "Unknown error";
+    Sentry.captureException(error, { tags: { feature: "cloudinary-sync" } });
+    logger.error({ err: error }, "[cloudinary-sync] Sync failed");
   }
 }
 

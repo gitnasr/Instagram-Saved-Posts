@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { accountUsernameHistory, scrapeRuns, posts, accounts } from "@/db/schema";
-import { eq, desc, inArray } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _request: Request,
@@ -10,11 +8,14 @@ export async function GET(
   const { runId } = await params;
   const id = parseInt(runId);
 
-  const run = db
-    .select()
-    .from(scrapeRuns)
-    .where(eq(scrapeRuns.id, id))
-    .get();
+  if (isNaN(id)) {
+    return NextResponse.json(
+      { error: "Scrape run not found" },
+      { status: 404 }
+    );
+  }
+
+  const run = await prisma.scrapeRun.findUnique({ where: { id } });
 
   if (!run) {
     return NextResponse.json(
@@ -23,49 +24,36 @@ export async function GET(
     );
   }
 
-  const newPosts = db
-    .select()
-    .from(posts)
-    .where(eq(posts.scrapeRunId, id))
-    .orderBy(desc(posts.takenAt))
-    .all();
-
-  const newAccounts = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.discoveredInRunId, id))
-    .all();
-
   const lostAccountPkList: string[] = run.lostAccountPks
     ? JSON.parse(run.lostAccountPks)
     : [];
 
-  const lostAccounts =
-    lostAccountPkList.length > 0
-      ? db
-          .select()
-          .from(accounts)
-          .where(inArray(accounts.pk, lostAccountPkList))
-          .all()
-      : [];
-
-  const usernameHistory = db
-    .select()
-    .from(accountUsernameHistory)
-    .where(eq(accountUsernameHistory.scrapeRunId, id))
-    .orderBy(desc(accountUsernameHistory.changedAt))
-    .all();
+  const [newPosts, newAccounts, lostAccounts, usernameHistory] =
+    await Promise.all([
+      prisma.post.findMany({
+        where: { scrapeRunId: id },
+        orderBy: { takenAt: "desc" },
+      }),
+      prisma.account.findMany({ where: { discoveredInRunId: id } }),
+      lostAccountPkList.length > 0
+        ? prisma.account.findMany({
+            where: { pk: { in: lostAccountPkList } },
+          })
+        : Promise.resolve([]),
+      prisma.accountUsernameHistory.findMany({
+        where: { scrapeRunId: id },
+        orderBy: { changedAt: "desc" },
+      }),
+    ]);
 
   const usernameChangeAccountPks = [
     ...new Set(usernameHistory.map((change) => change.accountPk)),
   ];
   const usernameChangeAccounts =
     usernameChangeAccountPks.length > 0
-      ? db
-          .select()
-          .from(accounts)
-          .where(inArray(accounts.pk, usernameChangeAccountPks))
-          .all()
+      ? await prisma.account.findMany({
+          where: { pk: { in: usernameChangeAccountPks } },
+        })
       : [];
   const usernameChangeAccountMap = new Map(
     usernameChangeAccounts.map((account) => [account.pk, account])

@@ -1,23 +1,22 @@
 import type {
-  accounts,
-  accountNotes,
-  accountStatusHistory,
-  accountUsernameHistory,
-  posts,
-  scrapeRuns,
-  settings,
-  carouselMedia,
-} from "@/db/schema";
-import type { InferSelectModel } from "drizzle-orm";
+  Account as PrismaAccount,
+  AccountNote as PrismaAccountNote,
+  AccountStatusHistory as PrismaAccountStatusHistory,
+  AccountUsernameHistory as PrismaAccountUsernameHistory,
+  Post as PrismaPost,
+  ScrapeRun as PrismaScrapeRun,
+  Setting as PrismaSetting,
+  CarouselMedia as PrismaCarouselMedia,
+} from "@prisma/client";
 
-export type Account = InferSelectModel<typeof accounts>;
-export type AccountNote = InferSelectModel<typeof accountNotes>;
-export type AccountStatusHistory = InferSelectModel<typeof accountStatusHistory>;
-export type AccountUsernameHistory = InferSelectModel<typeof accountUsernameHistory>;
-export type Post = InferSelectModel<typeof posts>;
-export type ScrapeRun = InferSelectModel<typeof scrapeRuns>;
-export type Setting = InferSelectModel<typeof settings>;
-export type CarouselMediaItem = InferSelectModel<typeof carouselMedia>;
+export type Account = PrismaAccount;
+export type AccountNote = PrismaAccountNote;
+export type AccountStatusHistory = PrismaAccountStatusHistory;
+export type AccountUsernameHistory = PrismaAccountUsernameHistory;
+export type Post = PrismaPost;
+export type ScrapeRun = PrismaScrapeRun;
+export type Setting = PrismaSetting;
+export type CarouselMediaItem = PrismaCarouselMedia;
 
 export interface PostWithCarousel extends Post {
   carouselItems?: CarouselMediaItem[];

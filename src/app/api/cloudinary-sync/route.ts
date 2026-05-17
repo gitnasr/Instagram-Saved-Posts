@@ -3,8 +3,15 @@ import {
   runCloudinarySync,
   getCurrentSyncState,
 } from "@/lib/cloudinary-sync";
+import { getCloudinaryConfig, isCloudinaryConfigured } from "@/lib/cloudinary";
 
 export async function POST() {
+  if (!isCloudinaryConfigured(getCloudinaryConfig())) {
+    return NextResponse.json(
+      { error: "Cloudinary credentials are not configured." },
+      { status: 400 }
+    );
+  }
   try {
     // Fire and forget — sync runs in background
     runCloudinarySync().catch(() => {
@@ -19,5 +26,6 @@ export async function POST() {
 
 export async function GET() {
   const current = getCurrentSyncState();
-  return NextResponse.json({ current });
+  const configured = isCloudinaryConfigured(getCloudinaryConfig());
+  return NextResponse.json({ current, configured });
 }

@@ -1,21 +1,10 @@
-import { db } from "@/db";
-import {
-  accountStatusHistory,
-  accountUsernameHistory,
-  accounts,
-  posts,
-  scrapeRuns,
-  settings,
-  carouselMedia,
-} from "@/db/schema";
+import { prisma, getNextScrapeRunId } from "./prisma";
 import { fetchSavedPostsPage } from "./instagram-api";
-import {
-  getCloudinaryConfig,
-  isCloudinaryConfigured,
-} from "./cloudinary";
+import { getCloudinaryConfig, isCloudinaryConfigured } from "./cloudinary";
 import { runCloudinarySync } from "./cloudinary-sync";
 import { PRIVATE_ACCOUNT_STATUS } from "./account-metadata";
-import { eq, sql } from "drizzle-orm";
+import { logger } from "./logger";
+import * as Sentry from "@sentry/nextjs";
 import { createHash } from "crypto";
 import type { AxiosError } from "axios";
 import type { InstagramMedia } from "@/types/instagram";
@@ -32,7 +21,10 @@ function isAxiosError(e: unknown): e is AxiosError {
 }
 
 /** Extract error message + optional JSON-stringified API response body */
-function extractErrorInfo(error: unknown): { errorMsg: string; errorBody: string | null } {
+function extractErrorInfo(error: unknown): {
+  errorMsg: string;
+  errorBody: string | null;
+} {
   const errorMsg = error instanceof Error ? error.message : "Unknown error";
   let errorBody: string | null = null;
   if (isAxiosError(error) && error.response?.data) {
@@ -76,17 +68,17 @@ function getPrivacyStatusUpdate(
   };
 }
 
-function recordAccountStatus(accountPk: string, status: string, changedAt: string) {
-  db.insert(accountStatusHistory)
-    .values({
-      accountPk,
-      status,
-      changedAt,
-    })
-    .run();
+async function recordAccountStatus(
+  accountPk: string,
+  status: string,
+  changedAt: string
+) {
+  await prisma.accountStatusHistory.create({
+    data: { accountPk, status, changedAt },
+  });
 }
 
-function recordUsernameChange({
+async function recordUsernameChange({
   accountPk,
   oldUsername,
   newUsername,
@@ -99,19 +91,20 @@ function recordUsernameChange({
   runId: number;
   changedAt: string;
 }) {
-  db.insert(accountUsernameHistory)
-    .values({
+  await prisma.accountUsernameHistory.create({
+    data: {
       accountPk,
       oldUsername,
       newUsername,
       scrapeRunId: runId,
       changedAt,
-    })
-    .run();
+    },
+  });
 
   usernameChangeAccountPks.add(accountPk);
-  console.info(
-    `[scraper] Account username changed for pk ${accountPk}: @${oldUsername} -> @${newUsername}`
+  logger.info(
+    { accountPk, oldUsername, newUsername },
+    "[scraper] Account username changed"
   );
 }
 
@@ -139,13 +132,13 @@ export function getCurrentScrapeState(): ScrapeProgress | null {
  * Called on GET /api/scrape to detect orphaned runs from a previous server process.
  * Safe to call repeatedly — no-op when nothing is stuck.
  */
-export function detectAndMarkInterruptedRuns(): void {
+export async function detectAndMarkInterruptedRuns(): Promise<void> {
   // Only mark as interrupted if there's no active in-memory scrape running
   if (currentScrapeState?.status === "running") return;
-  db.update(scrapeRuns)
-    .set({ status: "interrupted" })
-    .where(eq(scrapeRuns.status, "running"))
-    .run();
+  await prisma.scrapeRun.updateMany({
+    where: { status: "running" },
+    data: { status: "interrupted" },
+  });
 }
 
 export async function runScrape(): Promise<number> {
@@ -153,28 +146,23 @@ export async function runScrape(): Promise<number> {
     throw new Error("A scrape is already in progress");
   }
 
-  const cookieRow = db
-    .select()
-    .from(settings)
-    .where(eq(settings.key, "instagram_cookie"))
-    .get();
+  const cookieRow = await prisma.setting.findUnique({
+    where: { key: "instagram_cookie" },
+  });
 
   if (!cookieRow) {
     throw new Error("No Instagram cookie configured. Go to Settings first.");
   }
 
-  const userAgentRow = db
-    .select()
-    .from(settings)
-    .where(eq(settings.key, "user_agent"))
-    .get();
+  const userAgentRow = await prisma.setting.findUnique({
+    where: { key: "user_agent" },
+  });
 
   const now = new Date().toISOString();
-  const run = db
-    .insert(scrapeRuns)
-    .values({ startedAt: now, status: "running" })
-    .returning()
-    .get();
+  const runId = await getNextScrapeRunId();
+  const run = await prisma.scrapeRun.create({
+    data: { id: runId, startedAt: now, status: "running" },
+  });
 
   currentScrapeState = {
     runId: run.id,
@@ -188,24 +176,14 @@ export async function runScrape(): Promise<number> {
   seenAccountPks = new Set<string>();
   usernameChangeAccountPks = new Set<string>();
 
-  scrapeAllPages(run.id, cookieRow.value, userAgentRow?.value, run.startedAt).catch(
-    (error) => {
-      const { errorMsg, errorBody } = extractErrorInfo(error);
-      db.update(scrapeRuns)
-        .set({
-          status: "failed",
-          completedAt: new Date().toISOString(),
-          errorMessage: errorMsg,
-          errorBody,
-        })
-        .where(eq(scrapeRuns.id, run.id))
-        .run();
-
-      if (currentScrapeState?.runId === run.id) {
-        currentScrapeState.status = "failed";
-      }
-    }
-  );
+  scrapeAllPages(
+    run.id,
+    cookieRow.value,
+    userAgentRow?.value,
+    run.startedAt
+  ).catch((error) => {
+    void handleScrapeFailure(run.id, error);
+  });
 
   return run.id;
 }
@@ -218,30 +196,23 @@ export async function resumeScrape(runId: number): Promise<void> {
     throw new Error("A scrape is already in progress");
   }
 
-  const run = db
-    .select()
-    .from(scrapeRuns)
-    .where(eq(scrapeRuns.id, runId))
-    .get();
+  const run = await prisma.scrapeRun.findUnique({ where: { id: runId } });
 
   if (!run) throw new Error("Scrape run not found");
-  if (run.status !== "interrupted") throw new Error("Only interrupted runs can be resumed");
+  if (run.status !== "interrupted")
+    throw new Error("Only interrupted runs can be resumed");
 
-  const cookieRow = db
-    .select()
-    .from(settings)
-    .where(eq(settings.key, "instagram_cookie"))
-    .get();
+  const cookieRow = await prisma.setting.findUnique({
+    where: { key: "instagram_cookie" },
+  });
 
   if (!cookieRow) {
     throw new Error("No Instagram cookie configured. Go to Settings first.");
   }
 
-  const userAgentRow = db
-    .select()
-    .from(settings)
-    .where(eq(settings.key, "user_agent"))
-    .get();
+  const userAgentRow = await prisma.setting.findUnique({
+    where: { key: "user_agent" },
+  });
 
   // Restore in-memory state from DB
   currentScrapeState = {
@@ -256,29 +227,47 @@ export async function resumeScrape(runId: number): Promise<void> {
   seenAccountPks = new Set<string>();
   usernameChangeAccountPks = new Set<string>();
 
-  db.update(scrapeRuns)
-    .set({ status: "running", completedAt: null })
-    .where(eq(scrapeRuns.id, run.id))
-    .run();
+  await prisma.scrapeRun.update({
+    where: { id: run.id },
+    data: { status: "running", completedAt: null },
+  });
 
-  scrapeAllPages(run.id, cookieRow.value, userAgentRow?.value, run.startedAt, run.checkpointMaxId ?? undefined).catch(
-    (error) => {
-      const { errorMsg, errorBody } = extractErrorInfo(error);
-      db.update(scrapeRuns)
-        .set({
-          status: "failed",
-          completedAt: new Date().toISOString(),
-          errorMessage: errorMsg,
-          errorBody,
-        })
-        .where(eq(scrapeRuns.id, run.id))
-        .run();
+  scrapeAllPages(
+    run.id,
+    cookieRow.value,
+    userAgentRow?.value,
+    run.startedAt,
+    run.checkpointMaxId ?? undefined
+  ).catch((error) => {
+    void handleScrapeFailure(run.id, error);
+  });
+}
 
-      if (currentScrapeState?.runId === run.id) {
-        currentScrapeState.status = "failed";
-      }
-    }
-  );
+async function handleScrapeFailure(
+  runId: number,
+  error: unknown
+): Promise<void> {
+  const { errorMsg, errorBody } = extractErrorInfo(error);
+  Sentry.captureException(error, {
+    tags: { feature: "scrape" },
+    extra: { runId },
+  });
+  logger.error({ err: error, runId }, "[scraper] Scrape run failed");
+  await prisma.scrapeRun
+    .update({
+      where: { id: runId },
+      data: {
+        status: "failed",
+        completedAt: new Date().toISOString(),
+        errorMessage: errorMsg,
+        errorBody,
+      },
+    })
+    .catch(() => {});
+
+  if (currentScrapeState?.runId === runId) {
+    currentScrapeState.status = "failed";
+  }
 }
 
 async function scrapeAllPages(
@@ -311,16 +300,16 @@ async function scrapeAllPages(
       hasMore = page.more_available;
       maxId = page.next_max_id;
 
-      db.update(scrapeRuns)
-        .set({
+      await prisma.scrapeRun.update({
+        where: { id: runId },
+        data: {
           pagesScraped: currentScrapeState!.pagesScraped,
           totalPostsFound: currentScrapeState!.totalPostsFound,
           newPostsAdded: currentScrapeState!.newPostsAdded,
           newAccountsFound: currentScrapeState!.newAccountsFound,
           checkpointMaxId: maxId ?? null,
-        })
-        .where(eq(scrapeRuns.id, runId))
-        .run();
+        },
+      });
 
       if (hasMore) {
         await delay(
@@ -330,14 +319,17 @@ async function scrapeAllPages(
       }
     }
 
-    recalculateAccountPostCounts();
+    await recalculateAccountPostCounts();
 
     // Calculate lost accounts (only on full successful completion)
-    const { count: lostCount, pks: lostPks } = calculateLostAccounts(runStartedAt);
+    const { count: lostCount, pks: lostPks } = await calculateLostAccounts(
+      runStartedAt
+    );
     const usernameChangePks = [...usernameChangeAccountPks];
 
-    db.update(scrapeRuns)
-      .set({
+    await prisma.scrapeRun.update({
+      where: { id: runId },
+      data: {
         status: "completed",
         completedAt: new Date().toISOString(),
         totalPostsFound: currentScrapeState!.totalPostsFound,
@@ -349,37 +341,39 @@ async function scrapeAllPages(
         lostAccountPks: lostPks.length > 0 ? JSON.stringify(lostPks) : null,
         usernameChangesCount: usernameChangePks.length,
         usernameChangeAccountPks:
-          usernameChangePks.length > 0 ? JSON.stringify(usernameChangePks) : null,
-      })
-      .where(eq(scrapeRuns.id, runId))
-      .run();
+          usernameChangePks.length > 0
+            ? JSON.stringify(usernameChangePks)
+            : null,
+      },
+    });
 
     if (currentScrapeState?.runId === runId) {
       currentScrapeState.status = "completed";
     }
 
+    logger.info(
+      {
+        runId,
+        newPostsAdded: currentScrapeState?.newPostsAdded,
+        newAccountsFound: currentScrapeState?.newAccountsFound,
+        lostCount,
+        usernameChanges: usernameChangePks.length,
+      },
+      "[scraper] Scrape completed"
+    );
+
     // Auto-trigger Cloudinary sync as a background job after scraping
     const cloudinaryConfig = getCloudinaryConfig();
     if (isCloudinaryConfigured(cloudinaryConfig)) {
       runCloudinarySync().catch((err: Error) => {
-        console.warn("[scraper] Auto Cloudinary sync failed to start:", err.message);
+        logger.warn(
+          { err },
+          "[scraper] Auto Cloudinary sync failed to start"
+        );
       });
     }
   } catch (error) {
-    const { errorMsg, errorBody } = extractErrorInfo(error);
-    db.update(scrapeRuns)
-      .set({
-        status: "failed",
-        completedAt: new Date().toISOString(),
-        errorMessage: errorMsg,
-        errorBody,
-      })
-      .where(eq(scrapeRuns.id, runId))
-      .run();
-
-    if (currentScrapeState?.runId === runId) {
-      currentScrapeState.status = "failed";
-    }
+    await handleScrapeFailure(runId, error);
   }
 }
 
@@ -414,11 +408,9 @@ async function processMediaItem(
   seenAccountPks.add(accountPkStr);
 
   // ─── UPSERT ACCOUNT ──────────────────────────────────────
-  const existingAccount = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.pk, accountPkStr))
-    .get();
+  const existingAccount = await prisma.account.findUnique({
+    where: { pk: accountPkStr },
+  });
 
   // Hash the profile pic to detect changes (kept for hash-change detection)
   let profilePicHash: string | null = null;
@@ -436,8 +428,8 @@ async function processMediaItem(
   );
 
   if (!existingAccount) {
-    db.insert(accounts)
-      .values({
+    await prisma.account.create({
+      data: {
         pk: accountPkStr,
         username: media.user.username,
         fullName: media.user.full_name,
@@ -451,22 +443,23 @@ async function processMediaItem(
         firstSeenAt: now,
         lastSeenAt: now,
         discoveredInRunId: runId,
-      })
-      .run();
+      },
+    });
 
     if (currentScrapeState) {
       currentScrapeState.newAccountsFound += 1;
     }
 
     if (privacyStatusUpdate.recordHistory) {
-      recordAccountStatus(accountPkStr, PRIVATE_ACCOUNT_STATUS, now);
+      await recordAccountStatus(accountPkStr, PRIVATE_ACCOUNT_STATUS, now);
     }
   } else {
     const previousUsername = existingAccount.username;
     const nextUsername = media.user.username;
 
-    db.update(accounts)
-      .set({
+    await prisma.account.update({
+      where: { pk: accountPkStr },
+      data: {
         username: nextUsername,
         fullName: media.user.full_name,
         isVerified: media.user.is_verified,
@@ -477,12 +470,11 @@ async function processMediaItem(
         ...(hashChanged ? { cloudinaryProfilePicUrl: null } : {}),
         ...privacyStatusUpdate.updates,
         lastSeenAt: now,
-      })
-      .where(eq(accounts.pk, accountPkStr))
-      .run();
+      },
+    });
 
     if (previousUsername !== nextUsername) {
-      recordUsernameChange({
+      await recordUsernameChange({
         accountPk: accountPkStr,
         oldUsername: previousUsername,
         newUsername: nextUsername,
@@ -492,23 +484,21 @@ async function processMediaItem(
     }
 
     if (privacyStatusUpdate.recordHistory) {
-      recordAccountStatus(accountPkStr, PRIVATE_ACCOUNT_STATUS, now);
+      await recordAccountStatus(accountPkStr, PRIVATE_ACCOUNT_STATUS, now);
     }
   }
 
   // ─── UPSERT POST ─────────────────────────────────────────
-  const existingPost = db
-    .select()
-    .from(posts)
-    .where(eq(posts.pk, mediaPk))
-    .get();
+  const existingPost = await prisma.post.findUnique({
+    where: { pk: mediaPk },
+  });
 
   const thumbnail = media.image_versions2?.candidates?.[0];
   const thumbnailUrl = thumbnail?.url ?? null;
 
   if (!existingPost) {
-    db.insert(posts)
-      .values({
+    await prisma.post.create({
+      data: {
         pk: mediaPk,
         id: media.id,
         code: media.code,
@@ -525,8 +515,8 @@ async function processMediaItem(
         carouselMediaCount: media.carousel_media_count ?? null,
         scrapeRunId: runId,
         createdAt: now,
-      })
-      .run();
+      },
+    });
 
     if (currentScrapeState) {
       currentScrapeState.newPostsAdded += 1;
@@ -534,15 +524,15 @@ async function processMediaItem(
 
     await insertOrUpdateCarouselItems(mediaPk, media, true);
   } else {
-    db.update(posts)
-      .set({
+    await prisma.post.update({
+      where: { pk: mediaPk },
+      data: {
         likeCount: media.like_count,
         commentCount: media.comment_count ?? 0,
         captionText: media.caption?.text ?? null,
         thumbnailUrl: thumbnailUrl ?? existingPost.thumbnailUrl, // refresh CDN URL
-      })
-      .where(eq(posts.pk, mediaPk))
-      .run();
+      },
+    });
 
     await insertOrUpdateCarouselItems(mediaPk, media, false);
   }
@@ -558,11 +548,7 @@ async function insertOrUpdateCarouselItems(
 
   const existingItems = isNewPost
     ? []
-    : db
-        .select()
-        .from(carouselMedia)
-        .where(eq(carouselMedia.postPk, postPk))
-        .all();
+    : await prisma.carouselMedia.findMany({ where: { postPk } });
 
   for (let i = 0; i < media.carousel_media.length; i++) {
     const carouselItem = media.carousel_media[i];
@@ -581,23 +567,18 @@ async function insertOrUpdateCarouselItems(
     const existingItem = existingItems.find((item) => item.position === i);
 
     if (existingItem) {
-      const nextMediaUrl = imageUrl ?? videoUrl ?? existingItem.mediaUrl;
-      const nextVideoUrl = videoUrl ?? existingItem.videoUrl;
-      const nextWidth = width ?? existingItem.width;
-      const nextHeight = height ?? existingItem.height;
-
-      db.update(carouselMedia)
-        .set({
-          mediaUrl: nextMediaUrl,
-          videoUrl: nextVideoUrl,
-          width: nextWidth,
-          height: nextHeight,
-        })
-        .where(eq(carouselMedia.id, existingItem.id))
-        .run();
+      await prisma.carouselMedia.update({
+        where: { id: existingItem.id },
+        data: {
+          mediaUrl: imageUrl ?? videoUrl ?? existingItem.mediaUrl,
+          videoUrl: videoUrl ?? existingItem.videoUrl,
+          width: width ?? existingItem.width,
+          height: height ?? existingItem.height,
+        },
+      });
     } else {
-      db.insert(carouselMedia)
-        .values({
+      await prisma.carouselMedia.create({
+        data: {
           postPk,
           position: i,
           mediaType: carouselItem.media_type,
@@ -607,19 +588,35 @@ async function insertOrUpdateCarouselItems(
           videoUrl: videoUrl ?? null,
           videoDuration: carouselItem.video_duration ?? null,
           cloudinaryUrl: null, // Cloudinary sync will handle upload
-        })
-        .run();
+        },
+      });
     }
   }
 }
 
-function recalculateAccountPostCounts(): void {
-  db.run(sql`
-    UPDATE accounts
-    SET saved_post_count = (
-      SELECT COUNT(*) FROM posts WHERE posts.account_pk = accounts.pk
-    )
-  `);
+async function recalculateAccountPostCounts(): Promise<void> {
+  const grouped = await prisma.post.groupBy({
+    by: ["accountPk"],
+    _count: { _all: true },
+  });
+  const countByPk = new Map<string, number>(
+    grouped.map((g) => [g.accountPk, g._count._all])
+  );
+
+  const accountsList = await prisma.account.findMany({
+    select: { pk: true, savedPostCount: true },
+  });
+
+  await Promise.all(
+    accountsList.map((account) => {
+      const desired = countByPk.get(account.pk) ?? 0;
+      if (desired === account.savedPostCount) return Promise.resolve();
+      return prisma.account.update({
+        where: { pk: account.pk },
+        data: { savedPostCount: desired },
+      });
+    })
+  );
 }
 
 /**
@@ -627,14 +624,15 @@ function recalculateAccountPostCounts(): void {
  * Uses lastSeenAt < runStartedAt as the signal — processMediaItem always
  * updates lastSeenAt for every account it encounters.
  */
-function calculateLostAccounts(runStartedAt?: string): { count: number; pks: string[] } {
+async function calculateLostAccounts(
+  runStartedAt?: string
+): Promise<{ count: number; pks: string[] }> {
   if (!runStartedAt) return { count: 0, pks: [] };
 
-  const lost = db
-    .select({ pk: accounts.pk })
-    .from(accounts)
-    .where(sql`${accounts.lastSeenAt} < ${runStartedAt}`)
-    .all();
+  const lost = await prisma.account.findMany({
+    where: { lastSeenAt: { lt: runStartedAt } },
+    select: { pk: true },
+  });
 
   return { count: lost.length, pks: lost.map((a) => a.pk) };
 }

@@ -1,10 +1,9 @@
-import { db } from "@/db";
-import { accounts, accountNotes } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
 import {
   parseAccountFilters,
-  buildAccountWhereClause,
-  buildAccountOrderClause,
+  buildAccountWhere,
+  buildAccountOrderBy,
+  resolveNoteFilterContext,
 } from "@/lib/account-filters";
 
 function escapeCsv(value: string): string {
@@ -20,34 +19,22 @@ export async function GET(request: Request) {
   const order = searchParams.get("order") ?? "desc";
 
   const filters = parseAccountFilters(searchParams);
-  const whereClause = buildAccountWhereClause(filters);
-  const orderClause = buildAccountOrderClause(sort, order);
+  const noteCtx = await resolveNoteFilterContext(filters);
+  const where = buildAccountWhere(filters, noteCtx);
+  const orderBy = buildAccountOrderBy(sort, order);
 
-  const allAccounts = db
-    .select()
-    .from(accounts)
-    .where(whereClause)
-    .orderBy(orderClause)
-    .all();
+  const allAccounts = await prisma.account.findMany({ where, orderBy });
 
-  // Fetch all notes for these accounts in one query, keyed by accountPk
-  const accountPks = allAccounts.map((a) => a.pk);
+  // Fetch all notes once, keyed by accountPk
+  const allNotes = await prisma.accountNote.findMany({
+    select: { accountPk: true, content: true },
+  });
   const notesMap = new Map<string, string[]>();
-
-  if (accountPks.length > 0) {
-    // SQLite doesn't support IN with prepared statements in drizzle easily for large arrays,
-    // so fetch all notes and filter in JS (fine since total accounts is typically <10k)
-    const allNotes = db
-      .select({ accountPk: accountNotes.accountPk, content: accountNotes.content })
-      .from(accountNotes)
-      .all();
-
-    for (const note of allNotes) {
-      if (!notesMap.has(note.accountPk)) {
-        notesMap.set(note.accountPk, []);
-      }
-      notesMap.get(note.accountPk)!.push(note.content);
+  for (const note of allNotes) {
+    if (!notesMap.has(note.accountPk)) {
+      notesMap.set(note.accountPk, []);
     }
+    notesMap.get(note.accountPk)!.push(note.content);
   }
 
   const csvHeader =
