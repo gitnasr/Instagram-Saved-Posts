@@ -6,8 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AccountMetadata } from "@/components/accounts/account-metadata";
 import { AccountPostsGrid } from "@/components/accounts/account-posts-grid";
+import { AccountNotes } from "@/components/accounts/account-notes";
 import { useAccountDetail } from "@/hooks/use-account-detail";
+import { proxyImageUrl } from "@/lib/proxy-image";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
@@ -43,6 +46,7 @@ export default function AccountDetailPage({
 
   const { account, posts, pagination } = data;
   const igProfileUrl = `https://www.instagram.com/${account.username}/`;
+  const avatarSrc = proxyImageUrl(account.cloudinaryProfilePicUrl ?? account.profilePicUrl);
 
   return (
     <div className="space-y-6">
@@ -56,7 +60,7 @@ export default function AccountDetailPage({
 
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={account.profilePicUrl ?? undefined} />
+          <AvatarImage src={avatarSrc} />
           <AvatarFallback className="text-lg">
             {account.username.slice(0, 2).toUpperCase()}
           </AvatarFallback>
@@ -79,6 +83,29 @@ export default function AccountDetailPage({
           </a>
         </Button>
       </div>
+
+      <AccountMetadata
+        key={[
+          account.username,
+          account.lastScrapeOn ?? "",
+          account.accountStatus ?? "",
+          account.statusChangedAt ?? "",
+          account.existsAlso ?? "",
+          data.statusHistory
+            .map((item) => `${item.id}:${item.changedAt}:${item.status}`)
+            .join("|"),
+          data.usernameHistory
+            .map((item) => `${item.id}:${item.changedAt}:${item.oldUsername}:${item.newUsername}`)
+            .join("|"),
+          data.existsAlsoOptions.join("|"),
+        ].join("::")}
+        account={account}
+        existsAlsoOptions={data.existsAlsoOptions}
+        statusHistory={data.statusHistory}
+        usernameHistory={data.usernameHistory}
+      />
+
+      <AccountNotes username={account.username} />
 
       <Header title="Saved Posts" />
 

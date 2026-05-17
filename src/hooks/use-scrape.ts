@@ -44,3 +44,25 @@ export function useTriggerScrape() {
     },
   });
 }
+
+export function useResumeScrape() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (runId: number) => {
+      const res = await fetch("/api/scrape/resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error ?? "Failed to resume scrape");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scrape-status"] });
+    },
+  });
+}

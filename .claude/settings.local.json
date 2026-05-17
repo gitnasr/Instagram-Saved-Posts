@@ -20,7 +20,20 @@
       "Bash(where npm)",
       "Bash(where node)",
       "Bash(where npx)",
-      "Bash(npx shadcn@latest add chart)"
+      "Bash(npx shadcn@latest add chart)",
+      "Bash(node node_modules/drizzle-kit/bin.cjs push)",
+      "Bash(node -e \":*)",
+      "Bash(node node_modules/next/dist/bin/next build)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx tsc --noEmit --project tsconfig.json)",
+      "Bash(curl -s http://localhost:3001/api/accounts)",
+      "Bash(node -e \"const Database = require\\(''better-sqlite3''\\); const db = new Database\\(''data/instagram.db''\\); db.exec\\(''ALTER TABLE accounts ADD COLUMN profile_pic_hash TEXT''\\); console.log\\(''Column added''\\); db.close\\(\\);\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(findstr LISTENING)",
+      "Bash(timeout /t 4 /nobreak)",
+      "mcp__Windows-MCP__Wait",
+      "Bash(node -e \"const Database = require\\(''better-sqlite3''\\); const db = new Database\\(''data/instagram.db''\\); const row = db.prepare\\(\"\"SELECT value FROM settings WHERE key = ''cloudinary_api_secret''\"\"\\).get\\(\\); console.log\\(''length:'', row?.value?.length\\); console.log\\(''contains ...:'', row?.value?.includes\\(''...''\\)\\); console.log\\(''last3:'', row?.value?.slice\\(-3\\)\\);\")"
     ]
   }
 }

@@ -7,11 +7,18 @@ import { ScrapeButton } from "@/components/scrape/scrape-button";
 import { ScrapeProgressCard } from "@/components/scrape/scrape-progress";
 import { ScrapeHistoryTable } from "@/components/scrape/scrape-history-table";
 import { useScrapeStatus } from "@/hooks/use-scrape";
+import { useCloudinarySyncStatus } from "@/hooks/use-cloudinary-sync";
 
 export default function ScrapePage() {
   const { data, isLoading } = useScrapeStatus();
+  const { data: syncData } = useCloudinarySyncStatus();
 
   const isRunning = data?.current?.status === "running";
+  const isScrapeDoneWithSyncRunning =
+    data?.current?.status === "completed" &&
+    syncData?.current?.status === "running";
+
+  const showProgressCard = isRunning || isScrapeDoneWithSyncRunning;
 
   return (
     <div className="space-y-6">
@@ -29,7 +36,7 @@ export default function ScrapePage() {
         </div>
       ) : (
         <>
-          {isRunning && data?.current && (
+          {showProgressCard && data?.current && (
             <ScrapeProgressCard progress={data.current} />
           )}
 

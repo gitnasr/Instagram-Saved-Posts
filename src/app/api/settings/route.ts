@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { settings } from "@/db/schema";
-import { eq } from "drizzle-orm";
 
 export async function GET() {
   const allSettings = db.select().from(settings).all();
@@ -9,7 +8,8 @@ export async function GET() {
   const masked = allSettings.map((s) => ({
     ...s,
     value:
-      s.key === "instagram_cookie" && s.value.length > 20
+      (s.key === "instagram_cookie" || s.key === "cloudinary_api_secret") &&
+      s.value.length > 20
         ? s.value.substring(0, 20) + "..."
         : s.value,
   }));
