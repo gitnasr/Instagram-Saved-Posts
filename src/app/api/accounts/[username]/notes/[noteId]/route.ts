@@ -1,36 +1,27 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { accounts, accountNotes } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ username: string; noteId: string }> }
 ) {
   const { username, noteId } = await params;
-  const id = parseInt(noteId);
 
-  if (isNaN(id)) {
+  if (!noteId) {
     return NextResponse.json({ error: "Invalid note ID" }, { status: 400 });
   }
 
-  const account = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.username, username))
-    .get();
+  const account = await prisma.account.findUnique({ where: { username } });
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
-  const deleted = db
-    .delete(accountNotes)
-    .where(and(eq(accountNotes.id, id), eq(accountNotes.accountPk, account.pk)))
-    .returning()
-    .get();
+  const deleted = await prisma.accountNote.deleteMany({
+    where: { id: noteId, accountPk: account.pk },
+  });
 
-  if (!deleted) {
+  if (deleted.count === 0) {
     return NextResponse.json({ error: "Note not found" }, { status: 404 });
   }
 

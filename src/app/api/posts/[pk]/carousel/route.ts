@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { carouselMedia } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _request: Request,
@@ -9,12 +7,10 @@ export async function GET(
 ) {
   const { pk } = await params;
 
-  const items = db
-    .select()
-    .from(carouselMedia)
-    .where(eq(carouselMedia.postPk, pk))
-    .orderBy(asc(carouselMedia.position))
-    .all();
+  const items = await prisma.carouselMedia.findMany({
+    where: { postPk: pk },
+    orderBy: { position: "asc" },
+  });
 
   return NextResponse.json(items);
 }

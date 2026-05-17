@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import {
-  accountStatusHistory,
-  accountUsernameHistory,
-  accounts,
-  posts,
-  settings,
-} from "@/db/schema";
+import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import {
   EXISTS_ALSO_OPTIONS_SETTING_KEY,
   normalizeDateInput,
   normalizeOptionalText,
   parseReusableExistsAlsoOptions,
 } from "@/lib/account-metadata";
-import { eq, desc, sql } from "drizzle-orm";
 
 export async function PATCH(
   request: Request,
@@ -22,25 +15,16 @@ export async function PATCH(
   const { username } = await params;
   const body = await request.json();
 
-  const account = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.username, username))
-    .get();
+  const account = await prisma.account.findUnique({ where: { username } });
 
   if (!account) {
-    return NextResponse.json(
-      { error: "Account not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
   const now = new Date().toISOString();
-  const updates: Partial<typeof accounts.$inferInsert> = {};
+  const updates: Prisma.AccountUpdateInput = {};
 
   if ("notes" in body) {
-    const nextNotes = normalizeOptionalText(body.notes);
-
     if (body.notes !== null && typeof body.notes !== "string") {
       return NextResponse.json(
         { error: "notes must be a string or null" },
@@ -48,7 +32,7 @@ export async function PATCH(
       );
     }
 
-    updates.notes = nextNotes;
+    updates.notes = normalizeOptionalText(body.notes);
   }
 
   if ("lastScrapeOn" in body) {
@@ -88,27 +72,30 @@ export async function PATCH(
       updates.statusChangedAt = nextStatus ? now : null;
 
       if (nextStatus) {
-        db.insert(accountStatusHistory)
-          .values({
+        await prisma.accountStatusHistory.create({
+          data: {
             accountPk: account.pk,
             status: nextStatus,
             changedAt: now,
-          })
-          .run();
+          },
+        });
       }
     }
   }
 
+  const existsAlsoSetting = await prisma.setting.findUnique({
+    where: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY },
+  });
   let reusableExistsAlsoOptions = parseReusableExistsAlsoOptions(
-    db
-      .select()
-      .from(settings)
-      .where(eq(settings.key, EXISTS_ALSO_OPTIONS_SETTING_KEY))
-      .get()?.value
+    existsAlsoSetting?.value
   );
 
   if ("existsAlso" in body || "newExistsAlsoOption" in body) {
-    if (body.existsAlso !== undefined && body.existsAlso !== null && typeof body.existsAlso !== "string") {
+    if (
+      body.existsAlso !== undefined &&
+      body.existsAlso !== null &&
+      typeof body.existsAlso !== "string"
+    ) {
       return NextResponse.json(
         { error: "existsAlso must be a string or null" },
         { status: 400 }
@@ -128,7 +115,9 @@ export async function PATCH(
 
     let nextExistsAlso =
       "existsAlso" in body ? normalizeOptionalText(body.existsAlso) : undefined;
-    const nextNewExistsAlsoOption = normalizeOptionalText(body.newExistsAlsoOption);
+    const nextNewExistsAlsoOption = normalizeOptionalText(
+      body.newExistsAlsoOption
+    );
 
     if (nextNewExistsAlsoOption) {
       nextExistsAlso = nextNewExistsAlsoOption;
@@ -140,7 +129,8 @@ export async function PATCH(
       if (
         nextExistsAlso &&
         !reusableExistsAlsoOptions.some(
-          (option) => option.toLocaleLowerCase() === nextExistsAlso.toLocaleLowerCase()
+          (option) =>
+            option.toLocaleLowerCase() === nextExistsAlso.toLocaleLowerCase()
         )
       ) {
         reusableExistsAlsoOptions = parseReusableExistsAlsoOptions(
@@ -151,27 +141,19 @@ export async function PATCH(
   }
 
   if (Object.keys(updates).length > 0) {
-    db.update(accounts)
-      .set(updates)
-      .where(eq(accounts.pk, account.pk))
-      .run();
+    await prisma.account.update({
+      where: { pk: account.pk },
+      data: updates,
+    });
   }
 
   if ("existsAlso" in body || "newExistsAlsoOption" in body) {
-    db.insert(settings)
-      .values({
-        key: EXISTS_ALSO_OPTIONS_SETTING_KEY,
-        value: JSON.stringify(reusableExistsAlsoOptions),
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: settings.key,
-        set: {
-          value: JSON.stringify(reusableExistsAlsoOptions),
-          updatedAt: now,
-        },
-      })
-      .run();
+    const value = JSON.stringify(reusableExistsAlsoOptions);
+    await prisma.setting.upsert({
+      where: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY },
+      create: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY, value, updatedAt: now },
+      update: { value, updatedAt: now },
+    });
   }
 
   return NextResponse.json({ success: true });
@@ -187,54 +169,37 @@ export async function GET(
   const limit = parseInt(searchParams.get("limit") ?? "24");
   const offset = (page - 1) * limit;
 
-  const account = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.username, username))
-    .get();
+  const account = await prisma.account.findUnique({ where: { username } });
 
   if (!account) {
-    return NextResponse.json(
-      { error: "Account not found" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
-  const accountPosts = db
-    .select()
-    .from(posts)
-    .where(eq(posts.accountPk, account.pk))
-    .orderBy(desc(posts.takenAt))
-    .limit(limit)
-    .offset(offset)
-    .all();
+  const [accountPosts, total, existsAlsoSetting, statusHistory, usernameHistory] =
+    await Promise.all([
+      prisma.post.findMany({
+        where: { accountPk: account.pk },
+        orderBy: { takenAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.post.count({ where: { accountPk: account.pk } }),
+      prisma.setting.findUnique({
+        where: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY },
+      }),
+      prisma.accountStatusHistory.findMany({
+        where: { accountPk: account.pk },
+        orderBy: { changedAt: "desc" },
+      }),
+      prisma.accountUsernameHistory.findMany({
+        where: { accountPk: account.pk },
+        orderBy: { changedAt: "desc" },
+      }),
+    ]);
 
-  const totalResult = db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(posts)
-    .where(eq(posts.accountPk, account.pk))
-    .get();
-
-  const total = totalResult?.count ?? 0;
   const existsAlsoOptions = parseReusableExistsAlsoOptions(
-    db
-      .select()
-      .from(settings)
-      .where(eq(settings.key, EXISTS_ALSO_OPTIONS_SETTING_KEY))
-      .get()?.value
+    existsAlsoSetting?.value
   );
-  const statusHistory = db
-    .select()
-    .from(accountStatusHistory)
-    .where(eq(accountStatusHistory.accountPk, account.pk))
-    .orderBy(desc(accountStatusHistory.changedAt))
-    .all();
-  const usernameHistory = db
-    .select()
-    .from(accountUsernameHistory)
-    .where(eq(accountUsernameHistory.accountPk, account.pk))
-    .orderBy(desc(accountUsernameHistory.changedAt))
-    .all();
 
   return NextResponse.json({
     account,

@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { settings } from "@/db/schema";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const allSettings = db.select().from(settings).all();
+  const allSettings = await prisma.setting.findMany();
 
   const masked = allSettings.map((s) => ({
     ...s,
     value:
-      (s.key === "instagram_cookie" || s.key === "cloudinary_api_secret") &&
-      s.value.length > 20
+      s.key === "instagram_cookie" && s.value.length > 20
         ? s.value.substring(0, 20) + "..."
         : s.value,
   }));
@@ -30,13 +28,11 @@ export async function PUT(request: Request) {
 
   const now = new Date().toISOString();
 
-  db.insert(settings)
-    .values({ key, value, updatedAt: now })
-    .onConflictDoUpdate({
-      target: settings.key,
-      set: { value, updatedAt: now },
-    })
-    .run();
+  await prisma.setting.upsert({
+    where: { key },
+    create: { key, value, updatedAt: now },
+    update: { value, updatedAt: now },
+  });
 
   return NextResponse.json({ success: true });
 }

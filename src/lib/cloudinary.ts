@@ -1,7 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import { db } from "@/db";
-import { settings } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { logger } from "./logger";
 
 export interface CloudinaryConfig {
   cloudName: string;
@@ -13,18 +11,15 @@ export function isCloudinaryConfigured(config: CloudinaryConfig): boolean {
   return !!(config.cloudName && config.apiKey && config.apiSecret);
 }
 
+/**
+ * Cloudinary credentials are injected as production env vars (Dokploy),
+ * never stored in or edited through app settings.
+ */
 export function getCloudinaryConfig(): CloudinaryConfig {
-  const getVal = (key: string) =>
-    db
-      .select()
-      .from(settings)
-      .where(eq(settings.key, key))
-      .get()?.value;
-
   return {
-    cloudName: getVal("cloudinary_cloud_name") ?? "",
-    apiKey: getVal("cloudinary_api_key") ?? "",
-    apiSecret: getVal("cloudinary_api_secret") ?? "",
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
+    apiKey: process.env.CLOUDINARY_API_KEY ?? "",
+    apiSecret: process.env.CLOUDINARY_API_SECRET ?? "",
   };
 }
 
@@ -34,9 +29,7 @@ export async function uploadToCloudinary(
   publicId: string,
   config: CloudinaryConfig
 ): Promise<string | null> {
-  if (
-    !isCloudinaryConfigured(config)
-  ) {
+  if (!isCloudinaryConfigured(config)) {
     return null;
   }
 
@@ -55,7 +48,10 @@ export async function uploadToCloudinary(
     });
     return result.secure_url;
   } catch (error) {
-    console.error("Cloudinary upload failed:", error);
+    logger.error(
+      { err: error, folder, publicId },
+      "Cloudinary upload failed"
+    );
     return null;
   }
 }

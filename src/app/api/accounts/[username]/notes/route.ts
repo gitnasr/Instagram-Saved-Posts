@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { accounts, accountNotes } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _request: Request,
@@ -9,22 +7,16 @@ export async function GET(
 ) {
   const { username } = await params;
 
-  const account = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.username, username))
-    .get();
+  const account = await prisma.account.findUnique({ where: { username } });
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
-  const notes = db
-    .select()
-    .from(accountNotes)
-    .where(eq(accountNotes.accountPk, account.pk))
-    .orderBy(desc(accountNotes.createdAt))
-    .all();
+  const notes = await prisma.accountNote.findMany({
+    where: { accountPk: account.pk },
+    orderBy: { createdAt: "desc" },
+  });
 
   return NextResponse.json(notes);
 }
@@ -35,11 +27,7 @@ export async function POST(
 ) {
   const { username } = await params;
 
-  const account = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.username, username))
-    .get();
+  const account = await prisma.account.findUnique({ where: { username } });
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
@@ -52,15 +40,13 @@ export async function POST(
     return NextResponse.json({ error: "Content is required" }, { status: 400 });
   }
 
-  const note = db
-    .insert(accountNotes)
-    .values({
+  const note = await prisma.accountNote.create({
+    data: {
       accountPk: account.pk,
       content,
       createdAt: new Date().toISOString(),
-    })
-    .returning()
-    .get();
+    },
+  });
 
   return NextResponse.json(note, { status: 201 });
 }
