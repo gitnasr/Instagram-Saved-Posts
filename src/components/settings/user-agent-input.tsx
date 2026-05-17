@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,16 +13,10 @@ interface UserAgentInputProps {
 }
 
 export function UserAgentInput({ currentValue }: UserAgentInputProps) {
+  // The parent remounts this via `key` when the persisted value changes,
+  // so initializing state from the prop is sufficient (no effect needed).
   const [value, setValue] = useState(currentValue ?? DEFAULT_USER_AGENT);
   const updateSetting = useUpdateSetting();
-
-  // Sync the field when the persisted value arrives/changes (e.g. after the
-  // settings query resolves) while keeping it user-editable in between.
-  const lastSyncedValue = useRef(currentValue);
-  if (currentValue && currentValue !== lastSyncedValue.current) {
-    lastSyncedValue.current = currentValue;
-    setValue(currentValue);
-  }
 
   const handleSave = () => {
     if (!value.trim()) {
