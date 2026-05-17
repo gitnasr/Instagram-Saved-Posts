@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Heart, MessageCircle } from "lucide-react";
+import { proxyImageUrl } from "@/lib/proxy-image";
 import type { Post } from "@/types";
 
 interface PostCardProps {
@@ -16,10 +17,10 @@ export function PostCard({ post, onClick }: PostCardProps) {
       onClick={onClick}
     >
       <div className="relative aspect-square bg-muted">
-        {post.thumbnailUrl ? (
+        {(post.cloudinaryThumbnailUrl ?? post.thumbnailUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={post.thumbnailUrl}
+            src={post.cloudinaryThumbnailUrl ?? proxyImageUrl(post.thumbnailUrl)}
             alt={post.captionText?.slice(0, 50) ?? "Post thumbnail"}
             className="h-full w-full object-cover"
             loading="lazy"

@@ -1,12 +1,12 @@
 "use client";
 
-import { Header } from "@/components/layout/header";
-import { Skeleton } from "@/components/ui/skeleton";
-import { StatsCards } from "@/components/dashboard/stats-cards";
-import { TopAccounts } from "@/components/dashboard/top-accounts";
+import { AccountBreakdownCard } from "@/components/dashboard/account-breakdown";
 import { RecentScrapes } from "@/components/dashboard/recent-scrapes";
 import { ScrapesTrendChart } from "@/components/dashboard/scrapes-trend-chart";
-import { AccountBreakdownCard } from "@/components/dashboard/account-breakdown";
+import { StatsCards } from "@/components/dashboard/stats-cards";
+import { TopAccounts } from "@/components/dashboard/top-accounts";
+import { Header } from "@/components/layout/header";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "@/hooks/use-analytics";
 
 export default function OverviewPage() {
@@ -49,5 +49,5 @@ export default function OverviewPage() {
         </>
       ) : null}
     </div>
-  );
+  )
 }

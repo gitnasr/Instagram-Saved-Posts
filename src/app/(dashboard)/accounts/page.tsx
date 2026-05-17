@@ -1,34 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useCallback } from "react";
 import { Header } from "@/components/layout/header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AccountSearch } from "@/components/accounts/account-search";
 import { AccountsGrid } from "@/components/accounts/accounts-grid";
 import { useAccounts } from "@/hooks/use-accounts";
+import { useUrlFilters } from "@/hooks/use-url-filters";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function AccountsPage() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("post_count");
+function AccountsContent() {
+  const {
+    page,
+    search,
+    sort,
+    order,
+    filters,
+    setPage,
+    setSearch,
+    setSort,
+    setOrder,
+    setFilters,
+  } = useUrlFilters();
 
   const { data, isLoading } = useAccounts({
     page,
     search,
-    sort: sort as "post_count" | "username" | "last_seen",
+    sort: sort as "post_count" | "username" | "last_seen" | "first_seen" | "verified",
+    order,
+    filters,
   });
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
-  };
-
-  const handleSortChange = (value: string) => {
-    setSort(value);
-    setPage(1);
-  };
+  const handleExport = useCallback(() => {
+    const params = new URLSearchParams({ search, sort, order });
+    if (filters.isVerified) params.set("isVerified", filters.isVerified);
+    if (filters.isPrivate) params.set("isPrivate", filters.isPrivate);
+    if (filters.postCountMin != null)
+      params.set("postCountMin", String(filters.postCountMin));
+    if (filters.postCountMax != null)
+      params.set("postCountMax", String(filters.postCountMax));
+    if (filters.firstSeenFrom) params.set("firstSeenFrom", filters.firstSeenFrom);
+    if (filters.firstSeenTo) params.set("firstSeenTo", filters.firstSeenTo);
+    if (filters.lastSeenFrom) params.set("lastSeenFrom", filters.lastSeenFrom);
+    if (filters.lastSeenTo) params.set("lastSeenTo", filters.lastSeenTo);
+    if (filters.searchNotes) params.set("searchNotes", "true");
+    if (filters.hasNotes) params.set("hasNotes", "true");
+    window.open(`/api/accounts/export?${params}`, "_blank");
+  }, [search, sort, order, filters]);
 
   return (
     <div className="space-y-6">
@@ -43,9 +62,14 @@ export default function AccountsPage() {
 
       <AccountSearch
         search={search}
-        onSearchChange={handleSearchChange}
+        onSearchChange={setSearch}
         sort={sort}
-        onSortChange={handleSortChange}
+        onSortChange={setSort}
+        order={order}
+        onOrderChange={setOrder}
+        filters={filters}
+        onFiltersChange={setFilters}
+        onExport={handleExport}
       />
 
       {isLoading ? (
@@ -86,5 +110,25 @@ export default function AccountsPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function AccountsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-10 w-full max-w-md" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Skeleton key={i} className="h-20" />
+            ))}
+          </div>
+        </div>
+      }
+    >
+      <AccountsContent />
+    </Suspense>
   );
 }

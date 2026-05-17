@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { proxyImageUrl } from "@/lib/proxy-image";
 import type { Account } from "@/types";
 
 interface AccountCardProps {
@@ -16,7 +17,7 @@ export function AccountCard({ account }: AccountCardProps) {
       <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
         <CardContent className="flex items-center gap-4 p-4">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={account.profilePicUrl ?? undefined} />
+            <AvatarImage src={proxyImageUrl(account.cloudinaryProfilePicUrl ?? account.profilePicUrl)} />
             <AvatarFallback>
               {account.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>

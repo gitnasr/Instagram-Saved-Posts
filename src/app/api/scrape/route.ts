@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runScrape, getCurrentScrapeState } from "@/lib/scraper";
+import { runScrape, getCurrentScrapeState, detectAndMarkInterruptedRuns } from "@/lib/scraper";
 import { db } from "@/db";
 import { scrapeRuns } from "@/db/schema";
 import { desc } from "drizzle-orm";
@@ -15,6 +15,9 @@ export async function POST() {
 }
 
 export async function GET() {
+  // Detect any runs that were "running" when the server restarted
+  detectAndMarkInterruptedRuns();
+
   const currentState = getCurrentScrapeState();
   const history = db
     .select()

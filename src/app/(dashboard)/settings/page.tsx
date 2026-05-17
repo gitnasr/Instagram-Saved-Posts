@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CookieInput } from "@/components/settings/cookie-input";
 import { UserAgentInput } from "@/components/settings/user-agent-input";
+import { CloudinarySettings } from "@/components/settings/cloudinary-settings";
 import { useSettings } from "@/hooks/use-settings";
 
 export default function SettingsPage() {
@@ -47,6 +48,10 @@ export default function SettingsPage() {
               <UserAgentInput currentValue={userAgentSetting?.value} />
             </CardContent>
           </Card>
+
+          <Separator />
+
+          <CloudinarySettings settings={settings ?? []} />
         </div>
       )}
     </div>

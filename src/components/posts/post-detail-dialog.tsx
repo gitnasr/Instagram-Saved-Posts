@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CarouselViewer } from "@/components/posts/carousel-viewer";
 import { Heart, MessageCircle, ExternalLink } from "lucide-react";
+import { proxyImageUrl } from "@/lib/proxy-image";
 import { format } from "date-fns";
 import type { Post } from "@/types";
 
@@ -39,6 +41,8 @@ export function PostDetailDialog({
   if (!post) return null;
 
   const instagramUrl = `https://www.instagram.com/p/${post.code}/`;
+  const isCarousel =
+    post.carouselMediaCount != null && post.carouselMediaCount > 1;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,15 +55,19 @@ export function PostDetailDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {post.thumbnailUrl && (
-            <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={post.thumbnailUrl}
-                alt="Post"
-                className="h-full w-full object-cover"
-              />
-            </div>
+          {isCarousel ? (
+            <CarouselViewer key={post.pk} postPk={post.pk} />
+          ) : (
+            post.thumbnailUrl && (
+              <div className="relative overflow-hidden rounded-lg bg-muted flex items-center justify-center max-h-[70vh]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={post.cloudinaryThumbnailUrl ?? proxyImageUrl(post.thumbnailUrl)}
+                  alt="Post"
+                  className="max-h-[70vh] w-full object-contain"
+                />
+              </div>
+            )
           )}
 
           <div className="flex items-center gap-4">
