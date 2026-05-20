@@ -9,9 +9,10 @@ interface NavLinkProps {
   href: string;
   children: ReactNode;
   icon?: ReactNode;
+  className?: string;
 }
 
-export function NavLink({ href, children, icon }: NavLinkProps) {
+export function NavLink({ href, children, icon, className }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -22,7 +23,8 @@ export function NavLink({ href, children, icon }: NavLinkProps) {
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         isActive
           ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        className
       )}
     >
       {icon}
