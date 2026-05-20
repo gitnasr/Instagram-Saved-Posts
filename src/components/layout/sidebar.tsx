@@ -3,6 +3,7 @@
 import { NavLink } from "./nav-link";
 import { BarChart3, Users, Play, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const navItems = [
   { href: "/", label: "Overview", icon: BarChart3 },
@@ -26,9 +27,12 @@ export function Sidebar() {
             </NavLink>
           ))}
         </nav>
+        <div className="p-3">
+          <ThemeToggle showLabel />
+        </div>
       </aside>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-1 border-t bg-background/95 p-2 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t bg-background/95 p-2 backdrop-blur md:hidden">
         {navItems.map(({ href, label, icon: Icon }) => (
           <NavLink
             key={href}
@@ -39,6 +43,11 @@ export function Sidebar() {
             {label}
           </NavLink>
         ))}
+        <ThemeToggle
+          showLabel
+          labelText="Theme"
+          className="mx-auto min-h-12 w-full flex-col justify-center gap-1 rounded-md px-1 py-2 text-[11px]"
+        />
       </nav>
     </>
   );
