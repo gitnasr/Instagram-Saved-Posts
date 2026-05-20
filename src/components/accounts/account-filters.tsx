@@ -65,8 +65,8 @@ export function AccountFiltersPanel({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="relative">
-          <Filter className="mr-2 h-4 w-4" />
+        <Button variant="outline" size="sm" className="relative h-10 w-full sm:w-auto">
+          <Filter data-icon="inline-start" />
           Filters
           {activeCount > 0 && (
             <Badge
@@ -78,8 +78,11 @@ export function AccountFiltersPanel({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="start">
-        <div className="space-y-4">
+      <PopoverContent
+        className="max-h-[min(80vh,40rem)] w-[calc(100vw-2rem)] max-w-sm overflow-y-auto"
+        align="start"
+      >
+        <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium">Filters</h4>
             {activeCount > 0 && (
@@ -89,7 +92,7 @@ export function AccountFiltersPanel({
                 className="h-auto px-2 py-1 text-xs"
                 onClick={clearAll}
               >
-                <X className="mr-1 h-3 w-3" />
+                <X data-icon="inline-start" />
                 Clear all
               </Button>
             )}
@@ -98,7 +101,7 @@ export function AccountFiltersPanel({
           <Separator />
 
           {/* Verified filter */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">Verified Status</Label>
             <Select
               value={filters.isVerified ?? "any"}
@@ -121,7 +124,7 @@ export function AccountFiltersPanel({
           </div>
 
           {/* Privacy filter */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">Privacy</Label>
             <Select
               value={filters.isPrivate ?? "any"}
@@ -144,7 +147,7 @@ export function AccountFiltersPanel({
           </div>
 
           {/* Post count range */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">Saved Post Count</Label>
             <div className="flex items-center gap-2">
               <Input
@@ -178,7 +181,7 @@ export function AccountFiltersPanel({
           </div>
 
           {/* First seen date range */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">First Discovered</Label>
             <div className="grid grid-cols-2 gap-2">
               <Input
@@ -202,7 +205,7 @@ export function AccountFiltersPanel({
           </div>
 
           {/* Last seen date range */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">Last Seen</Label>
             <div className="grid grid-cols-2 gap-2">
               <Input
@@ -226,7 +229,7 @@ export function AccountFiltersPanel({
           </div>
 
           {/* Manual last scrape date range */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">Manual Last Scrape</Label>
             <div className="grid grid-cols-2 gap-2">
               <Input
@@ -250,7 +253,7 @@ export function AccountFiltersPanel({
           </div>
 
           {/* Account details filters */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">Current Status</Label>
             <Input
               className="h-8 text-xs"
@@ -262,7 +265,7 @@ export function AccountFiltersPanel({
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label className="text-xs font-medium">Exists Also</Label>
             <Input
               className="h-8 text-xs"
@@ -277,7 +280,7 @@ export function AccountFiltersPanel({
           <Separator />
 
           {/* Notes filters */}
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label className="text-xs font-medium">Notes</Label>
             <div className="flex items-center gap-2">
               <Checkbox
