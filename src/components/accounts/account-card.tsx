@@ -13,17 +13,21 @@ interface AccountCardProps {
 
 export function AccountCard({ account }: AccountCardProps) {
   return (
-    <Link href={`/accounts/${account.username}`}>
-      <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
-        <CardContent className="flex items-center gap-4 p-4">
-          <Avatar className="h-12 w-12">
+    <Link
+      href={`/accounts/${account.username}`}
+      aria-label={`Open @${account.username}`}
+      className="block"
+    >
+      <Card className="rounded-lg py-0 transition-colors hover:bg-accent/50">
+        <CardContent className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
+          <Avatar className="size-12">
             <AvatarImage src={proxyImageUrl(account.cloudinaryProfilePicUrl ?? account.profilePicUrl)} />
             <AvatarFallback>
               {account.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 items-center gap-1.5">
               <p className="font-medium truncate">@{account.username}</p>
               {account.isVerified && (
                 <Badge variant="secondary" className="text-xs px-1 py-0">
@@ -40,7 +44,7 @@ export function AccountCard({ account }: AccountCardProps) {
               {account.fullName}
             </p>
           </div>
-          <div className="text-right">
+          <div className="shrink-0 text-right">
             <p className="text-lg font-bold">{account.savedPostCount}</p>
             <p className="text-xs text-muted-foreground">posts</p>
           </div>

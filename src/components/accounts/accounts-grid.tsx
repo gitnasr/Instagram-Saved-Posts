@@ -10,14 +10,17 @@ interface AccountsGridProps {
 export function AccountsGrid({ accounts }: AccountsGridProps) {
   if (accounts.length === 0) {
     return (
-      <p className="py-12 text-center text-muted-foreground">
-        No accounts found.
-      </p>
+      <div className="rounded-lg border border-dashed px-4 py-12 text-center">
+        <p className="font-medium">No accounts found</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Try changing the search or filters.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {accounts.map((account) => (
         <AccountCard key={account.pk} account={account} />
       ))}

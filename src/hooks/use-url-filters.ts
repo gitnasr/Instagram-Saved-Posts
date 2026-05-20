@@ -3,8 +3,18 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import type { AccountFilters } from "@/hooks/use-accounts";
+import {
+  scrollDashboardToTop,
+  SCROLL_QUERY_PARAM,
+} from "@/hooks/use-scroll-url-sync";
 
-const SORT_VALUES = ["post_count", "username", "last_seen", "first_seen", "verified"] as const;
+const SORT_VALUES = [
+  "post_count",
+  "username",
+  "last_seen",
+  "first_seen",
+  "verified",
+] as const;
 type SortValue = (typeof SORT_VALUES)[number];
 
 function isSortValue(v: string): v is SortValue {
@@ -58,6 +68,7 @@ export function useUrlFilters() {
   const updateUrl = useCallback(
     (updates: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
+      params.delete(SCROLL_QUERY_PARAM);
       for (const [key, value] of Object.entries(updates)) {
         if (value == null || value === "") {
           params.delete(key);
@@ -67,6 +78,7 @@ export function useUrlFilters() {
       }
       const qs = params.toString();
       router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      requestAnimationFrame(scrollDashboardToTop);
     },
     [searchParams, router, pathname]
   );

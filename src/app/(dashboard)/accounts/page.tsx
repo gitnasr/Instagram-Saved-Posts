@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AccountSearch } from "@/components/accounts/account-search";
 import { AccountsGrid } from "@/components/accounts/accounts-grid";
 import { useAccounts } from "@/hooks/use-accounts";
+import { useScrollUrlSync } from "@/hooks/use-scroll-url-sync";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -23,11 +24,17 @@ function AccountsContent() {
     setOrder,
     setFilters,
   } = useUrlFilters();
+  useScrollUrlSync();
 
   const { data, isLoading } = useAccounts({
     page,
     search,
-    sort: sort as "post_count" | "username" | "last_seen" | "first_seen" | "verified",
+    sort: sort as
+      | "post_count"
+      | "username"
+      | "last_seen"
+      | "first_seen"
+      | "verified",
     order,
     filters,
   });
@@ -50,7 +57,7 @@ function AccountsContent() {
   }, [search, sort, order, filters]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <Header
         title="Accounts"
         description={
@@ -90,7 +97,7 @@ function AccountsContent() {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft data-icon="inline-start" />
                 Previous
               </Button>
               <span className="text-sm text-muted-foreground">
@@ -103,7 +110,7 @@ function AccountsContent() {
                 onClick={() => setPage((p) => p + 1)}
               >
                 Next
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight data-icon="inline-end" />
               </Button>
             </div>
           )}
@@ -117,7 +124,7 @@ export default function AccountsPage() {
   return (
     <Suspense
       fallback={
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-10 w-full max-w-md" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
