@@ -36,8 +36,25 @@ export function useScrollUrlSync({
     const savedTop = Number(savedScroll);
     const targetTop =
       Number.isFinite(savedTop) && savedTop > 0 ? Math.round(savedTop) : 0;
-    const restoreFrame = window.requestAnimationFrame(() => {
+
+    let retryTimeout: number | undefined;
+    const restoreScroll = (attempt = 0) => {
       container.scrollTo({ top: targetTop, behavior: "auto" });
+
+      const isRestored =
+        targetTop === 0 ||
+        Math.abs(container.scrollTop - targetTop) < 4 ||
+        container.scrollHeight <= container.clientHeight;
+
+      if (!isRestored && attempt < 12) {
+        retryTimeout = window.setTimeout(() => {
+          restoreScroll(attempt + 1);
+        }, 100);
+      }
+    };
+
+    const restoreFrame = window.requestAnimationFrame(() => {
+      restoreScroll();
     });
 
     const writeScrollToUrl = () => {
@@ -75,6 +92,7 @@ export function useScrollUrlSync({
 
     return () => {
       window.cancelAnimationFrame(restoreFrame);
+      if (retryTimeout) window.clearTimeout(retryTimeout);
       if (frame) window.cancelAnimationFrame(frame);
       container.removeEventListener("scroll", handleScroll);
       window.removeEventListener("pagehide", writeScrollToUrl);
