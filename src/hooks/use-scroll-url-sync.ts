@@ -42,9 +42,7 @@ export function useScrollUrlSync({
       container.scrollTo({ top: targetTop, behavior: "auto" });
 
       const isRestored =
-        targetTop === 0 ||
-        Math.abs(container.scrollTop - targetTop) < 4 ||
-        container.scrollHeight <= container.clientHeight;
+        targetTop === 0 || Math.abs(container.scrollTop - targetTop) < 4;
 
       if (!isRestored && attempt < 12) {
         retryTimeout = window.setTimeout(() => {
