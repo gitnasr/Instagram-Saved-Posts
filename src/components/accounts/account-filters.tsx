@@ -42,6 +42,7 @@ function countActiveFilters(filters: AccountFilters): number {
   if (filters.existsAlso) count++;
   if (filters.searchNotes) count++;
   if (filters.hasNotes) count++;
+  if (filters.lostStatus) count++;
   return count;
 }
 
@@ -142,6 +143,32 @@ export function AccountFiltersPanel({
                 <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="true">Private accounts</SelectItem>
                 <SelectItem value="false">Public accounts</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Lost status filter */}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs font-medium">Lost Status</Label>
+            <Select
+              value={filters.lostStatus ?? "any"}
+              onValueChange={(val) =>
+                updateFilter(
+                  "lostStatus",
+                  val === "any"
+                    ? undefined
+                    : (val as "lost" | "recovered" | "never")
+                )
+              }
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="lost">Currently lost</SelectItem>
+                <SelectItem value="recovered">Recovered</SelectItem>
+                <SelectItem value="never">Never lost</SelectItem>
               </SelectContent>
             </Select>
           </div>

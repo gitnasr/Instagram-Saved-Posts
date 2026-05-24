@@ -27,24 +27,39 @@ export async function GET(
   const lostAccountPkList: string[] = run.lostAccountPks
     ? JSON.parse(run.lostAccountPks)
     : [];
+  const newlyLostPkList: string[] = run.newlyLostAccountPks
+    ? JSON.parse(run.newlyLostAccountPks)
+    : [];
+  const newlyRecoveredPkList: string[] = run.newlyRecoveredAccountPks
+    ? JSON.parse(run.newlyRecoveredAccountPks)
+    : [];
 
-  const [newPosts, newAccounts, lostAccounts, usernameHistory] =
-    await Promise.all([
-      prisma.post.findMany({
-        where: { scrapeRunId: id },
-        orderBy: { takenAt: "desc" },
-      }),
-      prisma.account.findMany({ where: { discoveredInRunId: id } }),
-      lostAccountPkList.length > 0
-        ? prisma.account.findMany({
-            where: { pk: { in: lostAccountPkList } },
-          })
-        : Promise.resolve([]),
-      prisma.accountUsernameHistory.findMany({
-        where: { scrapeRunId: id },
-        orderBy: { changedAt: "desc" },
-      }),
-    ]);
+  const fetchAccountsByPks = (pks: string[]) =>
+    pks.length > 0
+      ? prisma.account.findMany({ where: { pk: { in: pks } } })
+      : Promise.resolve([]);
+
+  const [
+    newPosts,
+    newAccounts,
+    lostAccounts,
+    newlyLostAccounts,
+    newlyRecoveredAccounts,
+    usernameHistory,
+  ] = await Promise.all([
+    prisma.post.findMany({
+      where: { scrapeRunId: id },
+      orderBy: { takenAt: "desc" },
+    }),
+    prisma.account.findMany({ where: { discoveredInRunId: id } }),
+    fetchAccountsByPks(lostAccountPkList),
+    fetchAccountsByPks(newlyLostPkList),
+    fetchAccountsByPks(newlyRecoveredPkList),
+    prisma.accountUsernameHistory.findMany({
+      where: { scrapeRunId: id },
+      orderBy: { changedAt: "desc" },
+    }),
+  ]);
 
   const usernameChangeAccountPks = [
     ...new Set(usernameHistory.map((change) => change.accountPk)),
@@ -70,6 +85,8 @@ export async function GET(
     newPosts,
     newAccounts,
     lostAccounts,
+    newlyLostAccounts,
+    newlyRecoveredAccounts,
     usernameChanges,
   });
 }

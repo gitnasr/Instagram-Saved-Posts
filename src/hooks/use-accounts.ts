@@ -18,6 +18,7 @@ export interface AccountFilters {
   existsAlso?: string;
   searchNotes?: boolean;
   hasNotes?: boolean;
+  lostStatus?: "lost" | "recovered" | "never";
 }
 
 interface UseAccountsOptions {
@@ -71,6 +72,7 @@ export function useAccounts(options: UseAccountsOptions = {}) {
       if (filters.existsAlso) params.set("existsAlso", filters.existsAlso);
       if (filters.searchNotes) params.set("searchNotes", "true");
       if (filters.hasNotes) params.set("hasNotes", "true");
+      if (filters.lostStatus) params.set("lostStatus", filters.lostStatus);
 
       const res = await fetch(`/api/accounts?${params}`);
       if (!res.ok) throw new Error("Failed to fetch accounts");
