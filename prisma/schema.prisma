@@ -34,11 +34,14 @@ model Account {
   statusChangedAt         String?
   existsAlso              String?
   discoveredInRunId       Int?
+  lostAt                  String?
+  recoveredAt             String?
 
   @@index([savedPostCount])
   @@index([lastSeenAt])
   @@index([firstSeenAt])
   @@index([discoveredInRunId])
+  @@index([lostAt])
   @@map("accounts")
 }
 
@@ -128,10 +131,14 @@ model ScrapeRun {
   errorMessage             String?
   errorBody                String?
   checkpointMaxId          String?
-  lostAccountsCount        Int          @default(0)
-  lostAccountPks           String?
-  usernameChangesCount     Int          @default(0)
-  usernameChangeAccountPks String?
+  lostAccountsCount           Int          @default(0)
+  lostAccountPks              String?
+  newlyLostAccountsCount      Int          @default(0)
+  newlyLostAccountPks         String?
+  newlyRecoveredAccountsCount Int          @default(0)
+  newlyRecoveredAccountPks    String?
+  usernameChangesCount        Int          @default(0)
+  usernameChangeAccountPks    String?
 
   @@index([startedAt])
   @@map("scrapeRuns")

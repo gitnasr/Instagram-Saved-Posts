@@ -17,6 +17,7 @@ export interface AccountFilterParams {
   existsAlso?: string;
   searchNotes?: string;
   hasNotes?: string;
+  lostStatus?: string;
 }
 
 export function parseAccountFilters(
@@ -38,6 +39,7 @@ export function parseAccountFilters(
     existsAlso: searchParams.get("existsAlso") ?? undefined,
     searchNotes: searchParams.get("searchNotes") ?? undefined,
     hasNotes: searchParams.get("hasNotes") ?? undefined,
+    lostStatus: searchParams.get("lostStatus") ?? undefined,
   };
 }
 
@@ -155,6 +157,25 @@ export function buildAccountWhere(
 
   if (filters.hasNotes === "true") {
     and.push({ pk: { in: noteCtx.accountsWithNotesPks ?? [] } });
+  }
+
+  // In MongoDB, fields not yet written to a document are "missing" rather
+  // than null, so we explicitly OR in `isSet: false` to catch both states.
+  const lostAtNullOrMissing: Prisma.AccountWhereInput = {
+    OR: [{ lostAt: null }, { lostAt: { isSet: false } }],
+  };
+  const recoveredAtNullOrMissing: Prisma.AccountWhereInput = {
+    OR: [{ recoveredAt: null }, { recoveredAt: { isSet: false } }],
+  };
+
+  if (filters.lostStatus === "lost") {
+    and.push({ lostAt: { not: null } });
+  } else if (filters.lostStatus === "recovered") {
+    and.push(lostAtNullOrMissing);
+    and.push({ recoveredAt: { not: null } });
+  } else if (filters.lostStatus === "never") {
+    and.push(lostAtNullOrMissing);
+    and.push(recoveredAtNullOrMissing);
   }
 
   return and.length > 0 ? { AND: and } : {};

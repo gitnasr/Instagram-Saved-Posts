@@ -42,7 +42,8 @@
       "Bash(node -p \"require\\('next/package.json'\\).version\")",
       "Bash(npx tsc *)",
       "Bash(DATABASE_URL=\"mongodb://localhost:27017/placeholder\" npm run build)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(findstr filter *)"
     ]
   }
 }
