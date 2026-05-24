@@ -39,6 +39,11 @@ export function AccountCard({ account }: AccountCardProps) {
                   Private
                 </Badge>
               )}
+              {account.lostAt && (
+                <Badge variant="destructive" className="text-xs px-1 py-0">
+                  Lost
+                </Badge>
+              )}
             </div>
             <p className="text-sm text-muted-foreground truncate">
               {account.fullName}

@@ -321,24 +321,38 @@ async function scrapeAllPages(
 
     await recalculateAccountPostCounts();
 
-    // Calculate lost accounts (only on full successful completion)
-    const { count: lostCount, pks: lostPks } = await calculateLostAccounts(
-      runStartedAt
-    );
+    // Calculate & persist lost-state transitions (only on full success).
+    const runCompletedAt = new Date().toISOString();
+    const lostState = runStartedAt
+      ? await calculateAndUpdateLostState(runStartedAt, runCompletedAt)
+      : { allLostPks: [], newlyLostPks: [], newlyRecoveredPks: [] };
     const usernameChangePks = [...usernameChangeAccountPks];
 
     await prisma.scrapeRun.update({
       where: { id: runId },
       data: {
         status: "completed",
-        completedAt: new Date().toISOString(),
+        completedAt: runCompletedAt,
         totalPostsFound: currentScrapeState!.totalPostsFound,
         newPostsAdded: currentScrapeState!.newPostsAdded,
         newAccountsFound: currentScrapeState!.newAccountsFound,
         pagesScraped: currentScrapeState!.pagesScraped,
         checkpointMaxId: null,
-        lostAccountsCount: lostCount,
-        lostAccountPks: lostPks.length > 0 ? JSON.stringify(lostPks) : null,
+        lostAccountsCount: lostState.allLostPks.length,
+        lostAccountPks:
+          lostState.allLostPks.length > 0
+            ? JSON.stringify(lostState.allLostPks)
+            : null,
+        newlyLostAccountsCount: lostState.newlyLostPks.length,
+        newlyLostAccountPks:
+          lostState.newlyLostPks.length > 0
+            ? JSON.stringify(lostState.newlyLostPks)
+            : null,
+        newlyRecoveredAccountsCount: lostState.newlyRecoveredPks.length,
+        newlyRecoveredAccountPks:
+          lostState.newlyRecoveredPks.length > 0
+            ? JSON.stringify(lostState.newlyRecoveredPks)
+            : null,
         usernameChangesCount: usernameChangePks.length,
         usernameChangeAccountPks:
           usernameChangePks.length > 0
@@ -356,7 +370,9 @@ async function scrapeAllPages(
         runId,
         newPostsAdded: currentScrapeState?.newPostsAdded,
         newAccountsFound: currentScrapeState?.newAccountsFound,
-        lostCount,
+        lostCount: lostState.allLostPks.length,
+        newlyLost: lostState.newlyLostPks.length,
+        newlyRecovered: lostState.newlyRecoveredPks.length,
         usernameChanges: usernameChangePks.length,
       },
       "[scraper] Scrape completed"
@@ -619,22 +635,95 @@ async function recalculateAccountPostCounts(): Promise<void> {
   );
 }
 
-/**
- * After a completed scrape, find accounts not seen during this run.
- * Uses lastSeenAt < runStartedAt as the signal — processMediaItem always
- * updates lastSeenAt for every account it encounters.
- */
-async function calculateLostAccounts(
-  runStartedAt?: string
-): Promise<{ count: number; pks: string[] }> {
-  if (!runStartedAt) return { count: 0, pks: [] };
+const LOST_STATE_BACKFILL_KEY = "lost_state_backfilled";
 
-  const lost = await prisma.account.findMany({
-    where: { lastSeenAt: { lt: runStartedAt } },
-    select: { pk: true },
+/**
+ * One-time backfill: stamp `lostAt` on accounts that were already missing
+ * before this feature shipped, using the most recent prior completed run's
+ * timestamps. Without this the first post-deploy scrape would flag every
+ * pre-existing lost account as "newly lost."
+ */
+async function backfillLostStateIfNeeded(currentRunStartedAt: string): Promise<void> {
+  const flag = await prisma.setting.findUnique({
+    where: { key: LOST_STATE_BACKFILL_KEY },
+  });
+  if (flag?.value === "1") return;
+
+  const priorRun = await prisma.scrapeRun.findFirst({
+    where: { status: "completed", completedAt: { lt: currentRunStartedAt } },
+    orderBy: { completedAt: "desc" },
   });
 
-  return { count: lost.length, pks: lost.map((a) => a.pk) };
+  if (priorRun) {
+    const stampedAt = priorRun.completedAt ?? priorRun.startedAt;
+    await prisma.account.updateMany({
+      where: {
+        lastSeenAt: { lt: priorRun.startedAt },
+        lostAt: null,
+      },
+      data: { lostAt: stampedAt },
+    });
+  }
+
+  const now = new Date().toISOString();
+  await prisma.setting.upsert({
+    where: { key: LOST_STATE_BACKFILL_KEY },
+    create: { key: LOST_STATE_BACKFILL_KEY, value: "1", updatedAt: now },
+    update: { value: "1", updatedAt: now },
+  });
+}
+
+/**
+ * After a completed scrape, partition accounts into newly-lost,
+ * newly-recovered, and currently-lost sets, and persist the transitions
+ * onto each Account row.
+ */
+async function calculateAndUpdateLostState(
+  runStartedAt: string,
+  runCompletedAt: string
+): Promise<{
+  allLostPks: string[];
+  newlyLostPks: string[];
+  newlyRecoveredPks: string[];
+}> {
+  await backfillLostStateIfNeeded(runStartedAt);
+
+  const accounts = await prisma.account.findMany({
+    select: { pk: true, lastSeenAt: true, lostAt: true },
+  });
+
+  const newlyLostPks: string[] = [];
+  const newlyRecoveredPks: string[] = [];
+  const allLostPks: string[] = [];
+
+  for (const a of accounts) {
+    const unseenThisRun = a.lastSeenAt < runStartedAt;
+    const wasLost = a.lostAt !== null;
+
+    if (unseenThisRun && !wasLost) {
+      newlyLostPks.push(a.pk);
+      allLostPks.push(a.pk);
+    } else if (unseenThisRun && wasLost) {
+      allLostPks.push(a.pk);
+    } else if (!unseenThisRun && wasLost) {
+      newlyRecoveredPks.push(a.pk);
+    }
+  }
+
+  if (newlyLostPks.length > 0) {
+    await prisma.account.updateMany({
+      where: { pk: { in: newlyLostPks } },
+      data: { lostAt: runCompletedAt },
+    });
+  }
+  if (newlyRecoveredPks.length > 0) {
+    await prisma.account.updateMany({
+      where: { pk: { in: newlyRecoveredPks } },
+      data: { lostAt: null, recoveredAt: runCompletedAt },
+    });
+  }
+
+  return { allLostPks, newlyLostPks, newlyRecoveredPks };
 }
 
 function delay(ms: number): Promise<void> {

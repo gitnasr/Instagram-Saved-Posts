@@ -64,7 +64,15 @@ export default function RunDetailPage({
     );
   }
 
-  const { run, newPosts, newAccounts, lostAccounts, usernameChanges } = data;
+  const {
+    run,
+    newPosts,
+    newAccounts,
+    lostAccounts,
+    newlyLostAccounts,
+    newlyRecoveredAccounts,
+    usernameChanges,
+  } = data;
   const started = new Date(run.startedAt);
   const completed = run.completedAt ? new Date(run.completedAt) : null;
   const duration = completed
@@ -154,6 +162,8 @@ export default function RunDetailPage({
         newPostsAdded={run.newPostsAdded}
         newAccountsFound={run.newAccountsFound}
         lostAccountsCount={run.lostAccountsCount ?? 0}
+        newlyLostAccountsCount={run.newlyLostAccountsCount ?? newlyLostAccounts.length}
+        newlyRecoveredAccountsCount={run.newlyRecoveredAccountsCount ?? newlyRecoveredAccounts.length}
         usernameChangesCount={run.usernameChangesCount ?? usernameChanges.length}
       />
 
@@ -249,13 +259,57 @@ export default function RunDetailPage({
         )}
       </div>
 
-      {/* Lost Accounts — only show for completed runs */}
+      {/* Lost / Recovered sections — only for completed runs */}
       {run.status === "completed" && (
         <>
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Lost Accounts</h3>
+              <h3 className="text-lg font-semibold">Newly Lost Accounts</h3>
+              <Badge variant={newlyLostAccounts.length > 0 ? "destructive" : "secondary"}>
+                {newlyLostAccounts.length}
+              </Badge>
+            </div>
+            {newlyLostAccounts.length > 0 ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Accounts that were present in previous scrapes but went missing in this run.
+                </p>
+                <AccountsGrid accounts={newlyLostAccounts} />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground py-4">
+                No accounts went missing in this run.
+              </p>
+            )}
+          </div>
+
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold">Newly Recovered Accounts</h3>
+              <Badge variant={newlyRecoveredAccounts.length > 0 ? "default" : "secondary"}>
+                {newlyRecoveredAccounts.length}
+              </Badge>
+            </div>
+            {newlyRecoveredAccounts.length > 0 ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Previously-lost accounts that reappeared in the saved feed during this run.
+                </p>
+                <AccountsGrid accounts={newlyRecoveredAccounts} />
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground py-4">
+                No previously-lost accounts reappeared in this run.
+              </p>
+            )}
+          </div>
+
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold">All Lost Accounts</h3>
               <Badge variant={lostAccounts.length > 0 ? "destructive" : "secondary"}>
                 {lostAccounts.length}
               </Badge>
@@ -263,14 +317,14 @@ export default function RunDetailPage({
             {lostAccounts.length > 0 ? (
               <>
                 <p className="text-sm text-muted-foreground">
-                  These accounts had saved posts in previous scrapes but were absent from this run.
-                  Their saved posts have likely been removed. Their data remains in your database.
+                  Cumulative list of every account currently missing from the saved feed.
+                  Their data remains in your database.
                 </p>
                 <AccountsGrid accounts={lostAccounts} />
               </>
             ) : (
               <p className="text-sm text-muted-foreground py-4">
-                No accounts were lost in this run. All previously seen accounts appeared in the feed.
+                No accounts are currently lost. All previously seen accounts appeared in the feed.
               </p>
             )}
           </div>

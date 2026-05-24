@@ -5,6 +5,8 @@ import {
   Plus,
   UserPlus,
   UserMinus,
+  UserX,
+  UserCheck,
   UserRoundPen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +17,8 @@ interface RunDetailStatsProps {
   newPostsAdded: number;
   newAccountsFound: number;
   lostAccountsCount: number;
+  newlyLostAccountsCount: number;
+  newlyRecoveredAccountsCount: number;
   usernameChangesCount: number;
 }
 
@@ -24,10 +28,12 @@ export function RunDetailStats({
   newPostsAdded,
   newAccountsFound,
   lostAccountsCount,
+  newlyLostAccountsCount,
+  newlyRecoveredAccountsCount,
   usernameChangesCount,
 }: RunDetailStatsProps) {
   return (
-    <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Pages Scraped</CardTitle>
@@ -80,14 +86,40 @@ export function RunDetailStats({
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Lost Accounts</CardTitle>
+          <CardTitle className="text-sm font-medium">Newly Lost</CardTitle>
+          <UserX className={cn("h-4 w-4", newlyLostAccountsCount > 0 ? "text-destructive" : "text-muted-foreground")} />
+        </CardHeader>
+        <CardContent>
+          <div className={cn("text-2xl font-bold", newlyLostAccountsCount > 0 && "text-destructive")}>
+            {newlyLostAccountsCount}
+          </div>
+          <p className="text-xs text-muted-foreground">missing this run</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Newly Recovered</CardTitle>
+          <UserCheck className={cn("h-4 w-4", newlyRecoveredAccountsCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
+        </CardHeader>
+        <CardContent>
+          <div className={cn("text-2xl font-bold", newlyRecoveredAccountsCount > 0 && "text-emerald-600 dark:text-emerald-400")}>
+            {newlyRecoveredAccountsCount}
+          </div>
+          <p className="text-xs text-muted-foreground">reappeared this run</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">All Lost</CardTitle>
           <UserMinus className={cn("h-4 w-4", lostAccountsCount > 0 ? "text-destructive" : "text-muted-foreground")} />
         </CardHeader>
         <CardContent>
           <div className={cn("text-2xl font-bold", lostAccountsCount > 0 && "text-destructive")}>
             {lostAccountsCount}
           </div>
-          <p className="text-xs text-muted-foreground">no longer in saved feed</p>
+          <p className="text-xs text-muted-foreground">cumulative total</p>
         </CardContent>
       </Card>
 

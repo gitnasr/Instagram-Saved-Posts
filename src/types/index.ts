@@ -67,6 +67,8 @@ export interface RunDetailResponse {
   newPosts: Post[];
   newAccounts: Account[];
   lostAccounts: Account[];
+  newlyLostAccounts: Account[];
+  newlyRecoveredAccounts: Account[];
   usernameChanges: Array<AccountUsernameHistory & { account: Account }>;
 }
 

@@ -12,6 +12,7 @@ import { AccountNotes } from "@/components/accounts/account-notes";
 import { useAccountDetail } from "@/hooks/use-account-detail";
 import { proxyImageUrl } from "@/lib/proxy-image";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { format } from "date-fns";
 import Link from "next/link";
 
 export default function AccountDetailPage({
@@ -70,11 +71,21 @@ export default function AccountDetailPage({
             <h2 className="text-xl font-bold">@{account.username}</h2>
             {account.isVerified && <Badge variant="secondary">Verified</Badge>}
             {account.isPrivate && <Badge variant="outline">Private</Badge>}
+            {account.lostAt && <Badge variant="destructive">Lost</Badge>}
           </div>
           <p className="text-muted-foreground">{account.fullName}</p>
           <p className="text-sm text-muted-foreground">
             {account.savedPostCount} saved posts
           </p>
+          {account.lostAt ? (
+            <p className="text-sm text-destructive">
+              Lost on {format(new Date(account.lostAt), "MMM d, yyyy")}
+            </p>
+          ) : account.recoveredAt ? (
+            <p className="text-sm text-emerald-600 dark:text-emerald-400">
+              Recovered on {format(new Date(account.recoveredAt), "MMM d, yyyy")}
+            </p>
+          ) : null}
         </div>
         <Button asChild variant="outline" size="sm">
           <a href={igProfileUrl} target="_blank" rel="noopener noreferrer">
@@ -91,6 +102,8 @@ export default function AccountDetailPage({
           account.accountStatus ?? "",
           account.statusChangedAt ?? "",
           account.existsAlso ?? "",
+          account.lostAt ?? "",
+          account.recoveredAt ?? "",
           data.statusHistory
             .map((item) => `${item.id}:${item.changedAt}:${item.status}`)
             .join("|"),
