@@ -62,6 +62,9 @@ export function useUrlFilters() {
     if (existsAlso) f.existsAlso = existsAlso;
     if (searchParams.get("searchNotes") === "true") f.searchNotes = true;
     if (searchParams.get("hasNotes") === "true") f.hasNotes = true;
+    const lostStatus = searchParams.get("lostStatus");
+    if (lostStatus === "lost" || lostStatus === "recovered" || lostStatus === "never")
+      f.lostStatus = lostStatus;
     return f;
   }, [searchParams]);
 
@@ -142,6 +145,7 @@ export function useUrlFilters() {
         existsAlso: newFilters.existsAlso ?? undefined,
         searchNotes: newFilters.searchNotes ? "true" : undefined,
         hasNotes: newFilters.hasNotes ? "true" : undefined,
+        lostStatus: newFilters.lostStatus ?? undefined,
       };
       updateUrl(updates);
     },
