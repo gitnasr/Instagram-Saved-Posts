@@ -6,6 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useUpdateSetting } from "@/hooks/use-settings";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CookieInputProps {
   currentValue?: string;
@@ -14,8 +21,11 @@ interface CookieInputProps {
 export function CookieInput({ currentValue }: CookieInputProps) {
   const [value, setValue] = useState("");
   const updateSetting = useUpdateSetting();
+  const { data: auth, isLoading: isAuthLoading } = useAuth();
+  const isViewer = auth?.isViewer ?? false;
 
   const handleSave = () => {
+    if (isViewer) return;
     if (!value.trim()) {
       toast.error("Cookie value cannot be empty");
       return;
@@ -35,6 +45,17 @@ export function CookieInput({ currentValue }: CookieInputProps) {
     );
   };
 
+  const buttonDisabled = updateSetting.isPending || !value.trim() || isAuthLoading || isViewer;
+
+  const buttonElement = (
+    <Button
+      onClick={handleSave}
+      disabled={buttonDisabled}
+    >
+      {updateSetting.isPending ? "Saving..." : "Save Cookie"}
+    </Button>
+  );
+
   return (
     <div className="space-y-3">
       <Label htmlFor="cookie">Instagram Cookie</Label>
@@ -45,18 +66,27 @@ export function CookieInput({ currentValue }: CookieInputProps) {
       )}
       <Textarea
         id="cookie"
-        placeholder="Paste your Instagram cookie string here..."
+        placeholder={isViewer ? "Viewers cannot edit settings" : "Paste your Instagram cookie string here..."}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         rows={4}
         className="font-mono text-xs"
+        disabled={isViewer || isAuthLoading}
       />
-      <Button
-        onClick={handleSave}
-        disabled={updateSetting.isPending || !value.trim()}
-      >
-        {updateSetting.isPending ? "Saving..." : "Save Cookie"}
-      </Button>
+      {isViewer ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>{buttonElement}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Viewers do not have permission to update settings.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        buttonElement
+      )}
     </div>
   );
 }

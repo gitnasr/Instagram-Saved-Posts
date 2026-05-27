@@ -18,10 +18,19 @@ import {
   useCloudinarySyncStatus,
   useTriggerCloudinarySync,
 } from "@/hooks/use-cloudinary-sync";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function CloudinarySettings() {
   const { data: syncStatus } = useCloudinarySyncStatus();
   const triggerSync = useTriggerCloudinarySync();
+  const { data: auth, isLoading: isAuthLoading } = useAuth();
+  const isViewer = auth?.isViewer ?? false;
 
   const syncState = syncStatus?.current;
   const configured = syncStatus?.configured ?? false;
@@ -48,6 +57,7 @@ export function CloudinarySettings() {
   }, [syncState?.status, syncState]);
 
   const handleSync = () => {
+    if (isViewer) return;
     triggerSync.mutate();
   };
 
@@ -62,6 +72,20 @@ export function CloudinarySettings() {
     (syncState?.uploadedCarouselItems ?? 0) +
     (syncState?.failedUploads ?? 0);
   const syncPercent = syncTotal > 0 ? Math.round((syncDone / syncTotal) * 100) : 0;
+
+  const syncDisabled = isSyncing || !configured || isAuthLoading || isViewer;
+
+  const syncButton = (
+    <Button
+      onClick={handleSync}
+      disabled={syncDisabled}
+      variant="outline"
+      className="w-full"
+    >
+      <Upload className="mr-2 h-4 w-4" />
+      {isSyncing ? "Syncing..." : "Sync All Media"}
+    </Button>
+  );
 
   return (
     <Card>
@@ -109,15 +133,20 @@ export function CloudinarySettings() {
             </p>
           </div>
 
-          <Button
-            onClick={handleSync}
-            disabled={isSyncing || !configured}
-            variant="outline"
-            className="w-full"
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {isSyncing ? "Syncing..." : "Sync All Media"}
-          </Button>
+          {isViewer ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>{syncButton}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Viewers do not have permission to sync media.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            syncButton
+          )}
 
           {isSyncing && syncState && (
             <div className="space-y-2">
