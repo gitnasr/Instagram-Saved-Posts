@@ -6,5 +6,8 @@ export function getGroupsFromHeaders(headersList: { get: (name: string) => strin
 }
 
 export function isViewer(groups: string[]): boolean {
-  return groups.includes("Viewer");
+  return groups.some((g) => {
+    const lower = g.toLowerCase();
+    return lower === "viewer" || lower === "viewers";
+  });
 }
