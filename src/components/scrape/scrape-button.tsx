@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Play, Loader2 } from "lucide-react";
 import { useTriggerScrape } from "@/hooks/use-scrape";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ScrapeButtonProps {
   isRunning: boolean;
@@ -11,8 +18,11 @@ interface ScrapeButtonProps {
 
 export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
   const triggerScrape = useTriggerScrape();
+  const { data: auth, isLoading: isAuthLoading } = useAuth();
+  const isViewer = auth?.isViewer ?? false;
 
   const handleClick = () => {
+    if (isViewer) return;
     triggerScrape.mutate(undefined, {
       onSuccess: () => {
         toast.success("Scrape started");
@@ -23,10 +33,12 @@ export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
     });
   };
 
-  return (
+  const buttonDisabled = isRunning || triggerScrape.isPending || isAuthLoading || isViewer;
+
+  const buttonElement = (
     <Button
       onClick={handleClick}
-      disabled={isRunning || triggerScrape.isPending}
+      disabled={buttonDisabled}
       size="lg"
     >
       {isRunning ? (
@@ -42,4 +54,21 @@ export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
       )}
     </Button>
   );
+
+  if (isViewer) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>{buttonElement}</span>
+          </TooltipTrigger>
+          <TooltipContent>
+            Viewers do not have permission to run the scraper.
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return buttonElement;
 }
