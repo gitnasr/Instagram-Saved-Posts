@@ -43,7 +43,14 @@
       "Bash(npx tsc *)",
       "Bash(DATABASE_URL=\"mongodb://localhost:27017/placeholder\" npm run build)",
       "Bash(npm run *)",
-      "Bash(findstr filter *)"
+      "Bash(findstr filter *)",
+      "Bash(Get-ChildItem -Path \"G:\\\\Coding\\\\Programming\\\\Scripts\\\\Instagram Saved Posts\" -Force)",
+      "Bash(Select-Object Name, Mode)",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Recurse -Path \"G:\\\\Coding\\\\Programming\\\\Scripts\\\\Instagram Saved Posts\" -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
     ]
   }
 }

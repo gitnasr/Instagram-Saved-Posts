@@ -52,3 +52,39 @@ export async function fetchSavedPostsPage(
 
   return data;
 }
+
+export interface LoggedInUser {
+  pk: string;
+  username: string;
+  profilePicUrl: string | null;
+}
+
+/**
+ * Best-effort fetch of the logged-in account behind a cookie (used to
+ * auto-fill a profile's avatar). Parses `ds_user_id` from the cookie and
+ * calls the user-info endpoint. Returns null on any failure.
+ */
+export async function fetchLoggedInUser(
+  cookie: string,
+  userAgent: string = DEFAULT_USER_AGENT
+): Promise<LoggedInUser | null> {
+  const match = cookie.match(/ds_user_id=(\d+)/);
+  if (!match) return null;
+  const userId = match[1];
+
+  try {
+    const response = await axios.get(
+      `https://i.instagram.com/api/v1/users/${userId}/info/`,
+      { headers: { "User-Agent": userAgent, Cookie: cookie } }
+    );
+    const user = response.data?.user;
+    if (!user) return null;
+    return {
+      pk: String(user.pk ?? userId),
+      username: user.username ?? "",
+      profilePicUrl: user.profile_pic_url ?? null,
+    };
+  } catch {
+    return null;
+  }
+}

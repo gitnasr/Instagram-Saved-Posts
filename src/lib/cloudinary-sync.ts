@@ -8,15 +8,18 @@ import { logger } from "./logger";
 import * as Sentry from "@sentry/nextjs";
 import type { CloudinarySyncProgress } from "@/types";
 
-let currentSyncState: CloudinarySyncProgress | null = null;
+// Per-profile sync state so syncs are independent across profiles.
+const syncStates = new Map<string, CloudinarySyncProgress>();
 
-export function getCurrentSyncState(): CloudinarySyncProgress | null {
-  return currentSyncState;
+export function getCurrentSyncState(
+  profileId: string
+): CloudinarySyncProgress | null {
+  return syncStates.get(profileId) ?? null;
 }
 
-export async function runCloudinarySync(): Promise<void> {
-  if (currentSyncState?.status === "running") {
-    throw new Error("A Cloudinary sync is already in progress");
+export async function runCloudinarySync(profileId: string): Promise<void> {
+  if (syncStates.get(profileId)?.status === "running") {
+    throw new Error("A Cloudinary sync is already in progress for this profile");
   }
 
   const config = getCloudinaryConfig();
@@ -28,18 +31,26 @@ export async function runCloudinarySync(): Promise<void> {
 
   // Query items that need uploading (cloudinary field is null, source URL is set)
   const accountsToSync = await prisma.account.findMany({
-    where: { cloudinaryProfilePicUrl: null, profilePicUrl: { not: null } },
+    where: {
+      profileId,
+      cloudinaryProfilePicUrl: null,
+      profilePicUrl: { not: null },
+    },
   });
 
   const postsToSync = await prisma.post.findMany({
-    where: { cloudinaryThumbnailUrl: null, thumbnailUrl: { not: null } },
+    where: {
+      profileId,
+      cloudinaryThumbnailUrl: null,
+      thumbnailUrl: { not: null },
+    },
   });
 
   const carouselToSync = await prisma.carouselMedia.findMany({
-    where: { cloudinaryUrl: null, mediaUrl: { not: "" } },
+    where: { profileId, cloudinaryUrl: null, mediaUrl: { not: "" } },
   });
 
-  currentSyncState = {
+  const state: CloudinarySyncProgress = {
     status: "running",
     totalAccounts: accountsToSync.length,
     totalPosts: postsToSync.length,
@@ -49,6 +60,7 @@ export async function runCloudinarySync(): Promise<void> {
     uploadedCarouselItems: 0,
     failedUploads: 0,
   };
+  syncStates.set(profileId, state);
 
   try {
     // Sync account profile pics
@@ -56,17 +68,17 @@ export async function runCloudinarySync(): Promise<void> {
       const url = await uploadToCloudinary(
         account.profilePicUrl!,
         "instagram-profiles",
-        `profile_${account.pk}`,
+        `profile_${profileId}_${account.pk}`,
         config
       );
       if (url) {
         await prisma.account.update({
-          where: { pk: account.pk },
+          where: { id: account.id },
           data: { cloudinaryProfilePicUrl: url },
         });
-        currentSyncState.uploadedAccounts += 1;
+        state.uploadedAccounts += 1;
       } else {
-        currentSyncState.failedUploads += 1;
+        state.failedUploads += 1;
       }
       await delay(100);
     }
@@ -76,17 +88,17 @@ export async function runCloudinarySync(): Promise<void> {
       const url = await uploadToCloudinary(
         post.thumbnailUrl!,
         "instagram-posts",
-        `post_${post.pk}`,
+        `post_${profileId}_${post.pk}`,
         config
       );
       if (url) {
         await prisma.post.update({
-          where: { pk: post.pk },
+          where: { id: post.id },
           data: { cloudinaryThumbnailUrl: url },
         });
-        currentSyncState.uploadedPosts += 1;
+        state.uploadedPosts += 1;
       } else {
-        currentSyncState.failedUploads += 1;
+        state.failedUploads += 1;
       }
       await delay(100);
     }
@@ -95,13 +107,13 @@ export async function runCloudinarySync(): Promise<void> {
     for (const item of carouselToSync) {
       const source = item.mediaUrl || item.videoUrl;
       if (!source) {
-        currentSyncState.failedUploads += 1;
+        state.failedUploads += 1;
         continue;
       }
       const url = await uploadToCloudinary(
         source,
         "instagram-carousel",
-        `carousel_${item.postPk}_${item.position}`,
+        `carousel_${profileId}_${item.postPk}_${item.position}`,
         config
       );
       if (url) {
@@ -109,29 +121,30 @@ export async function runCloudinarySync(): Promise<void> {
           where: { id: item.id },
           data: { cloudinaryUrl: url },
         });
-        currentSyncState.uploadedCarouselItems += 1;
+        state.uploadedCarouselItems += 1;
       } else {
-        currentSyncState.failedUploads += 1;
+        state.failedUploads += 1;
       }
       await delay(100);
     }
 
-    currentSyncState.status = "completed";
+    state.status = "completed";
     logger.info(
       {
-        uploadedAccounts: currentSyncState.uploadedAccounts,
-        uploadedPosts: currentSyncState.uploadedPosts,
-        uploadedCarouselItems: currentSyncState.uploadedCarouselItems,
-        failedUploads: currentSyncState.failedUploads,
+        profileId,
+        uploadedAccounts: state.uploadedAccounts,
+        uploadedPosts: state.uploadedPosts,
+        uploadedCarouselItems: state.uploadedCarouselItems,
+        failedUploads: state.failedUploads,
       },
       "[cloudinary-sync] Sync completed"
     );
   } catch (error) {
-    currentSyncState.status = "failed";
-    currentSyncState.errorMessage =
+    state.status = "failed";
+    state.errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     Sentry.captureException(error, { tags: { feature: "cloudinary-sync" } });
-    logger.error({ err: error }, "[cloudinary-sync] Sync failed");
+    logger.error({ err: error, profileId }, "[cloudinary-sync] Sync failed");
   }
 }
 

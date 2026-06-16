@@ -1,20 +1,26 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   const { username } = await params;
 
-  const account = await prisma.account.findUnique({ where: { username } });
+  const account = await prisma.account.findFirst({
+    where: { profileId: profile.id, username },
+  });
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
   const notes = await prisma.accountNote.findMany({
-    where: { accountPk: account.pk },
+    where: { profileId: profile.id, accountPk: account.pk },
     orderBy: { createdAt: "desc" },
   });
 
@@ -25,9 +31,14 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   const { username } = await params;
 
-  const account = await prisma.account.findUnique({ where: { username } });
+  const account = await prisma.account.findFirst({
+    where: { profileId: profile.id, username },
+  });
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
@@ -42,6 +53,7 @@ export async function POST(
 
   const note = await prisma.accountNote.create({
     data: {
+      profileId: profile.id,
       accountPk: account.pk,
       content,
       createdAt: new Date().toISOString(),

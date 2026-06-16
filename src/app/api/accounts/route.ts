@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 import {
   parseAccountFilters,
   buildAccountWhere,
@@ -8,6 +9,9 @@ import {
 } from "@/lib/account-filters";
 
 export async function GET(request: Request) {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") ?? "1");
   const limit = parseInt(searchParams.get("limit") ?? "24");
@@ -17,8 +21,8 @@ export async function GET(request: Request) {
   const offset = (page - 1) * limit;
 
   const filters = parseAccountFilters(searchParams);
-  const noteCtx = await resolveNoteFilterContext(filters);
-  const where = buildAccountWhere(filters, noteCtx);
+  const noteCtx = await resolveNoteFilterContext(filters, profile.id);
+  const where = buildAccountWhere(filters, profile.id, noteCtx);
   const orderBy = buildAccountOrderBy(sort, order);
 
   const [items, total] = await Promise.all([

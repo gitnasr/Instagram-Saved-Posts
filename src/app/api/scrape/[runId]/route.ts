@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ runId: string }> }
 ) {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+  const profileId = profile.id;
+
   const { runId } = await params;
   const id = parseInt(runId);
 
@@ -15,7 +20,7 @@ export async function GET(
     );
   }
 
-  const run = await prisma.scrapeRun.findUnique({ where: { id } });
+  const run = await prisma.scrapeRun.findFirst({ where: { id, profileId } });
 
   if (!run) {
     return NextResponse.json(
@@ -36,7 +41,7 @@ export async function GET(
 
   const fetchAccountsByPks = (pks: string[]) =>
     pks.length > 0
-      ? prisma.account.findMany({ where: { pk: { in: pks } } })
+      ? prisma.account.findMany({ where: { profileId, pk: { in: pks } } })
       : Promise.resolve([]);
 
   const [
@@ -48,15 +53,15 @@ export async function GET(
     usernameHistory,
   ] = await Promise.all([
     prisma.post.findMany({
-      where: { scrapeRunId: id },
+      where: { profileId, scrapeRunId: id },
       orderBy: { takenAt: "desc" },
     }),
-    prisma.account.findMany({ where: { discoveredInRunId: id } }),
+    prisma.account.findMany({ where: { profileId, discoveredInRunId: id } }),
     fetchAccountsByPks(lostAccountPkList),
     fetchAccountsByPks(newlyLostPkList),
     fetchAccountsByPks(newlyRecoveredPkList),
     prisma.accountUsernameHistory.findMany({
-      where: { scrapeRunId: id },
+      where: { profileId, scrapeRunId: id },
       orderBy: { changedAt: "desc" },
     }),
   ]);
@@ -67,7 +72,7 @@ export async function GET(
   const usernameChangeAccounts =
     usernameChangeAccountPks.length > 0
       ? await prisma.account.findMany({
-          where: { pk: { in: usernameChangeAccountPks } },
+          where: { profileId, pk: { in: usernameChangeAccountPks } },
         })
       : [];
   const usernameChangeAccountMap = new Map(

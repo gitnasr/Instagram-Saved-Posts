@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 import type { Prisma } from "@prisma/client";
 import {
   EXISTS_ALSO_OPTIONS_SETTING_KEY,
@@ -12,10 +13,15 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   const { username } = await params;
   const body = await request.json();
 
-  const account = await prisma.account.findUnique({ where: { username } });
+  const account = await prisma.account.findFirst({
+    where: { profileId: profile.id, username },
+  });
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
@@ -74,6 +80,7 @@ export async function PATCH(
       if (nextStatus) {
         await prisma.accountStatusHistory.create({
           data: {
+            profileId: profile.id,
             accountPk: account.pk,
             status: nextStatus,
             changedAt: now,
@@ -142,7 +149,7 @@ export async function PATCH(
 
   if (Object.keys(updates).length > 0) {
     await prisma.account.update({
-      where: { pk: account.pk },
+      where: { id: account.id },
       data: updates,
     });
   }
@@ -163,13 +170,18 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   const { username } = await params;
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") ?? "1");
   const limit = parseInt(searchParams.get("limit") ?? "24");
   const offset = (page - 1) * limit;
 
-  const account = await prisma.account.findUnique({ where: { username } });
+  const account = await prisma.account.findFirst({
+    where: { profileId: profile.id, username },
+  });
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
@@ -178,21 +190,23 @@ export async function GET(
   const [accountPosts, total, existsAlsoSetting, statusHistory, usernameHistory] =
     await Promise.all([
       prisma.post.findMany({
-        where: { accountPk: account.pk },
+        where: { profileId: profile.id, accountPk: account.pk },
         orderBy: { takenAt: "desc" },
         take: limit,
         skip: offset,
       }),
-      prisma.post.count({ where: { accountPk: account.pk } }),
+      prisma.post.count({
+        where: { profileId: profile.id, accountPk: account.pk },
+      }),
       prisma.setting.findUnique({
         where: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY },
       }),
       prisma.accountStatusHistory.findMany({
-        where: { accountPk: account.pk },
+        where: { profileId: profile.id, accountPk: account.pk },
         orderBy: { changedAt: "desc" },
       }),
       prisma.accountUsernameHistory.findMany({
-        where: { accountPk: account.pk },
+        where: { profileId: profile.id, accountPk: account.pk },
         orderBy: { changedAt: "desc" },
       }),
     ]);

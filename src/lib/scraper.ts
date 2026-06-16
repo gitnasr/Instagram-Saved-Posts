@@ -1,5 +1,5 @@
 import { prisma, getNextScrapeRunId } from "./prisma";
-import { fetchSavedPostsPage } from "./instagram-api";
+import { fetchSavedPostsPage, fetchLoggedInUser } from "./instagram-api";
 import { getCloudinaryConfig, isCloudinaryConfigured } from "./cloudinary";
 import { runCloudinarySync } from "./cloudinary-sync";
 import { PRIVATE_ACCOUNT_STATUS } from "./account-metadata";
@@ -69,30 +69,35 @@ function getPrivacyStatusUpdate(
 }
 
 async function recordAccountStatus(
+  profileId: string,
   accountPk: string,
   status: string,
   changedAt: string
 ) {
   await prisma.accountStatusHistory.create({
-    data: { accountPk, status, changedAt },
+    data: { profileId, accountPk, status, changedAt },
   });
 }
 
-async function recordUsernameChange({
-  accountPk,
-  oldUsername,
-  newUsername,
-  runId,
-  changedAt,
-}: {
-  accountPk: string;
-  oldUsername: string;
-  newUsername: string;
-  runId: number;
-  changedAt: string;
-}) {
+async function recordUsernameChange(
+  runtime: Runtime,
+  {
+    accountPk,
+    oldUsername,
+    newUsername,
+    runId,
+    changedAt,
+  }: {
+    accountPk: string;
+    oldUsername: string;
+    newUsername: string;
+    runId: number;
+    changedAt: string;
+  }
+) {
   await prisma.accountUsernameHistory.create({
     data: {
+      profileId: runtime.state.profileId,
       accountPk,
       oldUsername,
       newUsername,
@@ -101,7 +106,7 @@ async function recordUsernameChange({
     },
   });
 
-  usernameChangeAccountPks.add(accountPk);
+  runtime.usernameChanges.add(accountPk);
   logger.info(
     { accountPk, oldUsername, newUsername },
     "[scraper] Account username changed"
@@ -110,6 +115,7 @@ async function recordUsernameChange({
 
 export interface ScrapeProgress {
   runId: number;
+  profileId: string;
   status: "running" | "completed" | "failed" | "cancelled" | "interrupted";
   pagesScraped: number;
   totalPostsFound: number;
@@ -117,72 +123,73 @@ export interface ScrapeProgress {
   newAccountsFound: number;
 }
 
-let currentScrapeState: ScrapeProgress | null = null;
+/** In-memory per-profile scrape runtime (reset each run). */
+interface Runtime {
+  state: ScrapeProgress;
+  seenAccountPks: Set<string>;
+  usernameChanges: Set<string>;
+}
 
-// Tracks which account PKs were seen in the current scrape (reset each run)
-let seenAccountPks = new Set<string>();
-let usernameChangeAccountPks = new Set<string>();
+// Each profile gets its own runtime so scrapes are fully independent.
+const runtimes = new Map<string, Runtime>();
 
-export function getCurrentScrapeState(): ScrapeProgress | null {
-  return currentScrapeState;
+export function getCurrentScrapeState(profileId: string): ScrapeProgress | null {
+  return runtimes.get(profileId)?.state ?? null;
 }
 
 /**
- * Mark any "running" runs in the DB as "interrupted".
- * Called on GET /api/scrape to detect orphaned runs from a previous server process.
- * Safe to call repeatedly — no-op when nothing is stuck.
+ * Mark "running" runs in the DB as "interrupted" when no in-memory runtime is
+ * actively driving them (orphans from a previous server process). Scoped to a
+ * profile when given. Safe to call repeatedly.
  */
-export async function detectAndMarkInterruptedRuns(): Promise<void> {
-  // Only mark as interrupted if there's no active in-memory scrape running
-  if (currentScrapeState?.status === "running") return;
+export async function detectAndMarkInterruptedRuns(
+  profileId?: string
+): Promise<void> {
+  const liveRunIds = [...runtimes.values()]
+    .filter((r) => r.state.status === "running")
+    .map((r) => r.state.runId);
+
   await prisma.scrapeRun.updateMany({
-    where: { status: "running" },
+    where: {
+      status: "running",
+      id: { notIn: liveRunIds },
+      ...(profileId ? { profileId } : {}),
+    },
     data: { status: "interrupted" },
   });
 }
 
-export async function runScrape(): Promise<number> {
-  if (currentScrapeState?.status === "running") {
-    throw new Error("A scrape is already in progress");
+export async function runScrape(profileId: string): Promise<number> {
+  if (runtimes.get(profileId)?.state.status === "running") {
+    throw new Error("A scrape is already in progress for this profile");
   }
 
-  const cookieRow = await prisma.setting.findUnique({
-    where: { key: "instagram_cookie" },
-  });
-
-  if (!cookieRow) {
-    throw new Error("No Instagram cookie configured. Go to Settings first.");
+  const profile = await prisma.profile.findUnique({ where: { id: profileId } });
+  if (!profile) {
+    throw new Error("Profile not found");
   }
-
-  const userAgentRow = await prisma.setting.findUnique({
-    where: { key: "user_agent" },
-  });
+  if (!profile.instagramCookie) {
+    throw new Error(
+      "No Instagram cookie configured for this profile. Go to Settings first."
+    );
+  }
 
   const now = new Date().toISOString();
   const runId = await getNextScrapeRunId();
   const run = await prisma.scrapeRun.create({
-    data: { id: runId, startedAt: now, status: "running" },
+    data: { id: runId, profileId, startedAt: now, status: "running" },
   });
 
-  currentScrapeState = {
-    runId: run.id,
-    status: "running",
-    pagesScraped: 0,
-    totalPostsFound: 0,
-    newPostsAdded: 0,
-    newAccountsFound: 0,
-  };
-
-  seenAccountPks = new Set<string>();
-  usernameChangeAccountPks = new Set<string>();
+  const runtime = createRuntime(run.id, profileId);
+  runtimes.set(profileId, runtime);
 
   scrapeAllPages(
-    run.id,
-    cookieRow.value,
-    userAgentRow?.value,
+    runtime,
+    profile.instagramCookie,
+    profile.userAgent ?? undefined,
     run.startedAt
   ).catch((error) => {
-    void handleScrapeFailure(run.id, error);
+    void handleScrapeFailure(runtime, error);
   });
 
   return run.id;
@@ -191,41 +198,38 @@ export async function runScrape(): Promise<number> {
 /**
  * Resume an interrupted scrape from its saved checkpoint cursor.
  */
-export async function resumeScrape(runId: number): Promise<void> {
-  if (currentScrapeState?.status === "running") {
-    throw new Error("A scrape is already in progress");
+export async function resumeScrape(
+  profileId: string,
+  runId: number
+): Promise<void> {
+  if (runtimes.get(profileId)?.state.status === "running") {
+    throw new Error("A scrape is already in progress for this profile");
   }
 
-  const run = await prisma.scrapeRun.findUnique({ where: { id: runId } });
+  const run = await prisma.scrapeRun.findFirst({
+    where: { id: runId, profileId },
+  });
 
   if (!run) throw new Error("Scrape run not found");
   if (run.status !== "interrupted")
     throw new Error("Only interrupted runs can be resumed");
 
-  const cookieRow = await prisma.setting.findUnique({
-    where: { key: "instagram_cookie" },
-  });
-
-  if (!cookieRow) {
-    throw new Error("No Instagram cookie configured. Go to Settings first.");
+  const profile = await prisma.profile.findUnique({ where: { id: profileId } });
+  if (!profile) {
+    throw new Error("Profile not found");
+  }
+  if (!profile.instagramCookie) {
+    throw new Error(
+      "No Instagram cookie configured for this profile. Go to Settings first."
+    );
   }
 
-  const userAgentRow = await prisma.setting.findUnique({
-    where: { key: "user_agent" },
-  });
-
-  // Restore in-memory state from DB
-  currentScrapeState = {
-    runId: run.id,
-    status: "running",
-    pagesScraped: run.pagesScraped,
-    totalPostsFound: run.totalPostsFound,
-    newPostsAdded: run.newPostsAdded,
-    newAccountsFound: run.newAccountsFound,
-  };
-
-  seenAccountPks = new Set<string>();
-  usernameChangeAccountPks = new Set<string>();
+  const runtime = createRuntime(run.id, profileId);
+  runtime.state.pagesScraped = run.pagesScraped;
+  runtime.state.totalPostsFound = run.totalPostsFound;
+  runtime.state.newPostsAdded = run.newPostsAdded;
+  runtime.state.newAccountsFound = run.newAccountsFound;
+  runtimes.set(profileId, runtime);
 
   await prisma.scrapeRun.update({
     where: { id: run.id },
@@ -233,26 +237,43 @@ export async function resumeScrape(runId: number): Promise<void> {
   });
 
   scrapeAllPages(
-    run.id,
-    cookieRow.value,
-    userAgentRow?.value,
+    runtime,
+    profile.instagramCookie,
+    profile.userAgent ?? undefined,
     run.startedAt,
     run.checkpointMaxId ?? undefined
   ).catch((error) => {
-    void handleScrapeFailure(run.id, error);
+    void handleScrapeFailure(runtime, error);
   });
 }
 
+function createRuntime(runId: number, profileId: string): Runtime {
+  return {
+    state: {
+      runId,
+      profileId,
+      status: "running",
+      pagesScraped: 0,
+      totalPostsFound: 0,
+      newPostsAdded: 0,
+      newAccountsFound: 0,
+    },
+    seenAccountPks: new Set<string>(),
+    usernameChanges: new Set<string>(),
+  };
+}
+
 async function handleScrapeFailure(
-  runId: number,
+  runtime: Runtime,
   error: unknown
 ): Promise<void> {
+  const { runId, profileId } = runtime.state;
   const { errorMsg, errorBody } = extractErrorInfo(error);
   Sentry.captureException(error, {
     tags: { feature: "scrape" },
-    extra: { runId },
+    extra: { runId, profileId },
   });
-  logger.error({ err: error, runId }, "[scraper] Scrape run failed");
+  logger.error({ err: error, runId, profileId }, "[scraper] Scrape run failed");
   await prisma.scrapeRun
     .update({
       where: { id: runId },
@@ -265,18 +286,17 @@ async function handleScrapeFailure(
     })
     .catch(() => {});
 
-  if (currentScrapeState?.runId === runId) {
-    currentScrapeState.status = "failed";
-  }
+  runtime.state.status = "failed";
 }
 
 async function scrapeAllPages(
-  runId: number,
+  runtime: Runtime,
   cookie: string,
   userAgent?: string,
   runStartedAt?: string,
   resumeFromMaxId?: string
 ): Promise<void> {
+  const { runId, profileId } = runtime.state;
   let maxId: string | undefined = resumeFromMaxId;
   let hasMore = true;
 
@@ -289,13 +309,11 @@ async function scrapeAllPages(
       });
 
       for (const item of page.items) {
-        await processMediaItem(item.media, runId);
+        await processMediaItem(runtime, item.media);
       }
 
-      if (currentScrapeState?.runId === runId) {
-        currentScrapeState.pagesScraped += 1;
-        currentScrapeState.totalPostsFound += page.num_results;
-      }
+      runtime.state.pagesScraped += 1;
+      runtime.state.totalPostsFound += page.num_results;
 
       hasMore = page.more_available;
       maxId = page.next_max_id;
@@ -303,10 +321,10 @@ async function scrapeAllPages(
       await prisma.scrapeRun.update({
         where: { id: runId },
         data: {
-          pagesScraped: currentScrapeState!.pagesScraped,
-          totalPostsFound: currentScrapeState!.totalPostsFound,
-          newPostsAdded: currentScrapeState!.newPostsAdded,
-          newAccountsFound: currentScrapeState!.newAccountsFound,
+          pagesScraped: runtime.state.pagesScraped,
+          totalPostsFound: runtime.state.totalPostsFound,
+          newPostsAdded: runtime.state.newPostsAdded,
+          newAccountsFound: runtime.state.newAccountsFound,
           checkpointMaxId: maxId ?? null,
         },
       });
@@ -319,24 +337,28 @@ async function scrapeAllPages(
       }
     }
 
-    await recalculateAccountPostCounts();
+    await recalculateAccountPostCounts(profileId);
 
     // Calculate & persist lost-state transitions (only on full success).
     const runCompletedAt = new Date().toISOString();
     const lostState = runStartedAt
-      ? await calculateAndUpdateLostState(runStartedAt, runCompletedAt)
+      ? await calculateAndUpdateLostState(
+          profileId,
+          runStartedAt,
+          runCompletedAt
+        )
       : { allLostPks: [], newlyLostPks: [], newlyRecoveredPks: [] };
-    const usernameChangePks = [...usernameChangeAccountPks];
+    const usernameChangePks = [...runtime.usernameChanges];
 
     await prisma.scrapeRun.update({
       where: { id: runId },
       data: {
         status: "completed",
         completedAt: runCompletedAt,
-        totalPostsFound: currentScrapeState!.totalPostsFound,
-        newPostsAdded: currentScrapeState!.newPostsAdded,
-        newAccountsFound: currentScrapeState!.newAccountsFound,
-        pagesScraped: currentScrapeState!.pagesScraped,
+        totalPostsFound: runtime.state.totalPostsFound,
+        newPostsAdded: runtime.state.newPostsAdded,
+        newAccountsFound: runtime.state.newAccountsFound,
+        pagesScraped: runtime.state.pagesScraped,
         checkpointMaxId: null,
         lostAccountsCount: lostState.allLostPks.length,
         lostAccountPks:
@@ -361,15 +383,17 @@ async function scrapeAllPages(
       },
     });
 
-    if (currentScrapeState?.runId === runId) {
-      currentScrapeState.status = "completed";
-    }
+    runtime.state.status = "completed";
+
+    // Best-effort: fill in the profile's avatar from the logged-in account.
+    await fillProfileAvatarIfNeeded(profileId, cookie, userAgent);
 
     logger.info(
       {
         runId,
-        newPostsAdded: currentScrapeState?.newPostsAdded,
-        newAccountsFound: currentScrapeState?.newAccountsFound,
+        profileId,
+        newPostsAdded: runtime.state.newPostsAdded,
+        newAccountsFound: runtime.state.newAccountsFound,
         lostCount: lostState.allLostPks.length,
         newlyLost: lostState.newlyLostPks.length,
         newlyRecovered: lostState.newlyRecoveredPks.length,
@@ -381,7 +405,7 @@ async function scrapeAllPages(
     // Auto-trigger Cloudinary sync as a background job after scraping
     const cloudinaryConfig = getCloudinaryConfig();
     if (isCloudinaryConfigured(cloudinaryConfig)) {
-      runCloudinarySync().catch((err: Error) => {
+      runCloudinarySync(profileId).catch((err: Error) => {
         logger.warn(
           { err },
           "[scraper] Auto Cloudinary sync failed to start"
@@ -389,7 +413,7 @@ async function scrapeAllPages(
       });
     }
   } catch (error) {
-    await handleScrapeFailure(runId, error);
+    await handleScrapeFailure(runtime, error);
   }
 }
 
@@ -413,19 +437,20 @@ async function hashImageUrl(url: string): Promise<string | null> {
 }
 
 async function processMediaItem(
-  media: InstagramMedia,
-  runId: number
+  runtime: Runtime,
+  media: InstagramMedia
 ): Promise<void> {
+  const { runId, profileId } = runtime.state;
   const now = new Date().toISOString();
   const mediaPk = String(media.pk);
   const accountPkStr = String(media.user.pk);
 
   // Track this account as seen in the current scrape
-  seenAccountPks.add(accountPkStr);
+  runtime.seenAccountPks.add(accountPkStr);
 
   // ─── UPSERT ACCOUNT ──────────────────────────────────────
-  const existingAccount = await prisma.account.findUnique({
-    where: { pk: accountPkStr },
+  const existingAccount = await prisma.account.findFirst({
+    where: { profileId, pk: accountPkStr },
   });
 
   // Hash the profile pic to detect changes (kept for hash-change detection)
@@ -446,6 +471,7 @@ async function processMediaItem(
   if (!existingAccount) {
     await prisma.account.create({
       data: {
+        profileId,
         pk: accountPkStr,
         username: media.user.username,
         fullName: media.user.full_name,
@@ -462,19 +488,22 @@ async function processMediaItem(
       },
     });
 
-    if (currentScrapeState) {
-      currentScrapeState.newAccountsFound += 1;
-    }
+    runtime.state.newAccountsFound += 1;
 
     if (privacyStatusUpdate.recordHistory) {
-      await recordAccountStatus(accountPkStr, PRIVATE_ACCOUNT_STATUS, now);
+      await recordAccountStatus(
+        profileId,
+        accountPkStr,
+        PRIVATE_ACCOUNT_STATUS,
+        now
+      );
     }
   } else {
     const previousUsername = existingAccount.username;
     const nextUsername = media.user.username;
 
     await prisma.account.update({
-      where: { pk: accountPkStr },
+      where: { id: existingAccount.id },
       data: {
         username: nextUsername,
         fullName: media.user.full_name,
@@ -490,7 +519,7 @@ async function processMediaItem(
     });
 
     if (previousUsername !== nextUsername) {
-      await recordUsernameChange({
+      await recordUsernameChange(runtime, {
         accountPk: accountPkStr,
         oldUsername: previousUsername,
         newUsername: nextUsername,
@@ -500,13 +529,18 @@ async function processMediaItem(
     }
 
     if (privacyStatusUpdate.recordHistory) {
-      await recordAccountStatus(accountPkStr, PRIVATE_ACCOUNT_STATUS, now);
+      await recordAccountStatus(
+        profileId,
+        accountPkStr,
+        PRIVATE_ACCOUNT_STATUS,
+        now
+      );
     }
   }
 
   // ─── UPSERT POST ─────────────────────────────────────────
-  const existingPost = await prisma.post.findUnique({
-    where: { pk: mediaPk },
+  const existingPost = await prisma.post.findFirst({
+    where: { profileId, pk: mediaPk },
   });
 
   const thumbnail = media.image_versions2?.candidates?.[0];
@@ -515,8 +549,9 @@ async function processMediaItem(
   if (!existingPost) {
     await prisma.post.create({
       data: {
+        profileId,
         pk: mediaPk,
-        id: media.id,
+        mediaId: media.id,
         code: media.code,
         accountPk: accountPkStr,
         mediaType: media.media_type,
@@ -534,14 +569,12 @@ async function processMediaItem(
       },
     });
 
-    if (currentScrapeState) {
-      currentScrapeState.newPostsAdded += 1;
-    }
+    runtime.state.newPostsAdded += 1;
 
-    await insertOrUpdateCarouselItems(mediaPk, media, true);
+    await insertOrUpdateCarouselItems(profileId, mediaPk, media, true);
   } else {
     await prisma.post.update({
-      where: { pk: mediaPk },
+      where: { id: existingPost.id },
       data: {
         likeCount: media.like_count,
         commentCount: media.comment_count ?? 0,
@@ -550,12 +583,13 @@ async function processMediaItem(
       },
     });
 
-    await insertOrUpdateCarouselItems(mediaPk, media, false);
+    await insertOrUpdateCarouselItems(profileId, mediaPk, media, false);
   }
 }
 
 /** Insert new carousel items or update existing ones with fresh URLs */
 async function insertOrUpdateCarouselItems(
+  profileId: string,
   postPk: string,
   media: InstagramMedia,
   isNewPost: boolean
@@ -564,7 +598,7 @@ async function insertOrUpdateCarouselItems(
 
   const existingItems = isNewPost
     ? []
-    : await prisma.carouselMedia.findMany({ where: { postPk } });
+    : await prisma.carouselMedia.findMany({ where: { profileId, postPk } });
 
   for (let i = 0; i < media.carousel_media.length; i++) {
     const carouselItem = media.carousel_media[i];
@@ -595,6 +629,7 @@ async function insertOrUpdateCarouselItems(
     } else {
       await prisma.carouselMedia.create({
         data: {
+          profileId,
           postPk,
           position: i,
           mediaType: carouselItem.media_type,
@@ -610,9 +645,10 @@ async function insertOrUpdateCarouselItems(
   }
 }
 
-async function recalculateAccountPostCounts(): Promise<void> {
+async function recalculateAccountPostCounts(profileId: string): Promise<void> {
   const grouped = await prisma.post.groupBy({
     by: ["accountPk"],
+    where: { profileId },
     _count: { _all: true },
   });
   const countByPk = new Map<string, number>(
@@ -620,7 +656,8 @@ async function recalculateAccountPostCounts(): Promise<void> {
   );
 
   const accountsList = await prisma.account.findMany({
-    select: { pk: true, savedPostCount: true },
+    where: { profileId },
+    select: { id: true, pk: true, savedPostCount: true },
   });
 
   await Promise.all(
@@ -628,29 +665,35 @@ async function recalculateAccountPostCounts(): Promise<void> {
       const desired = countByPk.get(account.pk) ?? 0;
       if (desired === account.savedPostCount) return Promise.resolve();
       return prisma.account.update({
-        where: { pk: account.pk },
+        where: { id: account.id },
         data: { savedPostCount: desired },
       });
     })
   );
 }
 
-const LOST_STATE_BACKFILL_KEY = "lost_state_backfilled";
-
 /**
- * One-time backfill: stamp `lostAt` on accounts that were already missing
- * before this feature shipped, using the most recent prior completed run's
- * timestamps. Without this the first post-deploy scrape would flag every
+ * One-time per-profile backfill: stamp `lostAt` on accounts that were already
+ * missing before this feature shipped, using the most recent prior completed
+ * run's timestamps. Without this the first post-deploy scrape would flag every
  * pre-existing lost account as "newly lost."
  */
-async function backfillLostStateIfNeeded(currentRunStartedAt: string): Promise<void> {
-  const flag = await prisma.setting.findUnique({
-    where: { key: LOST_STATE_BACKFILL_KEY },
+async function backfillLostStateIfNeeded(
+  profileId: string,
+  currentRunStartedAt: string
+): Promise<void> {
+  const profile = await prisma.profile.findUnique({
+    where: { id: profileId },
+    select: { lostStateBackfilled: true },
   });
-  if (flag?.value === "1") return;
+  if (profile?.lostStateBackfilled) return;
 
   const priorRun = await prisma.scrapeRun.findFirst({
-    where: { status: "completed", completedAt: { lt: currentRunStartedAt } },
+    where: {
+      profileId,
+      status: "completed",
+      completedAt: { lt: currentRunStartedAt },
+    },
     orderBy: { completedAt: "desc" },
   });
 
@@ -658,6 +701,7 @@ async function backfillLostStateIfNeeded(currentRunStartedAt: string): Promise<v
     const stampedAt = priorRun.completedAt ?? priorRun.startedAt;
     await prisma.account.updateMany({
       where: {
+        profileId,
         lastSeenAt: { lt: priorRun.startedAt },
         lostAt: null,
       },
@@ -665,11 +709,9 @@ async function backfillLostStateIfNeeded(currentRunStartedAt: string): Promise<v
     });
   }
 
-  const now = new Date().toISOString();
-  await prisma.setting.upsert({
-    where: { key: LOST_STATE_BACKFILL_KEY },
-    create: { key: LOST_STATE_BACKFILL_KEY, value: "1", updatedAt: now },
-    update: { value: "1", updatedAt: now },
+  await prisma.profile.update({
+    where: { id: profileId },
+    data: { lostStateBackfilled: true, updatedAt: new Date().toISOString() },
   });
 }
 
@@ -679,6 +721,7 @@ async function backfillLostStateIfNeeded(currentRunStartedAt: string): Promise<v
  * onto each Account row.
  */
 async function calculateAndUpdateLostState(
+  profileId: string,
   runStartedAt: string,
   runCompletedAt: string
 ): Promise<{
@@ -686,9 +729,10 @@ async function calculateAndUpdateLostState(
   newlyLostPks: string[];
   newlyRecoveredPks: string[];
 }> {
-  await backfillLostStateIfNeeded(runStartedAt);
+  await backfillLostStateIfNeeded(profileId, runStartedAt);
 
   const accounts = await prisma.account.findMany({
+    where: { profileId },
     select: { pk: true, lastSeenAt: true, lostAt: true },
   });
 
@@ -712,18 +756,48 @@ async function calculateAndUpdateLostState(
 
   if (newlyLostPks.length > 0) {
     await prisma.account.updateMany({
-      where: { pk: { in: newlyLostPks } },
+      where: { profileId, pk: { in: newlyLostPks } },
       data: { lostAt: runCompletedAt },
     });
   }
   if (newlyRecoveredPks.length > 0) {
     await prisma.account.updateMany({
-      where: { pk: { in: newlyRecoveredPks } },
+      where: { profileId, pk: { in: newlyRecoveredPks } },
       data: { lostAt: null, recoveredAt: runCompletedAt },
     });
   }
 
   return { allLostPks, newlyLostPks, newlyRecoveredPks };
+}
+
+/** Best-effort: populate a profile's avatar from the logged-in IG account. */
+async function fillProfileAvatarIfNeeded(
+  profileId: string,
+  cookie: string,
+  userAgent?: string
+): Promise<void> {
+  try {
+    const profile = await prisma.profile.findUnique({
+      where: { id: profileId },
+      select: { avatarUrl: true },
+    });
+    if (profile?.avatarUrl) return; // already set
+
+    const user = await fetchLoggedInUser(cookie, userAgent);
+    if (!user) return;
+
+    await prisma.profile.update({
+      where: { id: profileId },
+      data: {
+        avatarUrl: user.profilePicUrl,
+        igUserPk: user.pk,
+        igUsername: user.username || null,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    logger.warn({ err, profileId }, "[scraper] Avatar auto-fill failed");
+  }
 }
 
 function delay(ms: number): Promise<void> {
