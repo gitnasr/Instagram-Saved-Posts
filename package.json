@@ -9,6 +9,7 @@
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "backfill:mongo": "tsx scripts/backfill-mongo.ts",
+    "migrate:multiprofile": "tsx scripts/migrate-multi-profile.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

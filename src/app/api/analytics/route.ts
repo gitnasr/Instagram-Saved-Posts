@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 
 export async function GET() {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+  const profileId = profile.id;
+
   const [
     totalAccounts,
     totalPosts,
@@ -13,22 +18,29 @@ export async function GET() {
     verified,
     priv,
   ] = await Promise.all([
-    prisma.account.count(),
-    prisma.post.count(),
-    prisma.scrapeRun.findFirst({ orderBy: { startedAt: "desc" } }),
+    prisma.account.count({ where: { profileId } }),
+    prisma.post.count({ where: { profileId } }),
+    prisma.scrapeRun.findFirst({
+      where: { profileId },
+      orderBy: { startedAt: "desc" },
+    }),
     prisma.account.findMany({
+      where: { profileId },
       orderBy: { savedPostCount: "desc" },
       take: 5,
     }),
     prisma.scrapeRun.findMany({
+      where: { profileId },
       orderBy: { startedAt: "desc" },
       take: 5,
     }),
     prisma.post.groupBy({
       by: ["mediaType"],
+      where: { profileId },
       _count: { _all: true },
     }),
     prisma.scrapeRun.findMany({
+      where: { profileId },
       orderBy: { startedAt: "desc" },
       take: 20,
       select: {
@@ -40,8 +52,8 @@ export async function GET() {
         status: true,
       },
     }),
-    prisma.account.count({ where: { isVerified: true } }),
-    prisma.account.count({ where: { isPrivate: true } }),
+    prisma.account.count({ where: { profileId, isVerified: true } }),
+    prisma.account.count({ where: { profileId, isPrivate: true } }),
   ]);
 
   const mediaTypeBreakdown = mediaTypeGrouped.map((g) => ({

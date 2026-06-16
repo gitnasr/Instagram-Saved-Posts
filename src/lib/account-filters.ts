@@ -60,13 +60,17 @@ export interface NoteFilterContext {
  * since MongoDB cannot join `accountNotes` to `accounts` in one query.
  */
 export async function resolveNoteFilterContext(
-  filters: AccountFilterParams
+  filters: AccountFilterParams,
+  profileId: string
 ): Promise<NoteFilterContext> {
   const ctx: NoteFilterContext = {};
 
   if (filters.search && filters.searchNotes === "true") {
     const rows = await prisma.accountNote.findMany({
-      where: { content: { contains: filters.search, mode: "insensitive" } },
+      where: {
+        profileId,
+        content: { contains: filters.search, mode: "insensitive" },
+      },
       select: { accountPk: true },
       distinct: ["accountPk"],
     });
@@ -75,6 +79,7 @@ export async function resolveNoteFilterContext(
 
   if (filters.hasNotes === "true") {
     const rows = await prisma.accountNote.findMany({
+      where: { profileId },
       select: { accountPk: true },
       distinct: ["accountPk"],
     });
@@ -88,9 +93,10 @@ const insensitive = { mode: "insensitive" } as const;
 
 export function buildAccountWhere(
   filters: AccountFilterParams,
+  profileId: string,
   noteCtx: NoteFilterContext = {}
 ): Prisma.AccountWhereInput {
-  const and: Prisma.AccountWhereInput[] = [];
+  const and: Prisma.AccountWhereInput[] = [{ profileId }];
 
   if (filters.search) {
     const or: Prisma.AccountWhereInput[] = [

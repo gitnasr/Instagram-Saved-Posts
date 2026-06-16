@@ -5,11 +5,18 @@ import { getGroupsFromHeaders, isViewer } from "./lib/auth";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Profile create/edit/delete are restricted, but switching the active
+  // profile (/api/profiles/select) is allowed for everyone (it's navigation).
+  const isProfileWrite =
+    pathname.startsWith("/api/profiles") &&
+    !pathname.startsWith("/api/profiles/select");
+
   // We only protect specific API routes that perform write operations
   const isRestrictedApiRoute =
     pathname.startsWith("/api/scrape") ||
     pathname.startsWith("/api/settings") ||
-    pathname.startsWith("/api/cloudinary-sync");
+    pathname.startsWith("/api/cloudinary-sync") ||
+    isProfileWrite;
 
   const isWriteMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(request.method);
 
@@ -36,5 +43,6 @@ export const config = {
     "/api/scrape/:path*",
     "/api/settings/:path*",
     "/api/cloudinary-sync/:path*",
+    "/api/profiles/:path*",
   ],
 };

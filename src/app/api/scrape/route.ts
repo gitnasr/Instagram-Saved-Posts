@@ -5,10 +5,14 @@ import {
   detectAndMarkInterruptedRuns,
 } from "@/lib/scraper";
 import { prisma } from "@/lib/prisma";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 
 export async function POST() {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   try {
-    const runId = await runScrape();
+    const runId = await runScrape(profile.id);
     return NextResponse.json({ runId, status: "started" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -17,11 +21,15 @@ export async function POST() {
 }
 
 export async function GET() {
-  // Detect any runs that were "running" when the server restarted
-  await detectAndMarkInterruptedRuns();
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
 
-  const currentState = getCurrentScrapeState();
+  // Detect any runs that were "running" when the server restarted
+  await detectAndMarkInterruptedRuns(profile.id);
+
+  const currentState = getCurrentScrapeState(profile.id);
   const history = await prisma.scrapeRun.findMany({
+    where: { profileId: profile.id },
     orderBy: { startedAt: "desc" },
     take: 20,
   });

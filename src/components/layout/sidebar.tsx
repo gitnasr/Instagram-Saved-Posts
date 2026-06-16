@@ -4,6 +4,7 @@ import { NavLink } from "./nav-link";
 import { BarChart3, Users, Play, Settings } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { ProfileSwitcher } from "@/components/layout/profile-switcher";
 
 const navItems = [
   { href: "/", label: "Overview", icon: BarChart3 },
@@ -16,8 +17,8 @@ export function Sidebar() {
   return (
     <>
       <aside className="hidden h-dvh w-64 flex-col border-r bg-card md:flex">
-        <div className="flex h-14 items-center px-4">
-          <h1 className="text-lg font-semibold">IG Saved Tracker</h1>
+        <div className="flex h-14 items-center px-2">
+          <ProfileSwitcher />
         </div>
         <Separator />
         <nav className="flex flex-1 flex-col gap-1 p-3">
