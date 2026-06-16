@@ -101,7 +101,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="profile-name">Name</Label>
             <Input
@@ -125,7 +125,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
               value={cookie}
               onChange={(e) => setCookie(e.target.value)}
               rows={4}
-              className="font-mono text-xs"
+              className="w-full min-w-0 break-all font-mono text-xs"
               placeholder="Paste cookie string..."
             />
             {isEdit && profile?.hasCookie && (
