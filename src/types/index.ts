@@ -9,6 +9,19 @@ import type {
   CarouselMedia as PrismaCarouselMedia,
 } from "@prisma/client";
 
+/** Profile data exposed to the client (no cookie/user-agent secrets). */
+export interface ProfilePublic {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  avatarColor: string | null;
+  igUsername: string | null;
+  hasCookie: boolean;
+  hasUserAgent: boolean;
+  createdAt: string;
+  isActive: boolean;
+}
+
 export type Account = PrismaAccount;
 export type AccountNote = PrismaAccountNote;
 export type AccountStatusHistory = PrismaAccountStatusHistory;
@@ -98,6 +111,7 @@ export interface CloudinarySyncProgress {
 export interface ScrapeStatusResponse {
   current: {
     runId: number;
+    profileId: string;
     status: "running" | "completed" | "failed" | "cancelled" | "interrupted";
     pagesScraped: number;
     totalPostsFound: number;

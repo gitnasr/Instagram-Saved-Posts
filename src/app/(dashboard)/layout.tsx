@@ -1,10 +1,15 @@
+import { redirect } from "next/navigation";
+import { getActiveProfile } from "@/lib/active-profile";
 import { Sidebar } from "@/components/layout/sidebar";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const profile = await getActiveProfile();
+  if (!profile) redirect("/profiles");
+
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar />

@@ -68,11 +68,36 @@ async function main() {
   const sqlite = new Database(sqlitePath, { readonly: true });
   const all = (sql: string) => sqlite.prepare(sql).all() as any[];
 
+  // ── target profile (multi-profile era) ───────────────────
+  // All imported rows belong to one profile. Defaults to "Sama"; override
+  // with `--profile <name>`.
+  const profileName = getArg("profile") ?? "Sama";
+  const nowIso = new Date().toISOString();
+  const profile =
+    (await prisma.profile.findUnique({ where: { name: profileName } })) ??
+    (await prisma.profile.create({
+      data: { name: profileName, createdAt: nowIso, updatedAt: nowIso },
+    }));
+  const profileId = profile.id;
+  console.log(`Target profile: ${profileName} (${profileId})`);
+
   // ── settings (skip cloudinary_* — now env-only) ───────────
+  // The session cookie / user-agent now live on the Profile; everything else
+  // stays as a global setting.
   const settings = all("SELECT * FROM settings").filter(
     (s) => !String(s.key).startsWith("cloudinary_")
   );
   for (const s of settings) {
+    if (s.key === "instagram_cookie" || s.key === "user_agent") {
+      await prisma.profile.update({
+        where: { id: profileId },
+        data:
+          s.key === "instagram_cookie"
+            ? { instagramCookie: s.value, updatedAt: nowIso }
+            : { userAgent: s.value, updatedAt: nowIso },
+      });
+      continue;
+    }
     await prisma.setting.upsert({
       where: { key: s.key },
       create: { key: s.key, value: s.value, updatedAt: s.updated_at },
@@ -104,8 +129,8 @@ async function main() {
     };
     await prisma.scrapeRun.upsert({
       where: { id: r.id },
-      create: { id: r.id, ...data },
-      update: data,
+      create: { id: r.id, profileId, ...data },
+      update: { profileId, ...data },
     });
   }
   console.log(`scrapeRuns: ${runs.length} (max id ${maxRunId})`);
@@ -132,8 +157,8 @@ async function main() {
       discoveredInRunId: toNull(a.discovered_in_run_id),
     };
     await prisma.account.upsert({
-      where: { pk: String(a.pk) },
-      create: { pk: String(a.pk), ...data },
+      where: { profileId_pk: { profileId, pk: String(a.pk) } },
+      create: { profileId, pk: String(a.pk), ...data },
       update: data,
     });
   }
@@ -143,7 +168,7 @@ async function main() {
   const posts = all("SELECT * FROM posts");
   for (const p of posts) {
     const data = {
-      id: p.id,
+      mediaId: p.id,
       code: p.code,
       accountPk: String(p.account_pk),
       mediaType: p.media_type,
@@ -160,8 +185,8 @@ async function main() {
       createdAt: p.created_at,
     };
     await prisma.post.upsert({
-      where: { pk: String(p.pk) },
-      create: { pk: String(p.pk), ...data },
+      where: { profileId_pk: { profileId, pk: String(p.pk) } },
+      create: { profileId, pk: String(p.pk), ...data },
       update: data,
     });
   }
@@ -171,6 +196,7 @@ async function main() {
   const carousel = all("SELECT * FROM carousel_media");
   for (const c of carousel) {
     const data = {
+      profileId,
       postPk: String(c.post_pk),
       position: c.position,
       mediaType: c.media_type,
@@ -182,7 +208,7 @@ async function main() {
       cloudinaryUrl: toNull(c.cloudinary_url),
     };
     const existing = await prisma.carouselMedia.findFirst({
-      where: { postPk: data.postPk, position: data.position },
+      where: { profileId, postPk: data.postPk, position: data.position },
       select: { id: true },
     });
     if (existing) {
@@ -199,32 +225,34 @@ async function main() {
   // ── accountNotes (natural key: accountPk+content+createdAt) ─
   const notes = all("SELECT * FROM account_notes");
   for (const n of notes) {
-    const where = {
+    const data = {
+      profileId,
       accountPk: String(n.account_pk),
       content: n.content,
       createdAt: n.created_at,
     };
     const existing = await prisma.accountNote.findFirst({
-      where,
+      where: data,
       select: { id: true },
     });
-    if (!existing) await prisma.accountNote.create({ data: where });
+    if (!existing) await prisma.accountNote.create({ data });
   }
   console.log(`accountNotes: ${notes.length}`);
 
   // ── accountStatusHistory ──────────────────────────────────
   const statusHist = all("SELECT * FROM account_status_history");
   for (const h of statusHist) {
-    const where = {
+    const data = {
+      profileId,
       accountPk: String(h.account_pk),
       status: h.status,
       changedAt: h.changed_at,
     };
     const existing = await prisma.accountStatusHistory.findFirst({
-      where,
+      where: data,
       select: { id: true },
     });
-    if (!existing) await prisma.accountStatusHistory.create({ data: where });
+    if (!existing) await prisma.accountStatusHistory.create({ data });
   }
   console.log(`accountStatusHistory: ${statusHist.length}`);
 
@@ -232,6 +260,7 @@ async function main() {
   const nameHist = all("SELECT * FROM account_username_history");
   for (const h of nameHist) {
     const data = {
+      profileId,
       accountPk: String(h.account_pk),
       oldUsername: h.old_username,
       newUsername: h.new_username,
@@ -240,6 +269,7 @@ async function main() {
     };
     const existing = await prisma.accountUsernameHistory.findFirst({
       where: {
+        profileId,
         accountPk: data.accountPk,
         oldUsername: data.oldUsername,
         newUsername: data.newUsername,

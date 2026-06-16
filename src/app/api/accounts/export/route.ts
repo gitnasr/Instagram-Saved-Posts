@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 import {
   parseAccountFilters,
   buildAccountWhere,
@@ -14,19 +15,23 @@ function escapeCsv(value: string): string {
 }
 
 export async function GET(request: Request) {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   const { searchParams } = new URL(request.url);
   const sort = searchParams.get("sort") ?? "post_count";
   const order = searchParams.get("order") ?? "desc";
 
   const filters = parseAccountFilters(searchParams);
-  const noteCtx = await resolveNoteFilterContext(filters);
-  const where = buildAccountWhere(filters, noteCtx);
+  const noteCtx = await resolveNoteFilterContext(filters, profile.id);
+  const where = buildAccountWhere(filters, profile.id, noteCtx);
   const orderBy = buildAccountOrderBy(sort, order);
 
   const allAccounts = await prisma.account.findMany({ where, orderBy });
 
   // Fetch all notes once, keyed by accountPk
   const allNotes = await prisma.accountNote.findMany({
+    where: { profileId: profile.id },
     select: { accountPk: true, content: true },
   });
   const notesMap = new Map<string, string[]>();

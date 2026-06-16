@@ -4,8 +4,12 @@ import {
   getCurrentSyncState,
 } from "@/lib/cloudinary-sync";
 import { getCloudinaryConfig, isCloudinaryConfigured } from "@/lib/cloudinary";
+import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 
 export async function POST() {
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
   if (!isCloudinaryConfigured(getCloudinaryConfig())) {
     return NextResponse.json(
       { error: "Cloudinary credentials are not configured." },
@@ -14,8 +18,8 @@ export async function POST() {
   }
   try {
     // Fire and forget — sync runs in background
-    runCloudinarySync().catch(() => {
-      // Error is captured in currentSyncState
+    runCloudinarySync(profile.id).catch(() => {
+      // Error is captured in the profile's sync state
     });
     return NextResponse.json({ status: "started" });
   } catch (error) {
@@ -25,7 +29,10 @@ export async function POST() {
 }
 
 export async function GET() {
-  const current = getCurrentSyncState();
+  const profile = await getActiveProfile();
+  if (!profile) return noActiveProfileResponse();
+
+  const current = getCurrentSyncState(profile.id);
   const configured = isCloudinaryConfigured(getCloudinaryConfig());
   return NextResponse.json({ current, configured });
 }
