@@ -114,7 +114,7 @@ export default function SettingsPage() {
                   value={cookie}
                   onChange={(e) => setCookie(e.target.value)}
                   rows={4}
-                  className="font-mono text-xs"
+                  className="w-full min-w-0 break-all font-mono text-xs"
                   disabled={isViewer}
                 />
               </div>
