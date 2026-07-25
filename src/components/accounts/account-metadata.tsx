@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,19 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useUpdateAccount } from "@/hooks/use-update-account";
 import {
   ACCOUNT_STATUS_OPTIONS,
   dedupeAndSortTextOptions,
+  formatTimelineTimestamp,
   getTodayDateInputValue,
 } from "@/lib/account-metadata";
-import type { Account, AccountStatusHistory, AccountUsernameHistory } from "@/types";
+import type { Account } from "@/types";
 
 interface AccountMetadataProps {
   account: Account;
   existsAlsoOptions: string[];
-  statusHistory: AccountStatusHistory[];
-  usernameHistory: AccountUsernameHistory[];
 }
 
 const CUSTOM_STATUS_VALUE = "__custom__";
@@ -42,26 +41,9 @@ function getInitialStatusSelection(status: string | null) {
     : CUSTOM_STATUS_VALUE;
 }
 
-function formatTimelineTimestamp(value: string) {
-  try {
-    const parsed = new Date(value);
-    return {
-      absolute: format(parsed, "PPP p"),
-      relative: formatDistanceToNow(parsed, { addSuffix: true }),
-    };
-  } catch {
-    return {
-      absolute: value,
-      relative: "",
-    };
-  }
-}
-
 export function AccountMetadata({
   account,
   existsAlsoOptions,
-  statusHistory,
-  usernameHistory,
 }: AccountMetadataProps) {
   const today = useMemo(() => getTodayDateInputValue(), []);
   const savedStatus = account.accountStatus ?? "";
@@ -99,6 +81,24 @@ export function AccountMetadata({
     lastScrapeOn !== (account.lastScrapeOn ?? "") ||
     effectiveStatus !== savedStatus ||
     effectiveExistsAlso !== (account.existsAlso ?? "");
+
+  const isIgnored = account.ignoredAt != null;
+  const ignoredSince = account.ignoredAt
+    ? formatTimelineTimestamp(account.ignoredAt)
+    : null;
+
+  // Applied immediately rather than behind Save Details — an export-affecting
+  // flag shouldn't sit in an unsaved form.
+  const handleToggleIgnored = (next: boolean) => {
+    updateAccount(
+      { ignored: next },
+      {
+        onSuccess: () =>
+          toast.success(next ? "Account ignored" : "Account un-ignored"),
+        onError: (error) => toast.error(error.message),
+      }
+    );
+  };
 
   const handleAddExistsAlsoOption = () => {
     const trimmed = newExistsAlsoOption.trim();
@@ -247,82 +247,23 @@ export function AccountMetadata({
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <Label className="text-sm font-medium">Status Timeline</Label>
-            <span className="text-xs text-muted-foreground">
-              Saved automatically when the status changes
-            </span>
-          </div>
-
-          {statusHistory.length > 0 ? (
-            <div className="space-y-2">
-              {statusHistory.map((item) => {
-                const timestamp = formatTimelineTimestamp(item.changedAt);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border bg-muted/20 px-3 py-2"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium">{item.status}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {timestamp.relative || timestamp.absolute}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {timestamp.absolute}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
-              No status changes recorded yet.
+        <div className="flex items-center justify-between gap-4 rounded-lg border px-3 py-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="ignore-account" className="text-sm font-medium">
+              Ignore account
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {ignoredSince
+                ? `Excluded from CSV exports since ${ignoredSince.absolute}`
+                : "Excluded from CSV exports until you turn this back off"}
             </p>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <Label className="text-sm font-medium">Username Timeline</Label>
-            <span className="text-xs text-muted-foreground">
-              Recorded when scrape detects a handle change
-            </span>
           </div>
-
-          {usernameHistory.length > 0 ? (
-            <div className="space-y-2">
-              {usernameHistory.map((item) => {
-                const timestamp = formatTimelineTimestamp(item.changedAt);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border bg-muted/20 px-3 py-2"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium">
-                        @{item.oldUsername} &rarr; @{item.newUsername}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {timestamp.relative || timestamp.absolute}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {timestamp.absolute}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
-              No username changes recorded yet.
-            </p>
-          )}
+          <Switch
+            id="ignore-account"
+            checked={isIgnored}
+            disabled={isPending}
+            onCheckedChange={handleToggleIgnored}
+          />
         </div>
 
         <div className="flex justify-end">

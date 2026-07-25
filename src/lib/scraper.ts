@@ -3,6 +3,12 @@ import { fetchSavedPostsPage, fetchLoggedInUser } from "./instagram-api";
 import { getCloudinaryConfig, isCloudinaryConfigured } from "./cloudinary";
 import { runCloudinarySync } from "./cloudinary-sync";
 import { PRIVATE_ACCOUNT_STATUS } from "./account-metadata";
+import {
+  diffAccountForEvents,
+  recordAccountEvents,
+  recordBulkAccountEvents,
+  type AccountEventDraft,
+} from "./account-events";
 import { logger } from "./logger";
 import * as Sentry from "@sentry/nextjs";
 import { createHash } from "crypto";
@@ -468,6 +474,10 @@ async function processMediaItem(
     now
   );
 
+  // Timeline entries collected across the account and post branches, then
+  // written once at the end of this media item.
+  const accountEvents: AccountEventDraft[] = [];
+
   if (!existingAccount) {
     await prisma.account.create({
       data: {
@@ -498,9 +508,20 @@ async function processMediaItem(
         now
       );
     }
+
+    accountEvents.push({ type: "discovered", occurredAt: now });
+    if (media.user.is_private) {
+      accountEvents.push({ type: "privacy_private", occurredAt: now });
+    }
   } else {
     const previousUsername = existingAccount.username;
     const nextUsername = media.user.username;
+
+    // Diff before the update overwrites the stored values. This records both
+    // privacy directions, unlike the accountStatus-based history above.
+    accountEvents.push(
+      ...diffAccountForEvents(existingAccount, media.user, hashChanged, now)
+    );
 
     await prisma.account.update({
       where: { id: existingAccount.id },
@@ -571,6 +592,16 @@ async function processMediaItem(
 
     runtime.state.newPostsAdded += 1;
 
+    // "A saved post we hadn't seen before" — the account's real post feed is
+    // never fetched, so `takenAt` is carried in metadata to distinguish when
+    // the post was published from when we discovered it.
+    accountEvents.push({
+      type: "new_post",
+      occurredAt: now,
+      toValue: media.code,
+      metadata: JSON.stringify({ postPk: mediaPk, takenAt: media.taken_at }),
+    });
+
     await insertOrUpdateCarouselItems(profileId, mediaPk, media, true);
   } else {
     await prisma.post.update({
@@ -585,6 +616,8 @@ async function processMediaItem(
 
     await insertOrUpdateCarouselItems(profileId, mediaPk, media, false);
   }
+
+  await recordAccountEvents(profileId, accountPkStr, accountEvents, runId);
 }
 
 /** Insert new carousel items or update existing ones with fresh URLs */
@@ -759,12 +792,19 @@ async function calculateAndUpdateLostState(
       where: { profileId, pk: { in: newlyLostPks } },
       data: { lostAt: runCompletedAt },
     });
+    await recordBulkAccountEvents(profileId, newlyLostPks, "lost", runCompletedAt);
   }
   if (newlyRecoveredPks.length > 0) {
     await prisma.account.updateMany({
       where: { profileId, pk: { in: newlyRecoveredPks } },
       data: { lostAt: null, recoveredAt: runCompletedAt },
     });
+    await recordBulkAccountEvents(
+      profileId,
+      newlyRecoveredPks,
+      "recovered",
+      runCompletedAt
+    );
   }
 
   return { allLostPks, newlyLostPks, newlyRecoveredPks };
