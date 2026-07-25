@@ -43,6 +43,7 @@ function countActiveFilters(filters: AccountFilters): number {
   if (filters.searchNotes) count++;
   if (filters.hasNotes) count++;
   if (filters.lostStatus) count++;
+  if (filters.ignoredStatus) count++;
   return count;
 }
 
@@ -169,6 +170,29 @@ export function AccountFiltersPanel({
                 <SelectItem value="lost">Currently lost</SelectItem>
                 <SelectItem value="recovered">Recovered</SelectItem>
                 <SelectItem value="never">Never lost</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Ignored filter — ignored accounts are always left out of the CSV */}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs font-medium">Ignored</Label>
+            <Select
+              value={filters.ignoredStatus ?? "any"}
+              onValueChange={(val) =>
+                updateFilter(
+                  "ignoredStatus",
+                  val === "any" ? undefined : (val as "ignored" | "active")
+                )
+              }
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="ignored">Ignored only</SelectItem>
+                <SelectItem value="active">Not ignored</SelectItem>
               </SelectContent>
             </Select>
           </div>

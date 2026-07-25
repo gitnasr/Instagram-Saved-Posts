@@ -3,6 +3,7 @@ import type {
   AccountNote as PrismaAccountNote,
   AccountStatusHistory as PrismaAccountStatusHistory,
   AccountUsernameHistory as PrismaAccountUsernameHistory,
+  AccountEvent as PrismaAccountEvent,
   Post as PrismaPost,
   ScrapeRun as PrismaScrapeRun,
   Setting as PrismaSetting,
@@ -26,6 +27,7 @@ export type Account = PrismaAccount;
 export type AccountNote = PrismaAccountNote;
 export type AccountStatusHistory = PrismaAccountStatusHistory;
 export type AccountUsernameHistory = PrismaAccountUsernameHistory;
+export type AccountEvent = PrismaAccountEvent;
 export type Post = PrismaPost;
 export type ScrapeRun = PrismaScrapeRun;
 export type Setting = PrismaSetting;
@@ -50,6 +52,11 @@ export interface AccountDetailResponse {
   existsAlsoOptions: string[];
   statusHistory: AccountStatusHistory[];
   usernameHistory: AccountUsernameHistory[];
+  events: AccountEvent[];
+  /** Cap applied to `events`; a full page means older entries were trimmed. */
+  eventsLimit: number;
+  /** Unix seconds of the newest saved post, or null when none. */
+  latestPostTakenAt: number | null;
   posts: Post[];
   pagination: {
     page: number;

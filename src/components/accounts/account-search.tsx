@@ -129,6 +129,12 @@ export function AccountSearch({
             size="sm"
             className="col-span-2 h-10 w-full sm:col-span-1 sm:w-auto"
             onClick={onExport}
+            disabled={filters.ignoredStatus === "ignored"}
+            title={
+              filters.ignoredStatus === "ignored"
+                ? "Ignored accounts are never exported — clear the Ignored filter"
+                : "Export the filtered accounts, excluding ignored ones"
+            }
           >
             <Download data-icon="inline-start" />
             Export CSV
@@ -172,6 +178,11 @@ function getActiveFilterLabels(filters: AccountFilters): string[] {
   if (filters.existsAlso) labels.push(`Exists also: ${filters.existsAlso}`);
   if (filters.hasNotes) labels.push("Has notes");
   if (filters.searchNotes) labels.push("Search notes");
+  if (filters.lostStatus === "lost") labels.push("Currently lost");
+  if (filters.lostStatus === "recovered") labels.push("Recovered");
+  if (filters.lostStatus === "never") labels.push("Never lost");
+  if (filters.ignoredStatus === "ignored") labels.push("Ignored only");
+  if (filters.ignoredStatus === "active") labels.push("Not ignored");
 
   return labels;
 }

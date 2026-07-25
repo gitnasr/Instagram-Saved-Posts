@@ -18,7 +18,16 @@ export interface AccountFilterParams {
   searchNotes?: string;
   hasNotes?: string;
   lostStatus?: string;
+  ignoredStatus?: string;
 }
+
+/**
+ * In MongoDB, fields not yet written to a document are "missing" rather than
+ * null, so `ignoredAt`-is-empty checks must cover both states.
+ */
+export const notIgnoredWhere: Prisma.AccountWhereInput = {
+  OR: [{ ignoredAt: null }, { ignoredAt: { isSet: false } }],
+};
 
 export function parseAccountFilters(
   searchParams: URLSearchParams
@@ -40,6 +49,7 @@ export function parseAccountFilters(
     searchNotes: searchParams.get("searchNotes") ?? undefined,
     hasNotes: searchParams.get("hasNotes") ?? undefined,
     lostStatus: searchParams.get("lostStatus") ?? undefined,
+    ignoredStatus: searchParams.get("ignoredStatus") ?? undefined,
   };
 }
 
@@ -182,6 +192,14 @@ export function buildAccountWhere(
   } else if (filters.lostStatus === "never") {
     and.push(lostAtNullOrMissing);
     and.push(recoveredAtNullOrMissing);
+  }
+
+  // Unset means "show both" — the grid lists ignored accounts unless asked
+  // otherwise. The CSV export excludes them regardless (see export route).
+  if (filters.ignoredStatus === "ignored") {
+    and.push({ ignoredAt: { not: null } });
+  } else if (filters.ignoredStatus === "active") {
+    and.push(notIgnoredWhere);
   }
 
   return and.length > 0 ? { AND: and } : {};

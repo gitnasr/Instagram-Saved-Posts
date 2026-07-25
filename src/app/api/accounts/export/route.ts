@@ -5,6 +5,7 @@ import {
   buildAccountWhere,
   buildAccountOrderBy,
   resolveNoteFilterContext,
+  notIgnoredWhere,
 } from "@/lib/account-filters";
 
 function escapeCsv(value: string): string {
@@ -24,7 +25,11 @@ export async function GET(request: Request) {
 
   const filters = parseAccountFilters(searchParams);
   const noteCtx = await resolveNoteFilterContext(filters, profile.id);
-  const where = buildAccountWhere(filters, profile.id, noteCtx);
+  // Ignored accounts are always excluded from the export, whatever the filters
+  // say — that is the whole point of the flag. Clear it to get them back.
+  const where = {
+    AND: [buildAccountWhere(filters, profile.id, noteCtx), notIgnoredWhere],
+  };
   const orderBy = buildAccountOrderBy(sort, order);
 
   const allAccounts = await prisma.account.findMany({ where, orderBy });

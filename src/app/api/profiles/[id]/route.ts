@@ -82,6 +82,7 @@ export async function DELETE(
     prisma.accountNote.deleteMany({ where }),
     prisma.accountStatusHistory.deleteMany({ where }),
     prisma.accountUsernameHistory.deleteMany({ where }),
+    prisma.accountEvent.deleteMany({ where }),
     prisma.scrapeRun.deleteMany({ where }),
     prisma.account.deleteMany({ where }),
   ]);
