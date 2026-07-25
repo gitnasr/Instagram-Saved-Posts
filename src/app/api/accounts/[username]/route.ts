@@ -8,6 +8,13 @@ import {
   normalizeOptionalText,
   parseReusableExistsAlsoOptions,
 } from "@/lib/account-metadata";
+import {
+  accountEventsQuery,
+  recordAccountEvents,
+  type AccountEventDraft,
+} from "@/lib/account-events";
+
+const ACCOUNT_EVENTS_LIMIT = 200;
 
 export async function PATCH(
   request: Request,
@@ -29,6 +36,7 @@ export async function PATCH(
 
   const now = new Date().toISOString();
   const updates: Prisma.AccountUpdateInput = {};
+  const events: AccountEventDraft[] = [];
 
   if ("notes" in body) {
     if (body.notes !== null && typeof body.notes !== "string") {
@@ -87,6 +95,31 @@ export async function PATCH(
           },
         });
       }
+
+      events.push({
+        type: "status_changed",
+        occurredAt: now,
+        fromValue: account.accountStatus,
+        toValue: nextStatus,
+      });
+    }
+  }
+
+  if ("ignored" in body) {
+    if (typeof body.ignored !== "boolean") {
+      return NextResponse.json(
+        { error: "ignored must be a boolean" },
+        { status: 400 }
+      );
+    }
+
+    const wasIgnored = account.ignoredAt != null;
+    if (wasIgnored !== body.ignored) {
+      updates.ignoredAt = body.ignored ? now : null;
+      events.push({
+        type: body.ignored ? "ignored" : "unignored",
+        occurredAt: now,
+      });
     }
   }
 
@@ -154,6 +187,8 @@ export async function PATCH(
     });
   }
 
+  await recordAccountEvents(profile.id, account.pk, events);
+
   if ("existsAlso" in body || "newExistsAlsoOption" in body) {
     const value = JSON.stringify(reusableExistsAlsoOptions);
     await prisma.setting.upsert({
@@ -187,29 +222,43 @@ export async function GET(
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
-  const [accountPosts, total, existsAlsoSetting, statusHistory, usernameHistory] =
-    await Promise.all([
-      prisma.post.findMany({
-        where: { profileId: profile.id, accountPk: account.pk },
-        orderBy: { takenAt: "desc" },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.post.count({
-        where: { profileId: profile.id, accountPk: account.pk },
-      }),
-      prisma.setting.findUnique({
-        where: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY },
-      }),
-      prisma.accountStatusHistory.findMany({
-        where: { profileId: profile.id, accountPk: account.pk },
-        orderBy: { changedAt: "desc" },
-      }),
-      prisma.accountUsernameHistory.findMany({
-        where: { profileId: profile.id, accountPk: account.pk },
-        orderBy: { changedAt: "desc" },
-      }),
-    ]);
+  const [
+    accountPosts,
+    total,
+    existsAlsoSetting,
+    statusHistory,
+    usernameHistory,
+    events,
+    latestPost,
+  ] = await Promise.all([
+    prisma.post.findMany({
+      where: { profileId: profile.id, accountPk: account.pk },
+      orderBy: { takenAt: "desc" },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.post.count({
+      where: { profileId: profile.id, accountPk: account.pk },
+    }),
+    prisma.setting.findUnique({
+      where: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY },
+    }),
+    prisma.accountStatusHistory.findMany({
+      where: { profileId: profile.id, accountPk: account.pk },
+      orderBy: { changedAt: "desc" },
+    }),
+    prisma.accountUsernameHistory.findMany({
+      where: { profileId: profile.id, accountPk: account.pk },
+      orderBy: { changedAt: "desc" },
+    }),
+    prisma.accountEvent.findMany(
+      accountEventsQuery(profile.id, account.pk, ACCOUNT_EVENTS_LIMIT)
+    ),
+    prisma.post.aggregate({
+      where: { profileId: profile.id, accountPk: account.pk },
+      _max: { takenAt: true },
+    }),
+  ]);
 
   const existsAlsoOptions = parseReusableExistsAlsoOptions(
     existsAlsoSetting?.value
@@ -220,6 +269,11 @@ export async function GET(
     existsAlsoOptions,
     statusHistory,
     usernameHistory,
+    events,
+    eventsLimit: ACCOUNT_EVENTS_LIMIT,
+    // Newest post we have saved for this account — the real IG feed is never
+    // fetched, so this is the best "last post" signal available.
+    latestPostTakenAt: latestPost._max.takenAt ?? null,
     posts: accountPosts,
     pagination: {
       page,

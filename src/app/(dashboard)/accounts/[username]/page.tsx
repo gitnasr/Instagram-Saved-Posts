@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccountMetadata } from "@/components/accounts/account-metadata";
+import { AccountTimeline } from "@/components/accounts/account-timeline";
 import { AccountPostsGrid } from "@/components/accounts/account-posts-grid";
 import { AccountNotes } from "@/components/accounts/account-notes";
 import { useAccountDetail } from "@/hooks/use-account-detail";
@@ -72,10 +73,14 @@ export default function AccountDetailPage({
             {account.isVerified && <Badge variant="secondary">Verified</Badge>}
             {account.isPrivate && <Badge variant="outline">Private</Badge>}
             {account.lostAt && <Badge variant="destructive">Lost</Badge>}
+            {account.ignoredAt && <Badge variant="outline">Ignored</Badge>}
           </div>
           <p className="text-muted-foreground">{account.fullName}</p>
           <p className="text-sm text-muted-foreground">
             {account.savedPostCount} saved posts
+            {data.latestPostTakenAt
+              ? ` · latest ${format(new Date(data.latestPostTakenAt * 1000), "MMM d, yyyy")}`
+              : ""}
           </p>
           {account.lostAt ? (
             <p className="text-sm text-destructive">
@@ -104,19 +109,14 @@ export default function AccountDetailPage({
           account.existsAlso ?? "",
           account.lostAt ?? "",
           account.recoveredAt ?? "",
-          data.statusHistory
-            .map((item) => `${item.id}:${item.changedAt}:${item.status}`)
-            .join("|"),
-          data.usernameHistory
-            .map((item) => `${item.id}:${item.changedAt}:${item.oldUsername}:${item.newUsername}`)
-            .join("|"),
+          account.ignoredAt ?? "",
           data.existsAlsoOptions.join("|"),
         ].join("::")}
         account={account}
         existsAlsoOptions={data.existsAlsoOptions}
-        statusHistory={data.statusHistory}
-        usernameHistory={data.usernameHistory}
       />
+
+      <AccountTimeline events={data.events} eventsLimit={data.eventsLimit} />
 
       <AccountNotes username={account.username} />
 

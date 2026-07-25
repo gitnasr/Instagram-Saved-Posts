@@ -7,6 +7,7 @@ export interface UpdateAccountPayload {
   accountStatus?: string | null;
   existsAlso?: string | null;
   newExistsAlsoOption?: string | null;
+  ignored?: boolean;
 }
 
 export function useUpdateAccount(username: string) {

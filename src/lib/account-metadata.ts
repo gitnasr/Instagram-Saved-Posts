@@ -1,3 +1,5 @@
+import { format, formatDistanceToNow } from "date-fns";
+
 export const PRIVATE_ACCOUNT_STATUS = "Private Account";
 
 export const ACCOUNT_STATUS_OPTIONS = [
@@ -12,6 +14,19 @@ export const EXISTS_ALSO_OPTIONS_SETTING_KEY = "account_exists_also_options";
 
 export function getTodayDateInputValue() {
   return new Date().toISOString().slice(0, 10);
+}
+
+/** Absolute + relative rendering of an ISO timestamp for timeline rows. */
+export function formatTimelineTimestamp(value: string) {
+  try {
+    const parsed = new Date(value);
+    return {
+      absolute: format(parsed, "PPP p"),
+      relative: formatDistanceToNow(parsed, { addSuffix: true }),
+    };
+  } catch {
+    return { absolute: value, relative: "" };
+  }
 }
 
 export function normalizeDateInput(value: unknown) {

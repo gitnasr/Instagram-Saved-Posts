@@ -16,6 +16,25 @@ enum ScrapeStatus {
   interrupted
 }
 
+/// Every automatically- or manually-recorded change on a scraped account.
+/// Drives the per-account timeline.
+enum AccountEventType {
+  discovered
+  new_post
+  privacy_private
+  privacy_public
+  username_changed
+  full_name_changed
+  verified_gained
+  verified_lost
+  profile_pic_changed
+  lost
+  recovered
+  status_changed
+  ignored
+  unignored
+}
+
 /// A logged-in Instagram session (the Netflix-style "profile"). Owns its own
 /// cookie/user-agent and all scraped data via `profileId` on every collection.
 model Profile {
@@ -28,6 +47,7 @@ model Profile {
   igUserPk            String? // the logged-in account's own IG pk (for avatar)
   igUsername          String?
   lostStateBackfilled Boolean @default(false) // was global setting `lost_state_backfilled`
+  eventsBackfilled    Boolean @default(false) // accountEvents seeded from pre-timeline data
   createdAt           String
   updatedAt           String
 
@@ -56,6 +76,9 @@ model Account {
   discoveredInRunId       Int?
   lostAt                  String?
   recoveredAt             String?
+  /// Set when the account is marked "ignored"; ignored accounts are never
+  /// written to the CSV export until the flag is cleared.
+  ignoredAt               String?
 
   @@unique([profileId, pk])
   @@unique([profileId, username])
@@ -65,6 +88,7 @@ model Account {
   @@index([profileId, firstSeenAt])
   @@index([profileId, discoveredInRunId])
   @@index([profileId, lostAt])
+  @@index([profileId, ignoredAt])
   @@map("accounts")
 }
 
@@ -102,6 +126,24 @@ model AccountUsernameHistory {
   @@index([profileId, accountPk])
   @@index([profileId, scrapeRunId])
   @@map("accountUsernameHistory")
+}
+
+/// Append-only per-account timeline. Written by the scraper on every detected
+/// change and by manual edits; never updated in place.
+model AccountEvent {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  profileId   String
+  accountPk   String
+  type        AccountEventType
+  occurredAt  String
+  fromValue   String?
+  toValue     String?
+  scrapeRunId Int?
+  metadata    String? // JSON blob, e.g. { postPk, code, takenAt }
+
+  @@index([profileId, accountPk, occurredAt])
+  @@index([profileId, occurredAt])
+  @@map("accountEvents")
 }
 
 model Post {

@@ -65,6 +65,9 @@ export function useUrlFilters() {
     const lostStatus = searchParams.get("lostStatus");
     if (lostStatus === "lost" || lostStatus === "recovered" || lostStatus === "never")
       f.lostStatus = lostStatus;
+    const ignoredStatus = searchParams.get("ignoredStatus");
+    if (ignoredStatus === "ignored" || ignoredStatus === "active")
+      f.ignoredStatus = ignoredStatus;
     return f;
   }, [searchParams]);
 
@@ -146,6 +149,7 @@ export function useUrlFilters() {
         searchNotes: newFilters.searchNotes ? "true" : undefined,
         hasNotes: newFilters.hasNotes ? "true" : undefined,
         lostStatus: newFilters.lostStatus ?? undefined,
+        ignoredStatus: newFilters.ignoredStatus ?? undefined,
       };
       updateUrl(updates);
     },
