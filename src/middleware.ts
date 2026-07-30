@@ -16,6 +16,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api/scrape") ||
     pathname.startsWith("/api/settings") ||
     pathname.startsWith("/api/cloudinary-sync") ||
+    pathname.startsWith("/api/search/reindex") ||
     isProfileWrite;
 
   const isWriteMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(request.method);
@@ -43,6 +44,7 @@ export const config = {
     "/api/scrape/:path*",
     "/api/settings/:path*",
     "/api/cloudinary-sync/:path*",
+    "/api/search/reindex/:path*",
     "/api/profiles/:path*",
   ],
 };
