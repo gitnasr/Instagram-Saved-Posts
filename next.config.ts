@@ -3,7 +3,18 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["@prisma/client", ".prisma/client", "pino", "pino-pretty"],
+  serverExternalPackages: [
+    "@prisma/client",
+    ".prisma/client",
+    "pino",
+    "pino-pretty",
+    "onnxruntime-node",
+    "@huggingface/transformers",
+    "sharp",
+    "@vladmandic/face-api",
+    "@tensorflow/tfjs",
+    "@tensorflow/tfjs-backend-wasm",
+  ],
 };
 
 export default withSentryConfig(nextConfig, {

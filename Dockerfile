@@ -16,6 +16,11 @@ RUN npm ci --ignore-scripts
 COPY prisma ./prisma
 RUN npx prisma generate
 
+# Bake CLIP weights into the image (own layer, cached across deploys unless
+# warm-models.ts/its model id changes) instead of fetching them at runtime.
+COPY scripts/warm-models.ts ./scripts/warm-models.ts
+RUN npx tsx scripts/warm-models.ts
+
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -23,6 +28,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN --mount=type=secret,id=sentry_auth_token \
   SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
   npm run build
+
+# Standalone-output file tracing only follows static require()/import graphs,
+# so it misses native binaries and data files (model weights, .wasm) loaded
+# by path at runtime — onnxruntime-node, sharp, face-api, tfjs all hit this.
+# Pruning dev deps then copying the whole tree wholesale (below) is simpler
+# and more robust than chasing each missing transitive dependency by hand.
+RUN npm prune --omit=dev
 
 # ── Runner ────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS runner
@@ -44,9 +56,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Prisma generated client + query engine (kept external from the bundle)
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+# Full pruned (production-only) node_modules, overlaid on top of the
+# standalone output's traced subset — see the npm-prune step above for why.
+# This supersedes the old Prisma-only manual copy (still correct, just now
+# redundant: the engine/client are already inside this full tree).
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 USER nextjs
