@@ -73,6 +73,21 @@ export default function RunDetailPage({
     newlyRecoveredAccounts,
     usernameChanges,
   } = data;
+    const canResume =
+    run.status !== "running" &&
+    run.status !== "completed" &&
+    Boolean(run.checkpointMaxId);
+  const resumeButton = (
+    <Button
+      size="sm"
+      variant="secondary"
+      onClick={() => resumeMutation.mutate(run.id)}
+      disabled={resumeMutation.isPending}
+    >
+      <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+      Resume Scrape
+    </Button>
+  );
   const started = new Date(run.startedAt);
   const completed = run.completedAt ? new Date(run.completedAt) : null;
   const duration = completed
@@ -118,30 +133,58 @@ export default function RunDetailPage({
           <AlertTitle>Scrape Interrupted</AlertTitle>
           <AlertDescription className="flex items-center justify-between gap-4">
             <span>
-              The server restarted while this scrape was running. It stopped at page {run.pagesScraped}.
+              {run.errorKind === "rate_limited"
+                ? "Instagram rate-limited this scrape"
+                : run.errorKind === "transient"
+                  ? "A network error stopped this scrape"
+                  : "The server restarted while this scrape was running"}
+              . It stopped at page {run.pagesScraped}
+              {run.retryCount > 0 && ` after ${run.retryCount} retries`}.
               Resume to continue from where it left off.
             </span>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => resumeMutation.mutate(run.id)}
-              disabled={resumeMutation.isPending}
-            >
-              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Resume Scrape
-            </Button>
+            {canResume && resumeButton}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Cancelled alert */}
+      {run.status === "cancelled" && (
+        <Alert>
+          <RotateCcw className="h-4 w-4" />
+          <AlertTitle>Scrape Cancelled</AlertTitle>
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>
+              This scrape was cancelled at page {run.pagesScraped}. Its
+              checkpoint was kept, so it can still be resumed.
+            </span>
+            {canResume && resumeButton}
           </AlertDescription>
         </Alert>
       )}
 
       {/* Error alert */}
-      {run.status === "failed" && run.errorMessage && (
+      {run.status === "failed" && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Scrape Failed</AlertTitle>
           <AlertDescription className="font-mono text-xs break-all">
-            {run.errorMessage}
+            {run.errorMessage ?? "No error message was recorded."}
           </AlertDescription>
+          {run.errorKind === "auth" && (
+            <p className="mt-2 text-xs">
+              This looks like an expired or invalid session cookie. Update it in
+              Settings, then start a new scrape.
+            </p>
+          )}
+          {canResume && (
+            <div className="mt-3 flex items-center gap-3">
+              {resumeButton}
+              <span className="text-xs opacity-80">
+                Stopped at page {run.pagesScraped} — the checkpoint is still
+                valid.
+              </span>
+            </div>
+          )}
           {run.errorBody && (
             <details className="mt-3">
               <summary className="cursor-pointer text-xs opacity-70 hover:opacity-100">

@@ -8,3 +8,11 @@ export const DEFAULT_PAGE_COUNT = 48;
 
 export const SCRAPE_DELAY_MIN_MS = 2000;
 export const SCRAPE_DELAY_MAX_MS = 4000;
+
+/** Abort a single Instagram request after this long; a hung socket used to stall a whole run. */
+export const SCRAPE_REQUEST_TIMEOUT_MS = 30_000;
+
+/** Retries per page before a run is parked as resumable. */
+export const SCRAPE_MAX_RETRIES = 5;
+export const SCRAPE_RETRY_BASE_MS = 5_000;
+export const SCRAPE_RETRY_MAX_MS = 300_000;

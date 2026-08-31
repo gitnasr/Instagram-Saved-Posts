@@ -1,5 +1,10 @@
 import { prisma, getNextScrapeRunId } from "./prisma";
-import { fetchSavedPostsPage, fetchLoggedInUser } from "./instagram-api";
+import {
+  fetchSavedPostsPage,
+  fetchLoggedInUser,
+  classifyScrapeError,
+  type ScrapeErrorKind,
+} from "./instagram-api";
 import { getCloudinaryConfig, isCloudinaryConfigured } from "./cloudinary";
 import { runCloudinarySync } from "./cloudinary-sync";
 import { PRIVATE_ACCOUNT_STATUS } from "./account-metadata";
@@ -32,12 +37,25 @@ function extractErrorInfo(error: unknown): {
   errorBody: string | null;
 } {
   const errorMsg = error instanceof Error ? error.message : "Unknown error";
+
+  // Page errors arrive wrapped by `fetchSavedPostsPage`, so the axios error
+  // holding Instagram's response body is one level down.
+  const cause =
+    typeof error === "object" && error !== null && "cause" in error
+      ? (error as { cause?: unknown }).cause
+      : undefined;
+  const axiosLike = isAxiosError(error)
+    ? error
+    : isAxiosError(cause)
+      ? cause
+      : null;
+
   let errorBody: string | null = null;
-  if (isAxiosError(error) && error.response?.data) {
+  if (axiosLike?.response?.data) {
     try {
-      errorBody = JSON.stringify(error.response.data, null, 2);
+      errorBody = JSON.stringify(axiosLike.response.data, null, 2);
     } catch {
-      errorBody = String(error.response.data);
+      errorBody = String(axiosLike.response.data);
     }
   }
   return { errorMsg, errorBody };
@@ -132,8 +150,16 @@ export interface ScrapeProgress {
 /** In-memory per-profile scrape runtime (reset each run). */
 interface Runtime {
   state: ScrapeProgress;
-  seenAccountPks: Set<string>;
   usernameChanges: Set<string>;
+  /**
+   * Profile-pic hashes already computed this run, keyed by account pk. An
+   * account with 40 saved posts used to cost 40 CDN downloads; now it costs
+   * one. Deliberately per-run, so a resumed segment re-verifies.
+   */
+  profilePicHashCache: Map<string, string | null>;
+  /** Set by `requestScrapeCancel`; checked between pages. */
+  cancelRequested: boolean;
+  retryCount: number;
 }
 
 // Each profile gets its own runtime so scrapes are fully independent.
@@ -217,8 +243,14 @@ export async function resumeScrape(
   });
 
   if (!run) throw new Error("Scrape run not found");
-  if (run.status !== "interrupted")
-    throw new Error("Only interrupted runs can be resumed");
+  if (run.status === "running")
+    throw new Error("This run is already in progress");
+  if (run.status === "completed")
+    throw new Error("This run already completed");
+  // Any stopped run still holding a cursor can be picked back up — including
+  // ones marked `failed` before failures were classified.
+  if (!run.checkpointMaxId)
+    throw new Error("This run has no checkpoint to resume from");
 
   const profile = await prisma.profile.findUnique({ where: { id: profileId } });
   if (!profile) {
@@ -235,11 +267,28 @@ export async function resumeScrape(
   runtime.state.totalPostsFound = run.totalPostsFound;
   runtime.state.newPostsAdded = run.newPostsAdded;
   runtime.state.newAccountsFound = run.newAccountsFound;
+  runtime.retryCount = run.retryCount ?? 0;
+
+  // Username changes detected before the interruption are already persisted;
+  // without this the completion summary would only count the resumed segment.
+  const priorUsernameChanges = await prisma.accountUsernameHistory.findMany({
+    where: { profileId, scrapeRunId: run.id },
+    select: { accountPk: true },
+  });
+  for (const change of priorUsernameChanges) {
+    runtime.usernameChanges.add(change.accountPk);
+  }
+
   runtimes.set(profileId, runtime);
 
   await prisma.scrapeRun.update({
     where: { id: run.id },
-    data: { status: "running", completedAt: null },
+    data: {
+      status: "running",
+      completedAt: null,
+      resumeCount: (run.resumeCount ?? 0) + 1,
+      lastResumedAt: new Date().toISOString(),
+    },
   });
 
   scrapeAllPages(
@@ -264,35 +313,88 @@ function createRuntime(runId: number, profileId: string): Runtime {
       newPostsAdded: 0,
       newAccountsFound: 0,
     },
-    seenAccountPks: new Set<string>(),
     usernameChanges: new Set<string>(),
+    profilePicHashCache: new Map<string, string | null>(),
+    cancelRequested: false,
+    retryCount: 0,
   };
 }
 
+/**
+ * Ask the in-flight scrape for a profile to stop after the current page. The
+ * checkpoint is kept, so a cancelled run stays resumable.
+ *
+ * `runId` must match the run actually in flight, so a stale Cancel button on
+ * an older run cannot stop a newer one.
+ */
+export function requestScrapeCancel(
+  profileId: string,
+  runId: number
+): { ok: true } | { ok: false; reason: string } {
+  const runtime = runtimes.get(profileId);
+  if (!runtime || runtime.state.status !== "running") {
+    return { ok: false, reason: "No scrape is currently running for this profile" };
+  }
+  if (runtime.state.runId !== runId) {
+    return {
+      ok: false,
+      reason: `Run #${runId} is not the one currently running (#${runtime.state.runId})`,
+    };
+  }
+  runtime.cancelRequested = true;
+  return { ok: true };
+}
+
+/**
+ * Park a failed run. A rate limit or a dropped connection leaves the
+ * checkpoint valid, so the run becomes `interrupted` (resumable) rather than
+ * `failed`. Only a dead cookie or a genuinely unexpected error is terminal —
+ * resuming those would just fail again at the same page.
+ */
 async function handleScrapeFailure(
   runtime: Runtime,
   error: unknown
 ): Promise<void> {
   const { runId, profileId } = runtime.state;
   const { errorMsg, errorBody } = extractErrorInfo(error);
+  const kind: ScrapeErrorKind = classifyScrapeError(error);
+
+  const existing = await prisma.scrapeRun
+    .findUnique({ where: { id: runId }, select: { checkpointMaxId: true } })
+    .catch(() => null);
+  const resumable =
+    (kind === "rate_limited" || kind === "transient") &&
+    Boolean(existing?.checkpointMaxId);
+
+  const status = resumable ? "interrupted" : "failed";
+  const now = new Date().toISOString();
+
   Sentry.captureException(error, {
-    tags: { feature: "scrape" },
-    extra: { runId, profileId },
+    tags: { feature: "scrape", errorKind: kind },
+    extra: { runId, profileId, resumable },
   });
-  logger.error({ err: error, runId, profileId }, "[scraper] Scrape run failed");
+  logger.error(
+    { err: error, runId, profileId, kind, status },
+    "[scraper] Scrape run stopped on error"
+  );
+
   await prisma.scrapeRun
     .update({
       where: { id: runId },
       data: {
-        status: "failed",
-        completedAt: new Date().toISOString(),
+        status,
+        // An interrupted run isn't finished, so it keeps no completion time.
+        completedAt: resumable ? null : now,
         errorMessage: errorMsg,
         errorBody,
+        errorKind: kind,
+        lastErrorAt: now,
+        retryCount: runtime.retryCount,
       },
     })
     .catch(() => {});
 
-  runtime.state.status = "failed";
+  runtime.state.status = status;
 }
 
 async function scrapeAllPages(
@@ -308,10 +410,22 @@ async function scrapeAllPages(
 
   try {
     while (hasMore) {
+      if (runtime.cancelRequested) {
+        await markCancelled(runtime);
+        return;
+      }
+
       const page = await fetchSavedPostsPage({
         cookie,
         userAgent,
         maxId,
+        onRetry: ({ waitMs, kind }) => {
+          runtime.retryCount += 1;
+          logger.info(
+            { runId, kind, waitMs, retryCount: runtime.retryCount },
+            "[scraper] Retrying page after Instagram error"
+          );
+        },
       });
 
       for (const item of page.items) {
@@ -332,6 +446,7 @@ async function scrapeAllPages(
           newPostsAdded: runtime.state.newPostsAdded,
           newAccountsFound: runtime.state.newAccountsFound,
           checkpointMaxId: maxId ?? null,
+          retryCount: runtime.retryCount,
         },
       });
 
@@ -366,6 +481,11 @@ async function scrapeAllPages(
         newAccountsFound: runtime.state.newAccountsFound,
         pagesScraped: runtime.state.pagesScraped,
         checkpointMaxId: null,
+        retryCount: runtime.retryCount,
+        // A run that recovered and finished shouldn't still show its old error.
+        errorMessage: null,
+        errorBody: null,
+        errorKind: null,
         lostAccountsCount: lostState.allLostPks.length,
         lostAccountPks:
           lostState.allLostPks.length > 0
@@ -423,6 +543,35 @@ async function scrapeAllPages(
   }
 }
 
+/**
+ * Stop a run at the user's request, keeping the checkpoint so it can be
+ * resumed. Lost-state is deliberately not calculated — the feed was only
+ * partially walked, so every unvisited account would look missing.
+ */
+async function markCancelled(runtime: Runtime): Promise<void> {
+  const { runId, profileId } = runtime.state;
+  await prisma.scrapeRun
+    .update({
+      where: { id: runId },
+      data: {
+        status: "cancelled",
+        completedAt: new Date().toISOString(),
+        pagesScraped: runtime.state.pagesScraped,
+        totalPostsFound: runtime.state.totalPostsFound,
+        newPostsAdded: runtime.state.newPostsAdded,
+        newAccountsFound: runtime.state.newAccountsFound,
+        retryCount: runtime.retryCount,
+      },
+    })
+    .catch(() => {});
+
+  runtime.state.status = "cancelled";
+  logger.info(
+    { runId, profileId, pagesScraped: runtime.state.pagesScraped },
+    "[scraper] Scrape cancelled by request"
+  );
+}
+
 /** Fetch image bytes and compute SHA-256 hash. Returns null on failure. */
 async function hashImageUrl(url: string): Promise<string | null> {
   try {
@@ -451,18 +600,22 @@ async function processMediaItem(
   const mediaPk = String(media.pk);
   const accountPkStr = String(media.user.pk);
 
-  // Track this account as seen in the current scrape
-  runtime.seenAccountPks.add(accountPkStr);
-
   // ─── UPSERT ACCOUNT ──────────────────────────────────────
   const existingAccount = await prisma.account.findFirst({
     where: { profileId, pk: accountPkStr },
   });
 
-  // Hash the profile pic to detect changes (kept for hash-change detection)
+  // Hash the profile pic to detect changes (kept for hash-change detection).
+  // Cached per account for the run: the same account appears once per saved
+  // post, and re-downloading its avatar every time is what got us rate-limited.
   let profilePicHash: string | null = null;
   if (media.user.profile_pic_url) {
-    profilePicHash = await hashImageUrl(media.user.profile_pic_url);
+    if (runtime.profilePicHashCache.has(accountPkStr)) {
+      profilePicHash = runtime.profilePicHashCache.get(accountPkStr) ?? null;
+    } else {
+      profilePicHash = await hashImageUrl(media.user.profile_pic_url);
+      runtime.profilePicHashCache.set(accountPkStr, profilePicHash);
+    }
   }
 
   const hashChanged =
