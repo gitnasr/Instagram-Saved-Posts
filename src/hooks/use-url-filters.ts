@@ -2,7 +2,12 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import type { AccountFilters } from "@/hooks/use-accounts";
+import {
+  serializeAccountFilters,
+  type AccountFilters,
+} from "@/lib/account-filter-params";
+import { ACCOUNT_FILTERS } from "@/lib/account-filter-defs";
+import { parseFilters, paramNames } from "@/lib/filter-registry";
 import {
   scrollDashboardToTop,
   SCROLL_QUERY_PARAM,
@@ -14,12 +19,16 @@ const SORT_VALUES = [
   "last_seen",
   "first_seen",
   "verified",
+  "lost_at",
 ] as const;
 type SortValue = (typeof SORT_VALUES)[number];
 
 function isSortValue(v: string): v is SortValue {
   return (SORT_VALUES as readonly string[]).includes(v);
 }
+
+/** Every query-string key the filter registry owns. */
+const FILTER_PARAM_NAMES = ACCOUNT_FILTERS.flatMap(paramNames);
 
 export function useUrlFilters() {
   const searchParams = useSearchParams();
@@ -34,42 +43,12 @@ export function useUrlFilters() {
   const order: "asc" | "desc" =
     searchParams.get("order") === "asc" ? "asc" : "desc";
 
-  const filters: AccountFilters = useMemo(() => {
-    const f: AccountFilters = {};
-    const isVerified = searchParams.get("isVerified");
-    if (isVerified === "true" || isVerified === "false") f.isVerified = isVerified;
-    const isPrivate = searchParams.get("isPrivate");
-    if (isPrivate === "true" || isPrivate === "false") f.isPrivate = isPrivate;
-    const postCountMin = searchParams.get("postCountMin");
-    if (postCountMin != null) f.postCountMin = parseInt(postCountMin);
-    const postCountMax = searchParams.get("postCountMax");
-    if (postCountMax != null) f.postCountMax = parseInt(postCountMax);
-    const firstSeenFrom = searchParams.get("firstSeenFrom");
-    if (firstSeenFrom) f.firstSeenFrom = firstSeenFrom;
-    const firstSeenTo = searchParams.get("firstSeenTo");
-    if (firstSeenTo) f.firstSeenTo = firstSeenTo;
-    const lastSeenFrom = searchParams.get("lastSeenFrom");
-    if (lastSeenFrom) f.lastSeenFrom = lastSeenFrom;
-    const lastSeenTo = searchParams.get("lastSeenTo");
-    if (lastSeenTo) f.lastSeenTo = lastSeenTo;
-    const lastScrapeFrom = searchParams.get("lastScrapeFrom");
-    if (lastScrapeFrom) f.lastScrapeFrom = lastScrapeFrom;
-    const lastScrapeTo = searchParams.get("lastScrapeTo");
-    if (lastScrapeTo) f.lastScrapeTo = lastScrapeTo;
-    const accountStatus = searchParams.get("accountStatus");
-    if (accountStatus) f.accountStatus = accountStatus;
-    const existsAlso = searchParams.get("existsAlso");
-    if (existsAlso) f.existsAlso = existsAlso;
-    if (searchParams.get("searchNotes") === "true") f.searchNotes = true;
-    if (searchParams.get("hasNotes") === "true") f.hasNotes = true;
-    const lostStatus = searchParams.get("lostStatus");
-    if (lostStatus === "lost" || lostStatus === "recovered" || lostStatus === "never")
-      f.lostStatus = lostStatus;
-    const ignoredStatus = searchParams.get("ignoredStatus");
-    if (ignoredStatus === "ignored" || ignoredStatus === "active")
-      f.ignoredStatus = ignoredStatus;
-    return f;
-  }, [searchParams]);
+  // Reading and writing both come from the registry, so a new filter needs no
+  // change here — the two halves can no longer drift apart.
+  const filters: AccountFilters = useMemo(
+    () => parseFilters(ACCOUNT_FILTERS, new URLSearchParams(searchParams.toString())),
+    [searchParams]
+  );
 
   const updateUrl = useCallback(
     (updates: Record<string, string | undefined>) => {
@@ -126,34 +105,18 @@ export function useUrlFilters() {
 
   const setFilters = useCallback(
     (newFilters: AccountFilters) => {
-      const updates: Record<string, string | undefined> = {
-        page: undefined,
-        isVerified: newFilters.isVerified ?? undefined,
-        isPrivate: newFilters.isPrivate ?? undefined,
-        postCountMin:
-          newFilters.postCountMin != null
-            ? String(newFilters.postCountMin)
-            : undefined,
-        postCountMax:
-          newFilters.postCountMax != null
-            ? String(newFilters.postCountMax)
-            : undefined,
-        firstSeenFrom: newFilters.firstSeenFrom ?? undefined,
-        firstSeenTo: newFilters.firstSeenTo ?? undefined,
-        lastSeenFrom: newFilters.lastSeenFrom ?? undefined,
-        lastSeenTo: newFilters.lastSeenTo ?? undefined,
-        lastScrapeFrom: newFilters.lastScrapeFrom ?? undefined,
-        lastScrapeTo: newFilters.lastScrapeTo ?? undefined,
-        accountStatus: newFilters.accountStatus ?? undefined,
-        existsAlso: newFilters.existsAlso ?? undefined,
-        searchNotes: newFilters.searchNotes ? "true" : undefined,
-        hasNotes: newFilters.hasNotes ? "true" : undefined,
-        lostStatus: newFilters.lostStatus ?? undefined,
-        ignoredStatus: newFilters.ignoredStatus ?? undefined,
-      };
-      updateUrl(updates);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete(SCROLL_QUERY_PARAM);
+      params.delete("page");
+      // Clear every filter key first, so unsetting one actually removes it.
+      for (const name of FILTER_PARAM_NAMES) params.delete(name);
+      serializeAccountFilters(newFilters, params);
+
+      const qs = params.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      requestAnimationFrame(scrollDashboardToTop);
     },
-    [updateUrl]
+    [searchParams, router, pathname]
   );
 
   return {

@@ -12,8 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AccountFiltersPanel } from "@/components/accounts/account-filters";
-import { ArrowUp, ArrowDown, ArrowUpDown, Search, Download } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Search, Download, X } from "lucide-react";
 import type { AccountFilters } from "@/hooks/use-accounts";
+import {
+  ACCOUNT_FILTERS,
+  type AccountFilter,
+  type AccountFilterKey,
+} from "@/lib/account-filter-defs";
+import { activeChips } from "@/lib/filter-registry";
 
 interface AccountSearchProps {
   search: string;
@@ -33,6 +39,7 @@ const SORT_LABELS: Record<string, string> = {
   last_seen: "Last Scraped",
   first_seen: "First Discovered",
   verified: "Verified",
+  lost_at: "Went Missing",
 };
 
 export function AccountSearch({
@@ -47,7 +54,18 @@ export function AccountSearch({
   onExport,
 }: AccountSearchProps) {
   const [draftSearch, setDraftSearch] = useState(search);
-  const activeFilters = useMemo(() => getActiveFilterLabels(filters), [filters]);
+  // Chip labels come from the same registry that defines the filters, so a new
+  // filter shows up here without a parallel list to keep in step.
+  const activeFilters = useMemo(
+    () => activeChips(ACCOUNT_FILTERS as readonly AccountFilter[], filters),
+    [filters]
+  );
+
+  const removeFilter = (key: AccountFilterKey) => {
+    const next = { ...filters };
+    delete next[key];
+    onFiltersChange(next);
+  };
 
   useEffect(() => {
     setDraftSearch(search);
@@ -101,6 +119,7 @@ export function AccountSearch({
                 <DropdownMenuRadioItem value="last_seen">Last Scraped</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="first_seen">First Discovered</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="verified">Verified</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="lost_at">Went Missing</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -144,45 +163,21 @@ export function AccountSearch({
 
       {activeFilters.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {activeFilters.map((label) => (
-            <Badge key={label} variant="secondary" className="shrink-0">
-              {label}
+          {activeFilters.map((chip) => (
+            <Badge key={chip.key} variant="secondary" className="shrink-0 gap-1">
+              {chip.label}
+              <button
+                type="button"
+                aria-label={`Remove filter ${chip.label}`}
+                className="-mr-0.5 rounded-sm opacity-60 hover:opacity-100"
+                onClick={() => removeFilter(chip.key as AccountFilterKey)}
+              >
+                <X className="h-3 w-3" />
+              </button>
             </Badge>
           ))}
         </div>
       )}
     </div>
   );
-}
-
-function getActiveFilterLabels(filters: AccountFilters): string[] {
-  const labels: string[] = [];
-
-  if (filters.isVerified === "true") labels.push("Verified");
-  if (filters.isVerified === "false") labels.push("Not verified");
-  if (filters.isPrivate === "true") labels.push("Private");
-  if (filters.isPrivate === "false") labels.push("Public");
-  if (filters.postCountMin != null || filters.postCountMax != null) {
-    labels.push(
-      `Posts ${filters.postCountMin ?? 0}-${filters.postCountMax ?? "any"}`
-    );
-  }
-  if (filters.firstSeenFrom || filters.firstSeenTo) {
-    labels.push("First discovered");
-  }
-  if (filters.lastSeenFrom || filters.lastSeenTo) labels.push("Last seen");
-  if (filters.lastScrapeFrom || filters.lastScrapeTo) {
-    labels.push("Manual scrape date");
-  }
-  if (filters.accountStatus) labels.push(`Status: ${filters.accountStatus}`);
-  if (filters.existsAlso) labels.push(`Exists also: ${filters.existsAlso}`);
-  if (filters.hasNotes) labels.push("Has notes");
-  if (filters.searchNotes) labels.push("Search notes");
-  if (filters.lostStatus === "lost") labels.push("Currently lost");
-  if (filters.lostStatus === "recovered") labels.push("Recovered");
-  if (filters.lostStatus === "never") labels.push("Never lost");
-  if (filters.ignoredStatus === "ignored") labels.push("Ignored only");
-  if (filters.ignoredStatus === "active") labels.push("Not ignored");
-
-  return labels;
 }

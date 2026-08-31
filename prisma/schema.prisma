@@ -204,6 +204,14 @@ model ScrapeRun {
   pagesScraped                Int          @default(0)
   errorMessage                String?
   errorBody                   String?
+  /// rate_limited | transient | auth | fatal — decides whether a stopped run
+  /// is offered as resumable.
+  errorKind                   String?
+  lastErrorAt                 String?
+  /// Page requests retried across the run (including resumed segments).
+  retryCount                  Int          @default(0)
+  resumeCount                 Int          @default(0)
+  lastResumedAt               String?
   checkpointMaxId             String?
   lostAccountsCount           Int          @default(0)
   lostAccountPks              String?

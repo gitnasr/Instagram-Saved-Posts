@@ -66,3 +66,23 @@ export function useResumeScrape() {
     },
   });
 }
+
+export function useCancelScrape() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (runId: number) => {
+      const res = await fetch(`/api/scrape/${runId}/cancel`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error ?? "Failed to cancel scrape");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scrape-status"] });
+    },
+  });
+}
