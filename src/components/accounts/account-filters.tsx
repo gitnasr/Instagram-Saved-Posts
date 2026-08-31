@@ -19,55 +19,87 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Filter, X } from "lucide-react";
-import type { AccountFilters } from "@/hooks/use-accounts";
+import type { AccountFilters } from "@/lib/account-filter-params";
+import {
+  ACCOUNT_FILTERS,
+  type AccountFilter,
+  type AccountFilterKey,
+} from "@/lib/account-filter-defs";
+import {
+  countActive,
+  type DateRange,
+  type FilterOption,
+  type FilterValue,
+  type NumberRange,
+} from "@/lib/filter-registry";
+import { useAccountFacets } from "@/hooks/use-account-facets";
 
 interface AccountFiltersPanelProps {
   filters: AccountFilters;
   onFiltersChange: (filters: AccountFilters) => void;
 }
 
-function countActiveFilters(filters: AccountFilters): number {
-  let count = 0;
-  if (filters.isVerified) count++;
-  if (filters.isPrivate) count++;
-  if (filters.postCountMin != null) count++;
-  if (filters.postCountMax != null) count++;
-  if (filters.firstSeenFrom) count++;
-  if (filters.firstSeenTo) count++;
-  if (filters.lastSeenFrom) count++;
-  if (filters.lastSeenTo) count++;
-  if (filters.lastScrapeFrom) count++;
-  if (filters.lastScrapeTo) count++;
-  if (filters.accountStatus) count++;
-  if (filters.existsAlso) count++;
-  if (filters.searchNotes) count++;
-  if (filters.hasNotes) count++;
-  if (filters.lostStatus) count++;
-  if (filters.ignoredStatus) count++;
-  return count;
+/** Section order in the panel; anything unlisted falls to the end. */
+const GROUP_ORDER = [
+  "Identity",
+  "Status",
+  "Activity",
+  "Lost timeline",
+  "Saved posts",
+  "Timeline",
+  "Media",
+  "Notes",
+];
+
+function groupsOf(registry: readonly AccountFilter[]) {
+  const byGroup = new Map<string, AccountFilter[]>();
+  for (const d of registry) {
+    const key = d.group ?? "Other";
+    const list = byGroup.get(key);
+    if (list) list.push(d);
+    else byGroup.set(key, [d]);
+  }
+  return [...byGroup.entries()].sort(
+    (a, b) =>
+      (GROUP_ORDER.indexOf(a[0]) + 1 || 99) - (GROUP_ORDER.indexOf(b[0]) + 1 || 99)
+  );
 }
 
 export function AccountFiltersPanel({
   filters,
   onFiltersChange,
 }: AccountFiltersPanelProps) {
-  const activeCount = countActiveFilters(filters);
+  const activeCount = countActive(filters);
+  // Distinct values with live counts, narrowed by the other active filters.
+  const { data: facets } = useAccountFacets(filters);
 
-  const updateFilter = <K extends keyof AccountFilters>(
-    key: K,
-    value: AccountFilters[K]
-  ) => {
-    onFiltersChange({ ...filters, [key]: value });
+  const update = (key: AccountFilterKey, value: FilterValue | undefined) => {
+    const next = { ...filters };
+    if (value === undefined) delete next[key];
+    else next[key] = value;
+    onFiltersChange(next);
   };
 
-  const clearAll = () => {
-    onFiltersChange({});
+  const clearAll = () => onFiltersChange({});
+
+  /** Fixed options, replaced by discovered ones where the registry says so. */
+  const optionsFor = (d: AccountFilter): readonly FilterOption[] => {
+    if (!d.dynamicOptions) return d.options ?? [];
+    const discovered = facets?.[d.key];
+    if (!discovered || discovered.length === 0) return d.options ?? [];
+    // Union so a known-but-currently-unused status stays selectable.
+    const seen = new Set(discovered.map((o) => o.value));
+    return [...discovered, ...(d.options ?? []).filter((o) => !seen.has(o.value))];
   };
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="relative h-10 w-full sm:w-auto">
+        <Button
+          variant="outline"
+          size="sm"
+          className="relative h-10 w-full sm:w-auto"
+        >
           <Filter data-icon="inline-start" />
           Filters
           {activeCount > 0 && (
@@ -100,266 +132,254 @@ export function AccountFiltersPanel({
             )}
           </div>
 
-          <Separator />
-
-          {/* Verified filter */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Verified Status</Label>
-            <Select
-              value={filters.isVerified ?? "any"}
-              onValueChange={(val) =>
-                updateFilter(
-                  "isVerified",
-                  val === "any" ? undefined : (val as "true" | "false")
-                )
-              }
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="true">Verified only</SelectItem>
-                <SelectItem value="false">Not verified</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Privacy filter */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Privacy</Label>
-            <Select
-              value={filters.isPrivate ?? "any"}
-              onValueChange={(val) =>
-                updateFilter(
-                  "isPrivate",
-                  val === "any" ? undefined : (val as "true" | "false")
-                )
-              }
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="true">Private accounts</SelectItem>
-                <SelectItem value="false">Public accounts</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Lost status filter */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Lost Status</Label>
-            <Select
-              value={filters.lostStatus ?? "any"}
-              onValueChange={(val) =>
-                updateFilter(
-                  "lostStatus",
-                  val === "any"
-                    ? undefined
-                    : (val as "lost" | "recovered" | "never")
-                )
-              }
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="lost">Currently lost</SelectItem>
-                <SelectItem value="recovered">Recovered</SelectItem>
-                <SelectItem value="never">Never lost</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Ignored filter — ignored accounts are always left out of the CSV */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Ignored</Label>
-            <Select
-              value={filters.ignoredStatus ?? "any"}
-              onValueChange={(val) =>
-                updateFilter(
-                  "ignoredStatus",
-                  val === "any" ? undefined : (val as "ignored" | "active")
-                )
-              }
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="ignored">Ignored only</SelectItem>
-                <SelectItem value="active">Not ignored</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Post count range */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Saved Post Count</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                placeholder="Min"
-                min={0}
-                className="h-8 text-xs"
-                value={filters.postCountMin ?? ""}
-                onChange={(e) =>
-                  updateFilter(
-                    "postCountMin",
-                    e.target.value ? parseInt(e.target.value) : undefined
-                  )
-                }
-              />
-              <span className="text-xs text-muted-foreground">–</span>
-              <Input
-                type="number"
-                placeholder="Max"
-                min={0}
-                className="h-8 text-xs"
-                value={filters.postCountMax ?? ""}
-                onChange={(e) =>
-                  updateFilter(
-                    "postCountMax",
-                    e.target.value ? parseInt(e.target.value) : undefined
-                  )
-                }
-              />
+          {groupsOf(ACCOUNT_FILTERS as readonly AccountFilter[]).map(([group, descriptors]) => (
+            <div key={group} className="flex flex-col gap-4">
+              <Separator />
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {group}
+              </p>
+              {descriptors.map((d) => (
+                <FilterControl
+                  key={d.key}
+                  descriptor={d}
+                  value={filters[d.key as AccountFilterKey]}
+                  options={optionsFor(d)}
+                  onChange={(v) => update(d.key as AccountFilterKey, v)}
+                />
+              ))}
             </div>
-          </div>
-
-          {/* First seen date range */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">First Discovered</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="date"
-                className="h-8 text-xs"
-                value={filters.firstSeenFrom ?? ""}
-                onChange={(e) =>
-                  updateFilter("firstSeenFrom", e.target.value || undefined)
-                }
-              />
-              <Input
-                type="date"
-                className="h-8 text-xs"
-                value={filters.firstSeenTo ?? ""}
-                onChange={(e) =>
-                  updateFilter("firstSeenTo", e.target.value || undefined)
-                }
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground">From – To</p>
-          </div>
-
-          {/* Last seen date range */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Last Seen</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="date"
-                className="h-8 text-xs"
-                value={filters.lastSeenFrom ?? ""}
-                onChange={(e) =>
-                  updateFilter("lastSeenFrom", e.target.value || undefined)
-                }
-              />
-              <Input
-                type="date"
-                className="h-8 text-xs"
-                value={filters.lastSeenTo ?? ""}
-                onChange={(e) =>
-                  updateFilter("lastSeenTo", e.target.value || undefined)
-                }
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground">From – To</p>
-          </div>
-
-          {/* Manual last scrape date range */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Manual Last Scrape</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="date"
-                className="h-8 text-xs"
-                value={filters.lastScrapeFrom ?? ""}
-                onChange={(e) =>
-                  updateFilter("lastScrapeFrom", e.target.value || undefined)
-                }
-              />
-              <Input
-                type="date"
-                className="h-8 text-xs"
-                value={filters.lastScrapeTo ?? ""}
-                onChange={(e) =>
-                  updateFilter("lastScrapeTo", e.target.value || undefined)
-                }
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground">From – To</p>
-          </div>
-
-          {/* Account details filters */}
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Current Status</Label>
-            <Input
-              className="h-8 text-xs"
-              placeholder="Filter by status"
-              value={filters.accountStatus ?? ""}
-              onChange={(e) =>
-                updateFilter("accountStatus", e.target.value || undefined)
-              }
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-medium">Exists Also</Label>
-            <Input
-              className="h-8 text-xs"
-              placeholder="Filter by linked account"
-              value={filters.existsAlso ?? ""}
-              onChange={(e) =>
-                updateFilter("existsAlso", e.target.value || undefined)
-              }
-            />
-          </div>
-
-          <Separator />
-
-          {/* Notes filters */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-xs font-medium">Notes</Label>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="hasNotes"
-                checked={filters.hasNotes ?? false}
-                onCheckedChange={(checked) =>
-                  updateFilter("hasNotes", checked === true ? true : undefined)
-                }
-              />
-              <Label htmlFor="hasNotes" className="text-xs cursor-pointer font-normal">
-                Has notes only
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="searchNotes"
-                checked={filters.searchNotes ?? false}
-                onCheckedChange={(checked) =>
-                  updateFilter("searchNotes", checked === true ? true : undefined)
-                }
-              />
-              <Label htmlFor="searchNotes" className="text-xs cursor-pointer font-normal">
-                Include notes in search
-              </Label>
-            </div>
-          </div>
+          ))}
         </div>
       </PopoverContent>
     </Popover>
   );
+}
+
+interface FilterControlProps {
+  descriptor: AccountFilter;
+  value: FilterValue | undefined;
+  options: readonly FilterOption[];
+  onChange: (value: FilterValue | undefined) => void;
+}
+
+function FilterControl({
+  descriptor: d,
+  value,
+  options,
+  onChange,
+}: FilterControlProps) {
+  const hint = d.hint ? (
+    <p className="text-[10px] text-muted-foreground">{d.hint}</p>
+  ) : null;
+
+  switch (d.kind) {
+    case "boolean":
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={d.key}
+              checked={value === true}
+              onCheckedChange={(checked) =>
+                onChange(checked === true ? true : undefined)
+              }
+            />
+            <Label
+              htmlFor={d.key}
+              className="cursor-pointer text-xs font-normal"
+            >
+              {d.label}
+            </Label>
+          </div>
+          {hint}
+        </div>
+      );
+
+    case "enum":
+    case "tristate":
+      return (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-medium">{d.label}</Label>
+          <Select
+            value={typeof value === "string" ? value : "any"}
+            onValueChange={(v) => onChange(v === "any" ? undefined : v)}
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any</SelectItem>
+              {options.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                  {o.count != null ? ` (${o.count})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hint}
+        </div>
+      );
+
+    case "multiEnum": {
+      const selected = Array.isArray(value) ? value : [];
+      const toggle = (option: string) => {
+        const next = selected.includes(option)
+          ? selected.filter((v) => v !== option)
+          : [...selected, option];
+        onChange(next.length > 0 ? next : undefined);
+      };
+      return (
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-medium">{d.label}</Label>
+            {selected.length > 0 && (
+              <button
+                type="button"
+                className="text-[10px] text-muted-foreground hover:text-foreground"
+                onClick={() => onChange(undefined)}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {options.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground">
+              No values recorded yet.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {options.map((o) => (
+                <div key={o.value} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`${d.key}-${o.value}`}
+                    checked={selected.includes(o.value)}
+                    onCheckedChange={() => toggle(o.value)}
+                  />
+                  <Label
+                    htmlFor={`${d.key}-${o.value}`}
+                    className="cursor-pointer text-xs font-normal"
+                  >
+                    {o.label}
+                    {o.count != null && (
+                      <span className="ml-1 text-muted-foreground">
+                        ({o.count})
+                      </span>
+                    )}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          )}
+          {hint}
+        </div>
+      );
+    }
+
+    case "text":
+      return (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-medium">{d.label}</Label>
+          <Input
+            className="h-8 text-xs"
+            placeholder={d.placeholder}
+            value={typeof value === "string" ? value : ""}
+            onChange={(e) => onChange(e.target.value || undefined)}
+          />
+          {hint}
+        </div>
+      );
+
+    case "number":
+      return (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-medium">{d.label}</Label>
+          <Input
+            type="number"
+            className="h-8 text-xs"
+            placeholder={d.placeholder}
+            value={typeof value === "number" ? value : ""}
+            onChange={(e) =>
+              onChange(e.target.value ? Number(e.target.value) : undefined)
+            }
+          />
+          {hint}
+        </div>
+      );
+
+    case "numberRange": {
+      const v = (value ?? {}) as NumberRange;
+      const set = (part: Partial<NumberRange>) => {
+        const next = { ...v, ...part };
+        const cleaned: NumberRange = {};
+        if (next.min != null && !isNaN(next.min)) cleaned.min = next.min;
+        if (next.max != null && !isNaN(next.max)) cleaned.max = next.max;
+        onChange(cleaned.min == null && cleaned.max == null ? undefined : cleaned);
+      };
+      return (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-medium">{d.label}</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder="Min"
+              min={0}
+              className="h-8 text-xs"
+              value={v.min ?? ""}
+              onChange={(e) =>
+                set({ min: e.target.value ? Number(e.target.value) : undefined })
+              }
+            />
+            <span className="text-xs text-muted-foreground">–</span>
+            <Input
+              type="number"
+              placeholder="Max"
+              min={0}
+              className="h-8 text-xs"
+              value={v.max ?? ""}
+              onChange={(e) =>
+                set({ max: e.target.value ? Number(e.target.value) : undefined })
+              }
+            />
+          </div>
+          {hint}
+        </div>
+      );
+    }
+
+    case "dateRange": {
+      const v = (value ?? {}) as DateRange;
+      const set = (part: Partial<DateRange>) => {
+        const next = { ...v, ...part };
+        const cleaned: DateRange = {};
+        if (next.from) cleaned.from = next.from;
+        if (next.to) cleaned.to = next.to;
+        onChange(cleaned.from == null && cleaned.to == null ? undefined : cleaned);
+      };
+      return (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-medium">{d.label}</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="date"
+              className="h-8 text-xs"
+              value={v.from ?? ""}
+              onChange={(e) => set({ from: e.target.value || undefined })}
+            />
+            <Input
+              type="date"
+              className="h-8 text-xs"
+              value={v.to ?? ""}
+              onChange={(e) => set({ to: e.target.value || undefined })}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground">From – To</p>
+          {hint}
+        </div>
+      );
+    }
+
+    default:
+      return null;
+  }
 }

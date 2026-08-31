@@ -13,13 +13,21 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { RotateCcw } from "lucide-react";
-import { useResumeScrape } from "@/hooks/use-scrape";
+import { RotateCcw, Ban } from "lucide-react";
+import { useResumeScrape, useCancelScrape } from "@/hooks/use-scrape";
 import type { ScrapeRun } from "@/types";
 
 interface ScrapeHistoryTableProps {
   runs: ScrapeRun[];
 }
+
+/** Human-readable reason a run stopped, used as a badge next to the status. */
+const ERROR_KIND_LABEL: Record<string, string> = {
+  rate_limited: "rate limited",
+  transient: "network error",
+  auth: "cookie expired",
+  fatal: "unexpected error",
+};
 
 function statusVariant(status: string) {
   switch (status) {
@@ -37,6 +45,7 @@ function statusVariant(status: string) {
 export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
   const router = useRouter();
   const resumeMutation = useResumeScrape();
+  const cancelMutation = useCancelScrape();
 
   if (runs.length === 0) {
     return (
@@ -73,6 +82,16 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
             : null;
           const isFailed = run.status === "failed";
           const isInterrupted = run.status === "interrupted";
+          const isRunning = run.status === "running";
+          // Any stopped run still holding a cursor can be picked back up —
+          // a rate limit is no less resumable than a server restart.
+          const canResume =
+            !isRunning &&
+            run.status !== "completed" &&
+            Boolean(run.checkpointMaxId);
+          const errorKindLabel = run.errorKind
+            ? ERROR_KIND_LABEL[run.errorKind]
+            : null;
 
           return (
             <TableRow
@@ -96,6 +115,14 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                   {isInterrupted && (
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Stopped at page {run.pagesScraped}
+                      {errorKindLabel ? ` — ${errorKindLabel}` : ""}
+                    </p>
+                  )}
+                  {(run.retryCount > 0 || run.resumeCount > 0) && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {run.retryCount > 0 && `${run.retryCount} retries`}
+                      {run.retryCount > 0 && run.resumeCount > 0 && " · "}
+                      {run.resumeCount > 0 && `resumed ${run.resumeCount}×`}
                     </p>
                   )}
                 </div>
@@ -105,7 +132,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                   <Badge variant={statusVariant(run.status)}>
                     {run.status}
                   </Badge>
-                  {isInterrupted && (
+                  {canResume && (
                     <Button
                       size="sm"
                       variant="secondary"
@@ -118,6 +145,21 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                     >
                       <RotateCcw className="h-3 w-3 mr-1" />
                       Resume
+                    </Button>
+                  )}
+                  {isRunning && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        cancelMutation.mutate(run.id);
+                      }}
+                      disabled={cancelMutation.isPending}
+                    >
+                      <Ban className="h-3 w-3 mr-1" />
+                      Cancel
                     </Button>
                   )}
                 </div>
