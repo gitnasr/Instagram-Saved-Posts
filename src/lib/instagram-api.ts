@@ -9,6 +9,7 @@ import {
   SCRAPE_RETRY_MAX_MS,
 } from "./constants";
 import { logger } from "./logger";
+import { delay } from "./async";
 import axios, { type AxiosError } from "axios";
 
 /**
@@ -39,7 +40,8 @@ class ScrapeRequestError extends Error {
   }
 }
 
-function isAxiosError(e: unknown): e is AxiosError {
+/** True when the error is an Axios HTTP error (and so may carry a response body). */
+export function isAxiosError(e: unknown): e is AxiosError {
   return (
     typeof e === "object" &&
     e !== null &&
@@ -113,10 +115,6 @@ function backoffMs(attempt: number): number {
     SCRAPE_RETRY_MAX_MS
   );
   return Math.round(ceiling * (0.5 + Math.random() * 0.5));
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export interface FetchPageOptions {

@@ -5,6 +5,7 @@ import {
   isCloudinaryConfigured,
 } from "./cloudinary";
 import { logger } from "./logger";
+import { delay } from "./async";
 import type { CloudinarySyncProgress } from "@/types";
 
 // Per-profile sync state so syncs are independent across profiles.
@@ -144,8 +145,4 @@ export async function runCloudinarySync(profileId: string): Promise<void> {
       error instanceof Error ? error.message : "Unknown error";
     logger.error({ err: error, profileId }, "[cloudinary-sync] Sync failed");
   }
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

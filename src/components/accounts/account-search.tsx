@@ -54,6 +54,15 @@ export function AccountSearch({
   onExport,
 }: AccountSearchProps) {
   const [draftSearch, setDraftSearch] = useState(search);
+  // Re-sync the draft when the committed search changes underneath us (a
+  // cleared chip, a back navigation). Adjusting during render rather than in
+  // an effect keeps it to a single render pass, with no frame showing the
+  // stale draft. See https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [lastSearch, setLastSearch] = useState(search);
+  if (search !== lastSearch) {
+    setLastSearch(search);
+    setDraftSearch(search);
+  }
   // Chip labels come from the same registry that defines the filters, so a new
   // filter shows up here without a parallel list to keep in step.
   const activeFilters = useMemo(
@@ -66,10 +75,6 @@ export function AccountSearch({
     delete next[key];
     onFiltersChange(next);
   };
-
-  useEffect(() => {
-    setDraftSearch(search);
-  }, [search]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
