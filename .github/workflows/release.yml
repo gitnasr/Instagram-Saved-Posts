@@ -1,4 +1,4 @@
-name: Release
+name: Automated Release
 
 on:
   push:
@@ -6,10 +6,27 @@ on:
       - "v*.*.*"
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Release Tag (e.g. v1.0.0)"
+      bump_type:
+        description: "Version bump strategy"
         required: true
-        default: "v1.0.0"
+        type: choice
+        options:
+          - "auto"
+          - "patch"
+          - "minor"
+          - "major"
+          - "custom"
+        default: "auto"
+      custom_version:
+        description: "Custom version number (only used if bump_type is 'custom', e.g. 1.1.0)"
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        description: "Dry run (simulate without pushing commit, tag, release, or Docker image)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -20,30 +37,29 @@ env:
 
 jobs:
   release:
-    name: Build, Release & Publish Docker Image
+    name: Auto-Bump, Release & Docker Publish
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Determine Release Tag
-        id: vars
-        run: |
-          if [ -n "${{ github.event.inputs.tag }}" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "image_name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js 20
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+
+      - name: Calculate Release Version
+        id: semver
+        env:
+          INPUT_BUMP_TYPE: ${{ github.event.inputs.bump_type || 'auto' }}
+          INPUT_CUSTOM_VERSION: ${{ github.event.inputs.custom_version || '' }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          IS_TAG_PUSH: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        run: node .github/scripts/calculate-version.js
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -51,37 +67,67 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Verify Lint & Typecheck
+      - name: Verify Lint & TypeScript
         run: |
           npm run lint
           npx tsc --noEmit
 
+      - name: Update package.json Version
+        if: steps.semver.outputs.is_tag_push == 'false'
+        run: |
+          npm version ${{ steps.semver.outputs.version }} --no-git-tag-version --allow-same-version
+
+      - name: Commit, Tag & Push Version Bump
+        if: steps.semver.outputs.is_tag_push == 'false' && steps.semver.outputs.dry_run == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(release): ${{ steps.semver.outputs.tag }} [skip ci]" || echo "No package changes to commit"
+          git tag -a "${{ steps.semver.outputs.tag }}" -m "Release ${{ steps.semver.outputs.tag }}"
+          git push origin master
+          git push origin "${{ steps.semver.outputs.tag }}"
+
+      - name: Create GitHub Release with Auto-Changelog
+        if: steps.semver.outputs.dry_run == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.semver.outputs.tag }}" \
+            --title "Release ${{ steps.semver.outputs.tag }}" \
+            --generate-notes \
+            --verify-tag || echo "Release already exists"
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        if: steps.semver.outputs.dry_run == 'false'
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+        if: steps.semver.outputs.dry_run == 'false'
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Container Image
-        uses: docker/build-push-action@v7
+      - name: Build & Publish Multi-Arch Docker Image
+        if: steps.semver.outputs.dry_run == 'false'
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.vars.outputs.image_name }}:${{ steps.vars.outputs.tag }}
-            ${{ env.REGISTRY }}/${{ steps.vars.outputs.image_name }}:latest
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Create GitHub Release with Auto-Changelog
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dry Run Summary
+        if: steps.semver.outputs.dry_run == 'true'
         run: |
-          gh release create "${{ steps.vars.outputs.tag }}" \
-            --title "Release ${{ steps.vars.outputs.tag }}" \
-            --generate-notes \
-            --verify-tag || echo "Release may already exist"
+          echo "================================================================"
+          echo "🚀 [DRY RUN] Release Simulation Completed Successfully!"
+          echo "Target Version: ${{ steps.semver.outputs.version }}"
+          echo "Target Tag:     ${{ steps.semver.outputs.tag }}"
+          echo "Docker Image:   ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}"
+          echo "================================================================"
