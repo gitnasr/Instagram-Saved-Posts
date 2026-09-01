@@ -86,7 +86,7 @@ export function paramNames(d: { key: string; kind: FilterKind }): string[] {
 }
 
 /** Reads one descriptor's value out of a query string. */
-export function parseValue(
+function parseValue(
   d: { key: string; kind: FilterKind },
   params: URLSearchParams
 ): FilterValue | undefined {
@@ -130,7 +130,7 @@ export function parseValue(
 }
 
 /** Writes one descriptor's value into a query string. Inverse of `parseValue`. */
-export function serializeValue(
+function serializeValue(
   d: { key: string; kind: FilterKind },
   value: FilterValue | undefined,
   params: URLSearchParams

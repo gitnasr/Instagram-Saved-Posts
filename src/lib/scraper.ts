@@ -15,7 +15,6 @@ import {
   type AccountEventDraft,
 } from "./account-events";
 import { logger } from "./logger";
-import * as Sentry from "@sentry/nextjs";
 import { createHash } from "crypto";
 import type { AxiosError } from "axios";
 import type { InstagramMedia } from "@/types/instagram";
@@ -369,10 +368,6 @@ async function handleScrapeFailure(
   const status = resumable ? "interrupted" : "failed";
   const now = new Date().toISOString();
 
-  Sentry.captureException(error, {
-    tags: { feature: "scrape", errorKind: kind },
-    extra: { runId, profileId, resumable },
-  });
   logger.error(
     { err: error, runId, profileId, kind, status },
     "[scraper] Scrape run stopped on error"

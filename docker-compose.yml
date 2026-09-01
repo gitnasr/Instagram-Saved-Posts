@@ -9,7 +9,7 @@ services:
     ports:
       - "${PORT:-3000}:3000"
     environment:
-      - DATABASE_URL=mongodb://mongo:27017/instagram
+      - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
@@ -27,14 +27,25 @@ services:
     image: mongo:7.0
     container_name: instagram_saved_posts_mongo
     restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"]
-      interval: 10s
+      test: >
+        mongosh --port 27017 --eval "
+          try {
+            rs.status().ok
+          } catch (e) {
+            rs.initiate({
+              _id: 'rs0',
+              members: [{ _id: 0, host: 'mongo:27017' }]
+            }).ok
+          }
+        " || exit 1
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+      start_period: 2s
 
 volumes:
   mongo_data:

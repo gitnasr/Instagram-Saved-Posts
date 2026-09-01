@@ -5,7 +5,6 @@ import {
   isCloudinaryConfigured,
 } from "./cloudinary";
 import { logger } from "./logger";
-import * as Sentry from "@sentry/nextjs";
 import type { CloudinarySyncProgress } from "@/types";
 
 // Per-profile sync state so syncs are independent across profiles.
@@ -143,7 +142,6 @@ export async function runCloudinarySync(profileId: string): Promise<void> {
     state.status = "failed";
     state.errorMessage =
       error instanceof Error ? error.message : "Unknown error";
-    Sentry.captureException(error, { tags: { feature: "cloudinary-sync" } });
     logger.error({ err: error, profileId }, "[cloudinary-sync] Sync failed");
   }
 }
