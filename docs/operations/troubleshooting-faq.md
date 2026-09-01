@@ -17,12 +17,12 @@ Common questions, error resolutions, and operational tips.
 ### 2. `rate_limited` or "Please wait a few minutes"
 - **Cause**: Scraping too many pages rapidly from a datacenter IP.
 - **Solution**:
-  - The built-in scraper has automatic exponential backoff with jitter and will pause before retrying.
-  - If a scrape run fails due to rate limits, it will be marked as **Resumable**. You can click **Resume Scrape** anytime from the Scrape page to continue from the exact page where it stopped without duplicating posts!
+  - The built-in scraper has automatic exponential backoff with jitter and pauses before retrying.
+  - If a scrape run halts due to rate limits, it is marked as **Resumable**. You can click **Resume Scrape** anytime from the Scrape page to continue from the exact page where it stopped without duplicating posts!
 
 ---
 
-## 🐳 Docker & Networking Issues
+## 🐳 Docker & Database Issues
 
 ### 1. MongoDB Connection Failed (`PrismaClientInitializationError`)
 - **Fix**: Ensure MongoDB container is healthy. Verify `DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` is set in the app container.
@@ -37,7 +37,7 @@ Common questions, error resolutions, and operational tips.
 
 ### 3. Missing Images / Broken Post Thumbnails
 - **Explanation**: Instagram URLs include temporary CDN tokens that expire after several days.
-- **Fix**: Configure free Cloudinary credentials in `.env` to enable permanent CDN mirroring for all media.
+- **Fix**: Connect a free Cloudinary account in **Settings** &rarr; **Cloudinary CDN** (or during initial Onboarding) and run **Sync All Media** to permanently mirror all media assets to Cloudinary.
 
 ---
 
