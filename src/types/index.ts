@@ -115,22 +115,6 @@ export interface CloudinarySyncProgress {
   errorMessage?: string;
 }
 
-export interface VectorSearchHit {
-  post: Post;
-  score: number;
-  /** Only present for search-by-face results — the matched face's location in the post's image. */
-  bbox?: { x: number; y: number; width: number; height: number };
-}
-
-export interface VectorIndexProgress {
-  status: "running" | "completed" | "failed";
-  totalItems: number;
-  indexedItems: number;
-  facesIndexed: number;
-  failedItems: number;
-  errorMessage?: string;
-}
-
 export interface ScrapeStatusResponse {
   current: {
     runId: number;
