@@ -18,10 +18,7 @@ RUN npx prisma generate
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-# SENTRY_AUTH_TOKEN (if provided as a build secret) enables source map upload
-RUN --mount=type=secret,id=sentry_auth_token \
-  SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
-  npm run build
+RUN npm run build
 
 RUN npm prune --omit=dev
 
