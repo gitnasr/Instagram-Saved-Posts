@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import {
-  getCloudinaryConfig,
+  getCloudinaryConfigFromDB,
   uploadToCloudinary,
   isCloudinaryConfigured,
 } from "./cloudinary";
@@ -22,10 +22,10 @@ export async function runCloudinarySync(profileId: string): Promise<void> {
     throw new Error("A Cloudinary sync is already in progress for this profile");
   }
 
-  const config = getCloudinaryConfig();
+  const config = await getCloudinaryConfigFromDB();
   if (!isCloudinaryConfigured(config)) {
     throw new Error(
-      "Cloudinary credentials are not configured. Set Cloudinary env vars."
+      "Cloudinary credentials are not configured. Set them in Settings → Cloudinary."
     );
   }
 

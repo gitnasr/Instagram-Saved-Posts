@@ -8,6 +8,20 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  try {
+    // Check onboarding completion first — redirect new installs to the wizard
+    const onboardingSetting = await prisma.setting.findUnique({
+      where: { key: "onboardingCompleted" },
+    });
+    const profileCount = await prisma.profile.count();
+
+    if (onboardingSetting?.value !== "true" && profileCount === 0) {
+      redirect("/onboarding");
+    }
+  } catch {
+    // DB unreachable or during build — fall through to profile check
+  }
+
   const profile = await getActiveProfile();
   if (!profile) {
     try {
