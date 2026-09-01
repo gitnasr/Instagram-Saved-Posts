@@ -11,7 +11,7 @@ Common questions, error resolutions, and operational tips.
 - **Solution**:
   1. Open [instagram.com](https://www.instagram.com) in your browser.
   2. If a challenge/captcha appears, solve it.
-  3. Extract a fresh cookie (see [Cookie Guide](../getting-started/how-to-get-instagram-cookie.md)).
+  3. Extract a fresh cookie (see [[How to Get Your Instagram Cookie|How-to-Get-Your-Instagram-Cookie]]).
   4. Paste the new cookie in **Settings** or the **Profile Picker**.
 
 ### 2. `rate_limited` or "Please wait a few minutes"
@@ -24,10 +24,7 @@ Common questions, error resolutions, and operational tips.
 
 ## 🐳 Docker & Database Issues
 
-### 1. MongoDB Connection Failed (`PrismaClientInitializationError`)
-- **Fix**: Ensure MongoDB container is healthy. Verify `DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` is set in the app container.
-
-### 2. `Prisma needs to perform transactions, which requires your MongoDB server to be run as a replica set (P2031)`
+### 1. `Prisma needs to perform transactions, which requires your MongoDB server to be run as a replica set (P2031)`
 - **Cause**: Prisma uses MongoDB transactions for multi-document operations and profile initialization, requiring a replica set (`rs0`).
 - **Fix**: Ensure your MongoDB container runs with `--replSet rs0` and has been initiated via `rs.initiate()`. The included `docker-compose.yml`, `dokploy-compose.yml`, and `coolify-compose.yml` templates automatically configure and initialize this on first startup. If running MongoDB manually, execute:
   ```bash
@@ -35,7 +32,7 @@ Common questions, error resolutions, and operational tips.
   ```
   And ensure your connection string includes `?replicaSet=rs0&directConnection=true`.
 
-### 3. Missing Images / Broken Post Thumbnails
+### 2. Missing Images / Broken Post Thumbnails
 - **Explanation**: Instagram URLs include temporary CDN tokens that expire after several days.
 - **Fix**: Connect a free Cloudinary account in **Settings** &rarr; **Cloudinary CDN** (or during initial Onboarding) and run **Sync All Media** to permanently mirror all media assets to Cloudinary.
 
