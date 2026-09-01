@@ -16,3 +16,14 @@ export const SCRAPE_REQUEST_TIMEOUT_MS = 30_000;
 export const SCRAPE_MAX_RETRIES = 5;
 export const SCRAPE_RETRY_BASE_MS = 5_000;
 export const SCRAPE_RETRY_MAX_MS = 300_000;
+
+/**
+ * Avatar bytes are fetched from the Instagram CDN only to hash them for
+ * change detection. The CDN rejects the app user agent used for API calls,
+ * so this browser one is sent instead.
+ */
+export const PROFILE_PIC_FETCH_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+/** A hung avatar download must never stall the scrape loop. */
+export const PROFILE_PIC_FETCH_TIMEOUT_MS = 5_000;
