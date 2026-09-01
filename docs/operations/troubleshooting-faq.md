@@ -1,0 +1,45 @@
+# ❓ Troubleshooting & Frequently Asked Questions
+
+Common questions, error resolutions, and operational tips.
+
+---
+
+## 🚫 Scraping & Cookie Errors
+
+### 1. `login_required` or `checkpoint_required`
+- **Cause**: Instagram expired the session or flagged the IP/session.
+- **Solution**:
+  1. Open [instagram.com](https://www.instagram.com) in your browser.
+  2. If a challenge/captcha appears, solve it.
+  3. Extract a fresh cookie (see [Cookie Guide](../getting-started/how-to-get-instagram-cookie.md)).
+  4. Paste the new cookie in **Settings** or the **Profile Picker**.
+
+### 2. `rate_limited` or "Please wait a few minutes"
+- **Cause**: Scraping too many pages rapidly from a datacenter IP.
+- **Solution**:
+  - The built-in scraper has automatic exponential backoff with jitter and will pause before retrying.
+  - If a scrape run fails due to rate limits, it will be marked as **Resumable**. You can click **Resume Scrape** anytime from the Scrape page to continue from the exact page where it stopped without duplicating posts!
+
+---
+
+## 🐳 Docker & Networking Issues
+
+### 1. MongoDB Connection Failed (`MongooseServerSelectionError` / `PrismaClientInitializationError`)
+- **Fix**: Ensure MongoDB container is healthy. Verify `DATABASE_URL=mongodb://mongo:27017/instagram` is set in the app container.
+
+### 2. Missing Images / Broken Post Thumbnails
+- **Explanation**: Instagram URLs include temporary CDN tokens that expire after several days.
+- **Fix**: Configure free Cloudinary credentials in `.env` to enable permanent CDN mirroring for all media.
+
+---
+
+## ❓ Frequently Asked Questions
+
+**Q: Can I run multiple Instagram accounts?**  
+A: Yes! Click on the profile switcher in the top navigation or sidebar to create additional profiles. Each profile maintains its own session cookie, bookmarks, timeline, and scrape runs independently.
+
+**Q: Will scraping get my Instagram account banned?**  
+A: The scraper operates in read-only mode, only requesting the `/feed/saved/` endpoint at human-like intervals. However, using a secondary burner account to save posts is always good practice.
+
+**Q: Can I export my saved accounts to CSV?**  
+A: Yes! On the Accounts page, click **Export CSV** to download a complete spreadsheet of all discovered accounts, follower status, verification, and saved post counts.
