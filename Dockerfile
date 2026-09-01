@@ -9,8 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
-# --ignore-scripts skips the native better-sqlite3 build (dev-only, unused at
-# runtime) and the postinstall prisma generate (run explicitly below).
+# --ignore-scripts skips native builds and the postinstall prisma generate (run explicitly below).
 RUN npm ci --ignore-scripts
 
 COPY prisma ./prisma
@@ -24,11 +23,6 @@ RUN --mount=type=secret,id=sentry_auth_token \
   SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
   npm run build
 
-# Standalone-output file tracing only follows static require()/import graphs,
-# so it misses native binaries and data files (model weights, .wasm) loaded
-# by path at runtime — onnxruntime-node, sharp, face-api, tfjs all hit this.
-# Pruning dev deps then copying the whole tree wholesale (below) is simpler
-# and more robust than chasing each missing transitive dependency by hand.
 RUN npm prune --omit=dev
 
 # ── Runner ────────────────────────────────────────────────────
