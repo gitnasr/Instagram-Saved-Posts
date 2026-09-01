@@ -50,3 +50,8 @@ next-env.d.ts
 /data/*.db
 /data/*.db-wal
 /data/*.db-shm
+
+# IDE & AI Assistant Local Configs
+.claude/
+.idea/
+.vscode/

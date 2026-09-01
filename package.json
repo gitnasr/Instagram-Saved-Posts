@@ -1,7 +1,31 @@
 {
-  "name": "instagram-saved-tracker",
-  "version": "0.1.0",
-  "private": true,
+  "name": "instagram-saved-posts",
+  "version": "1.0.0",
+  "description": "A modern, self-hosted web app to archive, monitor, and explore your Instagram saved posts.",
+  "author": "Mahmoud Nasr <gitnasr>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitnasr/Instagram-Saved-Posts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gitnasr/Instagram-Saved-Posts/issues"
+  },
+  "homepage": "https://github.com/gitnasr/Instagram-Saved-Posts#readme",
+  "keywords": [
+    "instagram",
+    "instagram-saved",
+    "self-hosted",
+    "docker",
+    "archival",
+    "analytics",
+    "nextjs",
+    "mongodb",
+    "prisma",
+    "coolify",
+    "dokploy",
+    "open-source"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
