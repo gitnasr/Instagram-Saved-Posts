@@ -14,16 +14,31 @@ import {
   ShieldCheck,
   Play,
   Sparkles,
+  Eye,
+  EyeOff,
+  X,
+  HardDrive,
+  Zap,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { ProfileAvatar } from "@/components/profiles/profile-avatar";
 import { toast } from "sonner";
 import { useCreateProfile, useSelectProfile } from "@/hooks/use-profiles";
+import type { CloudinaryStats } from "@/hooks/use-cloudinary-config";
 
 interface ValidatedUser {
   pk: string;
@@ -31,12 +46,23 @@ interface ValidatedUser {
   profilePicUrl: string | null;
 }
 
+/** Format bytes into a human-readable string (e.g. "1.2 GB") */
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
 export function OnboardingWizard() {
   const createProfile = useCreateProfile();
   const selectProfile = useSelectProfile();
 
   const [step, setStep] = useState<number>(1);
-  const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "error">("checking");
+  const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "error">(
+    "checking"
+  );
   const [dbLatency, setDbLatency] = useState<number | null>(null);
 
   // Form State
@@ -48,7 +74,19 @@ export function OnboardingWizard() {
 
   // Cookie Validation State
   const [isValidating, setIsValidating] = useState(false);
-  const [validatedUser, setValidatedUser] = useState<ValidatedUser | null>(null);
+  const [validatedUser, setValidatedUser] = useState<ValidatedUser | null>(
+    null
+  );
+
+  // Cloudinary State (Step 3)
+  const [cloudName, setCloudName] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
+  const [showSecret, setShowSecret] = useState(false);
+  const [isTestingCloud, setIsTestingCloud] = useState(false);
+  const [cloudStats, setCloudStats] = useState<CloudinaryStats | null>(null);
+  const [cloudConnected, setCloudConnected] = useState(false);
+  const [cloudError, setCloudError] = useState<string | null>(null);
 
   // Step 1: Health check
   useEffect(() => {
@@ -107,6 +145,66 @@ export function OnboardingWizard() {
     }
   };
 
+  // Test & Save Cloudinary credentials
+  const handleTestCloudinary = async () => {
+    if (!cloudName.trim() || !apiKey.trim() || !apiSecret.trim()) {
+      toast.error("Please fill in all three Cloudinary fields");
+      return;
+    }
+
+    setIsTestingCloud(true);
+    setCloudError(null);
+    setCloudStats(null);
+    setCloudConnected(false);
+
+    try {
+      const res = await fetch("/api/cloudinary-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cloudName: cloudName.trim(),
+          apiKey: apiKey.trim(),
+          apiSecret: apiSecret.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        setCloudStats(data.stats ?? null);
+        setCloudConnected(true);
+        toast.success("Cloudinary connected successfully!");
+      } else {
+        setCloudError(data.error || "Connection failed");
+        toast.error(data.error || "Cloudinary connection failed");
+      }
+    } catch {
+      const msg = "Failed to reach the server";
+      setCloudError(msg);
+      toast.error(msg);
+    } finally {
+      setIsTestingCloud(false);
+    }
+  };
+
+  const handleClearCloudinary = () => {
+    setCloudName("");
+    setApiKey("");
+    setApiSecret("");
+    setCloudStats(null);
+    setCloudConnected(false);
+    setCloudError(null);
+  };
+
+  // Mark onboarding as completed
+  const markOnboardingComplete = async () => {
+    try {
+      await fetch("/api/onboarding", { method: "POST" });
+    } catch {
+      // Non-fatal — the user can still proceed
+    }
+  };
+
   // Complete profile setup and proceed
   const handleCreateProfile = async (targetAction: "dashboard" | "scrape") => {
     if (!profileName.trim()) {
@@ -123,8 +221,9 @@ export function OnboardingWizard() {
       {
         onSuccess: (newProfile) => {
           selectProfile.mutate(newProfile.id, {
-            onSuccess: () => {
+            onSuccess: async () => {
               toast.success("Profile setup complete!");
+              await markOnboardingComplete();
               if (targetAction === "scrape") {
                 window.location.assign("/scrape");
               } else {
@@ -143,6 +242,14 @@ export function OnboardingWizard() {
     );
   };
 
+  const storagePercent =
+    cloudStats && cloudStats.storageLimit > 0
+      ? Math.min(
+          100,
+          Math.round((cloudStats.storageUsed / cloudStats.storageLimit) * 100)
+        )
+      : 0;
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-2xl">
@@ -151,7 +258,7 @@ export function OnboardingWizard() {
           {[
             { num: 1, label: "System Check" },
             { num: 2, label: "Connect IG" },
-            { num: 3, label: "Storage" },
+            { num: 3, label: "Cloudinary" },
             { num: 4, label: "Launch" },
           ].map((item, idx) => (
             <div key={item.num} className="flex flex-1 items-center">
@@ -165,7 +272,11 @@ export function OnboardingWizard() {
                         : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  {step > item.num ? <CheckCircle2 className="size-5" /> : item.num}
+                  {step > item.num ? (
+                    <CheckCircle2 className="size-5" />
+                  ) : (
+                    item.num
+                  )}
                 </div>
                 <span className="mt-1 text-xs font-medium text-muted-foreground hidden sm:block">
                   {item.label}
@@ -189,10 +300,13 @@ export function OnboardingWizard() {
               <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <Sparkles className="size-6" />
               </div>
-              <CardTitle className="text-2xl font-bold">Welcome to InstaSave Tracker</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                Welcome to InstaSave Tracker
+              </CardTitle>
               <CardDescription>
-                Your self-hosted archive and intelligence dashboard for Instagram saved posts.
-                Let&apos;s get your system configured in under 2 minutes.
+                Your self-hosted archive and intelligence dashboard for
+                Instagram saved posts. Let&apos;s get your system configured in
+                under 2 minutes.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -217,7 +331,10 @@ export function OnboardingWizard() {
                     </div>
                   </div>
                   {dbStatus === "connected" && (
-                    <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-600 gap-1">
+                    <Badge
+                      variant="default"
+                      className="bg-emerald-600 hover:bg-emerald-600 gap-1"
+                    >
                       <CheckCircle2 className="size-3.5" /> Connected
                     </Badge>
                   )}
@@ -238,7 +355,9 @@ export function OnboardingWizard() {
                     <ShieldCheck className="size-5 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium">Local Media Cache</p>
-                      <p className="text-xs text-muted-foreground">Next.js standalone proxy active</p>
+                      <p className="text-xs text-muted-foreground">
+                        Next.js standalone proxy active
+                      </p>
                     </div>
                   </div>
                   <Badge variant="outline" className="text-muted-foreground">
@@ -268,7 +387,8 @@ export function OnboardingWizard() {
                 Connect Your Instagram Account
               </CardTitle>
               <CardDescription>
-                Provide an Instagram session cookie to allow the scraper to fetch your saved posts.
+                Provide an Instagram session cookie to allow the scraper to
+                fetch your saved posts.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -298,13 +418,48 @@ export function OnboardingWizard() {
 
                 {showCookieGuide && (
                   <div className="rounded-lg border bg-muted/40 p-4 text-xs space-y-2.5 text-muted-foreground">
-                    <p className="font-semibold text-foreground">How to extract your session cookie:</p>
+                    <p className="font-semibold text-foreground">
+                      How to extract your session cookie:
+                    </p>
                     <ol className="list-decimal list-inside space-y-1.5 leading-relaxed">
-                      <li>Log in to <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-primary underline">instagram.com</a> on your desktop browser.</li>
-                      <li>Open Developer Tools (<kbd className="rounded border px-1 bg-muted">F12</kbd> or <kbd className="rounded border px-1 bg-muted">Ctrl+Shift+I</kbd>).</li>
-                      <li>Go to the <strong>Network</strong> tab and refresh the page.</li>
-                      <li>Click any request to <code className="rounded bg-muted px-1">instagram.com</code> (or filter by <code className="rounded bg-muted px-1">graphql</code>).</li>
-                      <li>Under <strong>Request Headers</strong>, copy the entire <strong>Cookie</strong> string.</li>
+                      <li>
+                        Log in to{" "}
+                        <a
+                          href="https://instagram.com"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary underline"
+                        >
+                          instagram.com
+                        </a>{" "}
+                        on your desktop browser.
+                      </li>
+                      <li>
+                        Open Developer Tools (
+                        <kbd className="rounded border px-1 bg-muted">F12</kbd>{" "}
+                        or{" "}
+                        <kbd className="rounded border px-1 bg-muted">
+                          Ctrl+Shift+I
+                        </kbd>
+                        ).
+                      </li>
+                      <li>
+                        Go to the <strong>Network</strong> tab and refresh the
+                        page.
+                      </li>
+                      <li>
+                        Click any request to{" "}
+                        <code className="rounded bg-muted px-1">
+                          instagram.com
+                        </code>{" "}
+                        (or filter by{" "}
+                        <code className="rounded bg-muted px-1">graphql</code>
+                        ).
+                      </li>
+                      <li>
+                        Under <strong>Request Headers</strong>, copy the entire{" "}
+                        <strong>Cookie</strong> string.
+                      </li>
                     </ol>
                   </div>
                 )}
@@ -332,11 +487,13 @@ export function OnboardingWizard() {
                   >
                     {isValidating ? (
                       <>
-                        <Loader2 className="size-3.5 animate-spin" /> Verifying with Instagram...
+                        <Loader2 className="size-3.5 animate-spin" />{" "}
+                        Verifying with Instagram...
                       </>
                     ) : (
                       <>
-                        <ShieldCheck className="size-3.5" /> Test & Verify Cookie
+                        <ShieldCheck className="size-3.5" /> Test & Verify
+                        Cookie
                       </>
                     )}
                   </Button>
@@ -367,7 +524,8 @@ export function OnboardingWizard() {
                       <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      User PK: {validatedUser.pk} &bull; Authentication Successful
+                      User PK: {validatedUser.pk} &bull; Authentication
+                      Successful
                     </p>
                   </div>
                 </div>
@@ -375,7 +533,9 @@ export function OnboardingWizard() {
 
               {showUa && (
                 <div className="space-y-2 pt-2 border-t">
-                  <Label htmlFor="ua" className="text-xs">Custom User-Agent</Label>
+                  <Label htmlFor="ua" className="text-xs">
+                    Custom User-Agent
+                  </Label>
                   <Input
                     id="ua"
                     placeholder="Defaults to Instagram Android UA"
@@ -387,7 +547,11 @@ export function OnboardingWizard() {
               )}
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="ghost" onClick={() => setStep(1)} className="gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setStep(1)}
+                className="gap-2"
+              >
                 <ArrowLeft className="size-4" /> Back
               </Button>
               <Button
@@ -406,57 +570,208 @@ export function OnboardingWizard() {
           </Card>
         )}
 
-        {/* STEP 3: MEDIA STORAGE & CDN */}
+        {/* STEP 3: CLOUDINARY SETUP */}
         {step === 3 && (
           <Card className="border-border/60 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Cloud className="size-5 text-sky-500" />
-                Media Storage Options
+                Cloudinary CDN{" "}
+                <Badge variant="outline" className="ml-auto text-[10px]">
+                  Optional
+                </Badge>
               </CardTitle>
               <CardDescription>
-                Choose how post images and video thumbnails are stored.
+                Connect your free Cloudinary account to permanently store media
+                — preventing broken images when Instagram CDN links expire. You
+                can skip this and configure it later in Settings.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border-2 border-primary/60 bg-primary/5 p-4 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
-                    <Badge variant="default" className="text-[10px] uppercase font-bold tracking-wider">
-                      Recommended
-                    </Badge>
-                    <h4 className="font-semibold text-sm pt-1">On-Demand Proxy Caching</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Zero setup required. Images are securely streamed through your self-hosted server without third-party services.
-                    </p>
+              {cloudConnected && cloudStats ? (
+                /* Connected stats panel */
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+                      <CheckCircle2 className="size-4" />
+                      Connected to Cloudinary
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-muted-foreground"
+                      onClick={handleClearCloudinary}
+                    >
+                      <X className="size-3 mr-1" /> Disconnect
+                    </Button>
                   </div>
-                  <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5" /> Built-in & ready
-                  </div>
-                </div>
 
-                <div className="rounded-xl border bg-card p-4 flex flex-col justify-between space-y-3">
-                  <div className="space-y-1">
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider">
-                      Optional
-                    </Badge>
-                    <h4 className="font-semibold text-sm pt-1">Cloudinary Permanent CDN</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Syncs media permanently to your free Cloudinary account so images never expire if Instagram links change.
-                    </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+                      <HardDrive className="size-4 text-muted-foreground mx-auto" />
+                      <p className="text-xs text-muted-foreground">Storage</p>
+                      <p className="text-xs font-semibold">
+                        {formatBytes(cloudStats.storageUsed)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+                      <ImageIcon className="size-4 text-muted-foreground mx-auto" />
+                      <p className="text-xs text-muted-foreground">Assets</p>
+                      <p className="text-xs font-semibold">
+                        {cloudStats.resources.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+                      <Zap className="size-4 text-muted-foreground mx-auto" />
+                      <p className="text-xs text-muted-foreground">Plan</p>
+                      <p className="text-xs font-semibold capitalize">
+                        {cloudStats.plan}
+                      </p>
+                    </div>
                   </div>
+
+                  {cloudStats.storageLimit > 0 && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Storage used</span>
+                        <span>
+                          {formatBytes(cloudStats.storageUsed)} /{" "}
+                          {formatBytes(cloudStats.storageLimit)}
+                        </span>
+                      </div>
+                      <Progress value={storagePercent} className="h-1.5" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Credentials form */
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="cloud-name">Cloud Name</Label>
+                    <Input
+                      id="cloud-name"
+                      placeholder="e.g. my-cloud"
+                      value={cloudName}
+                      onChange={(e) => {
+                        setCloudName(e.target.value);
+                        setCloudError(null);
+                      }}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="api-key">API Key</Label>
+                    <Input
+                      id="api-key"
+                      placeholder="123456789012345"
+                      value={apiKey}
+                      onChange={(e) => {
+                        setApiKey(e.target.value);
+                        setCloudError(null);
+                      }}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="api-secret">API Secret</Label>
+                    <div className="relative">
+                      <Input
+                        id="api-secret"
+                        type={showSecret ? "text" : "password"}
+                        placeholder="••••••••••••••••••••••••••"
+                        value={apiSecret}
+                        onChange={(e) => {
+                          setApiSecret(e.target.value);
+                          setCloudError(null);
+                        }}
+                        className="font-mono text-sm pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                        onClick={() => setShowSecret(!showSecret)}
+                      >
+                        {showSecret ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
                   <p className="text-xs text-muted-foreground">
-                    Can be enabled anytime in Settings via environment variables.
+                    Find these in your{" "}
+                    <a
+                      href="https://console.cloudinary.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary underline"
+                    >
+                      Cloudinary Console
+                    </a>{" "}
+                    under Settings → Access keys.
+                  </p>
+
+                  {cloudError && (
+                    <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                      <AlertCircle className="size-3.5 shrink-0" />
+                      {cloudError}
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleTestCloudinary}
+                    disabled={
+                      isTestingCloud ||
+                      !cloudName.trim() ||
+                      !apiKey.trim() ||
+                      !apiSecret.trim()
+                    }
+                    variant="secondary"
+                    className="w-full gap-2"
+                  >
+                    {isTestingCloud ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" /> Testing
+                        connection...
+                      </>
+                    ) : (
+                      <>
+                        <Cloud className="size-4" /> Test & Save Connection
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Fallback option info */}
+              {!cloudConnected && (
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                      No Cloudinary?
+                    </span>{" "}
+                    That&apos;s fine! The built-in on-demand proxy will securely
+                    stream media through your server. You can always add
+                    Cloudinary later in Settings.
                   </p>
                 </div>
-              </div>
+              )}
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="ghost" onClick={() => setStep(2)} className="gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setStep(2)}
+                className="gap-2"
+              >
                 <ArrowLeft className="size-4" /> Back
               </Button>
               <Button onClick={() => setStep(4)} className="gap-2">
-                Finish Setup <ArrowRight className="size-4" />
+                {cloudConnected ? "Continue" : "Skip for Now"}{" "}
+                <ArrowRight className="size-4" />
               </Button>
             </CardFooter>
           </Card>
@@ -469,9 +784,12 @@ export function OnboardingWizard() {
               <div className="mx-auto mb-2 flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
                 <CheckCircle2 className="size-8" />
               </div>
-              <CardTitle className="text-2xl font-bold">You&apos;re All Set!</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                You&apos;re All Set!
+              </CardTitle>
               <CardDescription>
-                Your profile <strong>{profileName}</strong> is ready. You can start your first scrape right now or explore the dashboard.
+                Your profile <strong>{profileName}</strong> is ready. You can
+                start your first scrape right now or explore the dashboard.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -487,6 +805,32 @@ export function OnboardingWizard() {
                     {cookie ? "Instagram Session Active" : "No Session Configured"}
                   </p>
                 </div>
+              </div>
+
+              {/* Summary badges */}
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Badge
+                  variant={cookie ? "default" : "outline"}
+                  className={
+                    cookie
+                      ? "bg-emerald-600 hover:bg-emerald-600 gap-1"
+                      : "gap-1 text-muted-foreground"
+                  }
+                >
+                  <Instagram className="size-3" />
+                  {cookie ? "Instagram Connected" : "No Instagram Session"}
+                </Badge>
+                <Badge
+                  variant={cloudConnected ? "default" : "outline"}
+                  className={
+                    cloudConnected
+                      ? "bg-sky-600 hover:bg-sky-600 gap-1"
+                      : "gap-1 text-muted-foreground"
+                  }
+                >
+                  <Cloud className="size-3" />
+                  {cloudConnected ? "Cloudinary CDN Active" : "Proxy Caching (Built-in)"}
+                </Badge>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col sm:flex-row gap-3 justify-center">
