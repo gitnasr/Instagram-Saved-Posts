@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-export const DASHBOARD_SCROLL_SELECTOR = "[data-dashboard-scroll]";
+const DASHBOARD_SCROLL_SELECTOR = "[data-dashboard-scroll]";
 export const SCROLL_QUERY_PARAM = "scroll";
 
 interface UseScrollUrlSyncOptions {

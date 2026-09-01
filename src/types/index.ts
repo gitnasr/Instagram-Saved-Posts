@@ -33,10 +33,6 @@ export type ScrapeRun = PrismaScrapeRun;
 export type Setting = PrismaSetting;
 export type CarouselMediaItem = PrismaCarouselMedia;
 
-export interface PostWithCarousel extends Post {
-  carouselItems?: CarouselMediaItem[];
-}
-
 export interface PaginatedResponse<T> {
   items: T[];
   pagination: {

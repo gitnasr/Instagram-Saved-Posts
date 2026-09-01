@@ -53,7 +53,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=mongodb://mongo:27017/instagram
+      - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
     depends_on:
       mongo:
         condition: service_healthy
@@ -61,14 +61,25 @@ services:
   mongo:
     image: mongo:7.0
     restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"]
-      interval: 10s
+      test: >
+        mongosh --port 27017 --eval "
+          try {
+            rs.status().ok
+          } catch (e) {
+            rs.initiate({
+              _id: 'rs0',
+              members: [{ _id: 0, host: 'mongo:27017' }]
+            }).ok
+          }
+        " || exit 1
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+      start_period: 2s
 
 volumes:
   mongo_data:
@@ -136,7 +147,7 @@ When running via Docker Compose, **zero environment variables are required**. Op
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `PORT` | `3000` | Port exposed on host |
-| `DATABASE_URL` | `mongodb://mongo:27017/instagram` | MongoDB connection string |
+| `DATABASE_URL` | `mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` | MongoDB connection string (replica set enabled) |
 | `CLOUDINARY_CLOUD_NAME` | `""` | Optional Cloudinary cloud name for permanent media |
 | `CLOUDINARY_API_KEY` | `""` | Optional Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | `""` | Optional Cloudinary API secret |
@@ -154,11 +165,12 @@ cd Instagram-Saved-Posts
 # 2. Install dependencies
 npm install
 
-# 3. Start local MongoDB (or run via docker)
-docker run -d -p 27017:27017 --name ig_mongo mongo:7.0
+# 3. Start local MongoDB with replica set (required for Prisma transactions)
+docker run -d -p 27017:27017 --name ig_mongo mongo:7.0 --replSet rs0
+docker exec ig_mongo mongosh --eval "rs.initiate()"
 
 # 4. Generate Prisma client & start dev server
-export DATABASE_URL="mongodb://localhost:27017/instagram"
+export DATABASE_URL="mongodb://localhost:27017/instagram?replicaSet=rs0&directConnection=true"
 npx prisma generate
 npm run dev
 ```
