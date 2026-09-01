@@ -16,11 +16,6 @@ RUN npm ci --ignore-scripts
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# Bake CLIP weights into the image (own layer, cached across deploys unless
-# warm-models.ts/its model id changes) instead of fetching them at runtime.
-COPY scripts/warm-models.ts ./scripts/warm-models.ts
-RUN npx tsx scripts/warm-models.ts
-
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1

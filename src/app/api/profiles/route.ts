@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getActiveProfileId } from "@/lib/active-profile";
 import { profileColor } from "@/lib/profile-avatar";
+import { fetchLoggedInUser } from "@/lib/instagram-api";
 
 /** Strip secrets; expose only what the UI needs. */
 function publicProfile(
@@ -57,11 +58,31 @@ export async function POST(request: Request) {
     );
   }
 
+  let igUsername: string | null = null;
+  let igUserPk: string | null = null;
+  let avatarUrl: string | null = null;
+
+  if (cookie) {
+    try {
+      const igUser = await fetchLoggedInUser(cookie, userAgent || undefined);
+      if (igUser) {
+        igUsername = igUser.username;
+        igUserPk = igUser.pk;
+        avatarUrl = igUser.profilePicUrl;
+      }
+    } catch {
+      // Best-effort; continue if fetch fails
+    }
+  }
+
   const now = new Date().toISOString();
   const profile = await prisma.profile.create({
     data: {
       name,
       avatarColor: profileColor(name),
+      avatarUrl,
+      igUsername,
+      igUserPk,
       instagramCookie: cookie || null,
       userAgent: userAgent || null,
       lostStateBackfilled: false,
