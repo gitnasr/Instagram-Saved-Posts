@@ -21,7 +21,7 @@ import axios, { type AxiosError } from "axios";
 export type ScrapeErrorKind = "rate_limited" | "transient" | "auth" | "fatal";
 
 /** Error carrying the verdict so the scraper can pick a run status from it. */
-export class ScrapeRequestError extends Error {
+class ScrapeRequestError extends Error {
   readonly kind: ScrapeErrorKind;
   readonly status?: number;
   readonly cause?: unknown;

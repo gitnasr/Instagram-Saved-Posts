@@ -17,15 +17,16 @@ Thank you for your interest in contributing! We welcome bug reports, feature req
    npm install
    ```
 
-3. **Start Local MongoDB**:
+3. **Start Local MongoDB with Replica Set (required for Prisma transactions)**:
    ```bash
-   docker run -d -p 27017:27017 --name ig_mongo mongo:7.0
+   docker run -d -p 27017:27017 --name ig_mongo mongo:7.0 --replSet rs0
+   docker exec ig_mongo mongosh --eval "rs.initiate()"
    ```
 
 4. **Environment Setup**:
    ```bash
    cp .env.example .env.local
-   # DATABASE_URL="mongodb://localhost:27017/instagram"
+   # DATABASE_URL="mongodb://localhost:27017/instagram?replicaSet=rs0&directConnection=true"
    ```
 
 5. **Generate Prisma Client & Run Dev Server**:

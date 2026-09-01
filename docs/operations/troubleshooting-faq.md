@@ -24,10 +24,18 @@ Common questions, error resolutions, and operational tips.
 
 ## 🐳 Docker & Networking Issues
 
-### 1. MongoDB Connection Failed (`MongooseServerSelectionError` / `PrismaClientInitializationError`)
-- **Fix**: Ensure MongoDB container is healthy. Verify `DATABASE_URL=mongodb://mongo:27017/instagram` is set in the app container.
+### 1. MongoDB Connection Failed (`PrismaClientInitializationError`)
+- **Fix**: Ensure MongoDB container is healthy. Verify `DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` is set in the app container.
 
-### 2. Missing Images / Broken Post Thumbnails
+### 2. `Prisma needs to perform transactions, which requires your MongoDB server to be run as a replica set (P2031)`
+- **Cause**: Prisma uses MongoDB transactions for multi-document operations and profile initialization, requiring a replica set (`rs0`).
+- **Fix**: Ensure your MongoDB container runs with `--replSet rs0` and has been initiated via `rs.initiate()`. The included `docker-compose.yml`, `dokploy-compose.yml`, and `coolify-compose.yml` templates automatically configure and initialize this on first startup. If running MongoDB manually, execute:
+  ```bash
+  docker exec <mongo_container_name> mongosh --eval "rs.initiate()"
+  ```
+  And ensure your connection string includes `?replicaSet=rs0&directConnection=true`.
+
+### 3. Missing Images / Broken Post Thumbnails
 - **Explanation**: Instagram URLs include temporary CDN tokens that expire after several days.
 - **Fix**: Configure free Cloudinary credentials in `.env` to enable permanent CDN mirroring for all media.
 

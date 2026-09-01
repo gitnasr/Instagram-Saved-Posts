@@ -371,11 +371,6 @@ export const ACCOUNT_FILTERS = [
 /** Every valid filter key, so a typo anywhere is a compile error. */
 export type AccountFilterKey = (typeof ACCOUNT_FILTERS)[number]["key"];
 
-/** Fast lookup by key, for the URL hook and the facets route. */
-export const ACCOUNT_FILTERS_BY_KEY = new Map(
-  ACCOUNT_FILTERS.map((d) => [d.key, d])
-);
-
 /** Columns whose distinct values the facets endpoint offers. */
 export const ACCOUNT_FACET_KEYS = ["accountStatus", "existsAlso"] as const;
 
