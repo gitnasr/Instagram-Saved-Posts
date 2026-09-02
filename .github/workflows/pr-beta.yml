@@ -1,0 +1,134 @@
+name: PR Beta Build & Publish
+
+on:
+  pull_request:
+    branches: [master, main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-beta:
+    name: Build & Publish Beta Preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Calculate Beta Version
+        id: semver
+        env:
+          INPUT_MODE: "beta"
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node .github/scripts/calculate-version.mjs --mode=beta
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Verify Lint & TypeScript
+        run: |
+          npm run lint
+          npx tsc --noEmit
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Publish Beta Docker Container
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: ${{ !github.event.pull_request.head.repo.fork }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta-pr-${{ github.event.pull_request.number }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:pr-${{ github.event.pull_request.number }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}
+          build-args: |
+            APP_VERSION=${{ steps.semver.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Beta Release Summary
+        run: |
+          echo "### 🧪 Beta Preview Ready!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Beta Version:** \`${{ steps.semver.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release Tag:** \`${{ steps.semver.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Image:** \`${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta-pr-${{ github.event.pull_request.number }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Pull and run this beta container locally:" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -d -p 3000:3000 --name test-beta \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -e DATABASE_URL=\"mongodb://...\" \\" >> $GITHUB_STEP_SUMMARY
+          echo "  ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta-pr-${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Post Beta Preview Comment on PR
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.issue.number;
+            const repo = context.repo;
+            const version = "${{ steps.semver.outputs.version }}";
+            const tag = "${{ steps.semver.outputs.tag }}";
+            const image = "${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta-pr-" + prNumber;
+
+            const marker = "<!-- pr-beta-preview-comment -->";
+            const body = `${marker}\n### 🧪 Beta Container Ready for Testing\n\n` +
+              `A preview beta version has been built for this Pull Request:\n\n` +
+              `- **Beta Version:** \`${version}\`\n` +
+              `- **Docker Tag:** \`${image}\`\n` +
+              `- **Rolling Beta Tag:** \`${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta\`\n\n` +
+              `\`\`\`bash\n# Test this PR build locally:\ndocker pull ${image}\n\`\`\``;
+
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
+                ...repo,
+                issue_number: prNumber,
+              });
+              const existingComment = comments.find(c => c.body && c.body.includes(marker));
+
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  ...repo,
+                  comment_id: existingComment.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  ...repo,
+                  issue_number: prNumber,
+                  body,
+                });
+              }
+            } catch (err) {
+              core.warning('Failed to post PR comment: ' + err.message);
+            }

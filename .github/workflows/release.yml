@@ -2,6 +2,9 @@ name: Automated Release
 
 on:
   push:
+    branches:
+      - master
+      - main
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -55,65 +58,75 @@ jobs:
       - name: Calculate Release Version
         id: semver
         env:
+          INPUT_MODE: "release"
           INPUT_BUMP_TYPE: ${{ github.event.inputs.bump_type || 'auto' }}
           INPUT_CUSTOM_VERSION: ${{ github.event.inputs.custom_version || '' }}
           INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           IS_TAG_PUSH: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        run: node .github/scripts/calculate-version.mjs
+        run: node .github/scripts/calculate-version.mjs --mode=release
 
       - name: Install dependencies
+        if: steps.semver.outputs.should_release == 'true'
         run: npm ci --ignore-scripts
 
       - name: Generate Prisma Client
+        if: steps.semver.outputs.should_release == 'true'
         run: npx prisma generate
 
       - name: Verify Lint & TypeScript
+        if: steps.semver.outputs.should_release == 'true'
         run: |
           npm run lint
           npx tsc --noEmit
 
       - name: Update package.json Version
-        if: steps.semver.outputs.is_tag_push == 'false'
+        if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.is_tag_push == 'false'
         run: |
           npm version ${{ steps.semver.outputs.version }} --no-git-tag-version --allow-same-version
 
       - name: Commit, Tag & Push Version Bump
-        if: steps.semver.outputs.is_tag_push == 'false' && steps.semver.outputs.dry_run == 'false'
+        if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.is_tag_push == 'false' && steps.semver.outputs.dry_run == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json
           git commit -m "chore(release): ${{ steps.semver.outputs.tag }} [skip ci]" || echo "No package changes to commit"
           git tag -a "${{ steps.semver.outputs.tag }}" -m "Release ${{ steps.semver.outputs.tag }}"
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:${{ github.ref_name }} || echo "Notice: Direct branch push skipped or protected, continuing with tag push"
           git push origin "${{ steps.semver.outputs.tag }}"
 
       - name: Set up Docker Buildx
-        if: steps.semver.outputs.dry_run == 'false'
+        if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'
         uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        if: steps.semver.outputs.dry_run == 'false'
+        if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Publish Multi-Arch Docker Image
-        if: steps.semver.outputs.dry_run == 'false'
+      - name: Build & Publish Release Docker Image
+        if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'
         uses: docker/build-push-action@v7
         with:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}
             ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:latest
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.minor }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.major }}
+            ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ github.sha }}
+          build-args: |
+            APP_VERSION=${{ steps.semver.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Create GitHub Release with Auto-Changelog
-        if: steps.semver.outputs.dry_run == 'false'
+        if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -121,6 +134,22 @@ jobs:
             --title "Release ${{ steps.semver.outputs.tag }}" \
             --generate-notes \
             --verify-tag || echo "Release already exists"
+
+      - name: Release Step Summary
+        if: steps.semver.outputs.should_release == 'true'
+        run: |
+          echo "### 🚀 Release Successfully Published!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** \`${{ steps.semver.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git Tag:** \`${{ steps.semver.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Releases:** [View Release Notes](https://github.com/${{ github.repository }}/releases/tag/${{ steps.semver.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Docker Tags Available:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:latest\` (Always latest prod)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}\` (Pinned release for rollback)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.minor }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.major }}\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Dry Run Summary
         if: steps.semver.outputs.dry_run == 'true'
