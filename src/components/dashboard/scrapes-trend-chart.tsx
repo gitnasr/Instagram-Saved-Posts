@@ -23,11 +23,11 @@ interface ScrapesTrendChartProps {
 const chartConfig = {
   newPostsAdded: {
     label: "New Posts",
-    color: "var(--chart-1)",
+    color: "#f59e0b",
   },
   newAccountsFound: {
     label: "New Accounts",
-    color: "var(--chart-2)",
+    color: "#71717a",
   },
 };
 
@@ -40,22 +40,35 @@ export function ScrapesTrendChart({ data }: ScrapesTrendChartProps) {
   }));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Scrapes Over Time</CardTitle>
+    <Card className="hover:border-hairline-strong transition-all">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="space-y-0.5">
+          <CardTitle className="text-base font-semibold">Activity Trend</CardTitle>
+          <p className="text-xs text-ink-muted">Posts added and new accounts discovered per sync</p>
+        </div>
+        <div className="flex items-center gap-3 text-xs font-mono">
+          <div className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-amber-500" />
+            <span className="text-ink-muted">New Posts</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-zinc-500" />
+            <span className="text-ink-muted">New Creators</span>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[220px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} barGap={2}>
+            <BarChart data={chartData} barGap={4}>
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11, fill: "#71717a" }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11, fill: "#71717a" }}
                 tickLine={false}
                 axisLine={false}
                 allowDecimals={false}
@@ -72,12 +85,12 @@ export function ScrapesTrendChart({ data }: ScrapesTrendChartProps) {
               />
               <Bar
                 dataKey="newPostsAdded"
-                fill="var(--chart-1)"
+                fill="#f59e0b"
                 radius={[3, 3, 0, 0]}
               />
               <Bar
                 dataKey="newAccountsFound"
-                fill="var(--chart-2)"
+                fill="#71717a"
                 radius={[3, 3, 0, 0]}
               />
             </BarChart>

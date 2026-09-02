@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, use } from "react";
-import { Header } from "@/components/layout/header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ import { AccountPostsGrid } from "@/components/accounts/account-posts-grid";
 import { AccountNotes } from "@/components/accounts/account-notes";
 import { useAccountDetail } from "@/hooks/use-account-detail";
 import { proxyImageUrl } from "@/lib/proxy-image";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, ArrowLeft, BookmarkCheck, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -28,10 +27,10 @@ export default function AccountDetailPage({
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-28 w-full rounded-[8px]" />
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square" />
+            <Skeleton key={i} className="aspect-square rounded-[8px]" />
           ))}
         </div>
       </div>
@@ -40,8 +39,13 @@ export default function AccountDetailPage({
 
   if (!data) {
     return (
-      <div className="py-12 text-center text-muted-foreground">
-        Account not found.
+      <div className="py-16 text-center text-ink-muted">
+        <p className="text-base font-semibold">Account not found</p>
+        <Button asChild variant="outline" size="sm" className="mt-4">
+          <Link href="/accounts">
+            <ArrowLeft className="mr-1.5 size-3.5" /> Back to accounts
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -52,50 +56,68 @@ export default function AccountDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/accounts" className="hover:text-foreground">
-          Accounts
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs font-mono text-ink-muted">
+        <Link href="/accounts" className="hover:text-primary transition-colors flex items-center gap-1">
+          <ArrowLeft className="size-3" /> Accounts
         </Link>
         <span>/</span>
-        <span>@{account.username}</span>
+        <span className="text-ink font-semibold">@{account.username}</span>
       </div>
 
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
-          <AvatarImage src={avatarSrc} />
-          <AvatarFallback className="text-lg">
-            {account.username.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold">@{account.username}</h2>
-            {account.isVerified && <Badge variant="secondary">Verified</Badge>}
-            {account.isPrivate && <Badge variant="outline">Private</Badge>}
-            {account.lostAt && <Badge variant="destructive">Lost</Badge>}
-            {account.ignoredAt && <Badge variant="outline">Ignored</Badge>}
+      {/* Account Hero Card */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-[8px] border border-hairline bg-surface-1">
+        <div className="flex items-center gap-4">
+          <Avatar className="size-16 rounded-[8px] border border-hairline">
+            <AvatarImage src={avatarSrc} className="object-cover" />
+            <AvatarFallback className="rounded-[8px] text-lg font-bold bg-surface-3 text-ink">
+              {account.username.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold tracking-tight text-ink">@{account.username}</h1>
+              {account.isVerified && (
+                <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono">
+                  Verified
+                </Badge>
+              )}
+              {account.isPrivate && (
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-hairline text-ink-muted">
+                  Private
+                </Badge>
+              )}
+              {account.lostAt && (
+                <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">
+                  Lost
+                </Badge>
+              )}
+              {account.ignoredAt && (
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-hairline text-ink-subtle">
+                  Ignored
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-ink-muted mt-0.5">{account.fullName || "No full display name"}</p>
+            <div className="flex items-center gap-3 mt-2 text-xs font-mono text-ink-subtle">
+              <span className="flex items-center gap-1 font-semibold text-ink">
+                <BookmarkCheck className="size-3 text-amber-500" />
+                {account.savedPostCount} saved posts
+              </span>
+              {data.latestPostTakenAt && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="size-3" />
+                  Latest {format(new Date(data.latestPostTakenAt * 1000), "MMM d, yyyy")}
+                </span>
+              )}
+            </div>
           </div>
-          <p className="text-muted-foreground">{account.fullName}</p>
-          <p className="text-sm text-muted-foreground">
-            {account.savedPostCount} saved posts
-            {data.latestPostTakenAt
-              ? ` · latest ${format(new Date(data.latestPostTakenAt * 1000), "MMM d, yyyy")}`
-              : ""}
-          </p>
-          {account.lostAt ? (
-            <p className="text-sm text-destructive">
-              Lost on {format(new Date(account.lostAt), "MMM d, yyyy")}
-            </p>
-          ) : account.recoveredAt ? (
-            <p className="text-sm text-emerald-600 dark:text-emerald-400">
-              Recovered on {format(new Date(account.recoveredAt), "MMM d, yyyy")}
-            </p>
-          ) : null}
         </div>
-        <Button asChild variant="outline" size="sm">
+
+        <Button asChild variant="outline" size="sm" className="self-start sm:self-center border-hairline hover:bg-surface-2 text-xs">
           <a href={igProfileUrl} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Profile
+            <ExternalLink className="mr-1.5 size-3.5" />
+            Instagram Profile
           </a>
         </Button>
       </div>
@@ -116,39 +138,52 @@ export default function AccountDetailPage({
         existsAlsoOptions={data.existsAlsoOptions}
       />
 
-      <AccountTimeline events={data.events} eventsLimit={data.eventsLimit} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AccountTimeline events={data.events} eventsLimit={data.eventsLimit} />
+        <AccountNotes username={account.username} />
+      </div>
 
-      <AccountNotes username={account.username} />
-
-      <Header title="Saved Posts" />
-
-      <AccountPostsGrid posts={posts} />
-
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {pagination.totalPages}
+      <div className="pt-4 border-t border-hairline">
+        <div className="flex items-center justify-between pb-4">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-ink">Saved Posts Collection</h2>
+            <p className="text-xs text-ink-muted">All preserved posts from @{account.username}</p>
+          </div>
+          <span className="text-xs font-mono text-ink-subtle">
+            {posts.length} of {account.savedPostCount}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= pagination.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
         </div>
-      )}
+
+        <AccountPostsGrid posts={posts} />
+
+        {pagination.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="text-xs"
+            >
+              <ChevronLeft className="size-3.5 mr-1" />
+              Previous
+            </Button>
+            <span className="text-xs font-mono text-ink-muted px-2">
+              Page {page} of {pagination.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= pagination.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="text-xs"
+            >
+              Next
+              <ChevronRight className="size-3.5 ml-1" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

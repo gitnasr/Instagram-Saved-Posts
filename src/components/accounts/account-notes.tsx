@@ -44,95 +44,94 @@ export function AccountNotes({ username }: AccountNotesProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <StickyNote className="h-4 w-4" />
-            Notes
-            {notes && notes.length > 0 && (
-              <span className="text-xs font-normal text-muted-foreground">
-                ({notes.length})
-              </span>
-            )}
-          </CardTitle>
-          {!showForm && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowForm(true)}
-            >
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add Note
-            </Button>
+    <Card className="hover:border-hairline-strong transition-all">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <StickyNote className="size-4 text-amber-500" />
+          Notes & Annotations
+          {notes && notes.length > 0 && (
+            <span className="text-[10px] font-mono text-ink-subtle">
+              ({notes.length})
+            </span>
           )}
-        </div>
+        </CardTitle>
+        {!showForm && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs h-8"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="mr-1 size-3.5" />
+            Add Note
+          </Button>
+        )}
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {/* Add note form */}
         {showForm && (
-          <div className="space-y-2 rounded-lg border p-3">
+          <div className="space-y-2 rounded-[6px] border border-hairline bg-surface-1 p-3">
             <Textarea
-              placeholder="Write a note..."
+              placeholder="Write a note about this creator or saved content..."
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               rows={3}
-              className="resize-y text-sm"
+              className="resize-y text-xs bg-surface-2/40"
               autoFocus
             />
             <div className="flex justify-end gap-2">
               <Button
                 size="sm"
                 variant="ghost"
+                className="text-xs h-7"
                 onClick={() => {
                   setShowForm(false);
                   setNewContent("");
                 }}
               >
-                <X className="mr-1.5 h-3.5 w-3.5" />
+                <X className="mr-1 size-3" />
                 Cancel
               </Button>
               <Button
                 size="sm"
+                className="text-xs h-7 font-semibold"
                 onClick={handleAdd}
                 disabled={!newContent.trim() || isAdding}
               >
-                <Save className="mr-1.5 h-3.5 w-3.5" />
-                {isAdding ? "Saving..." : "Save"}
+                <Save className="mr-1 size-3" />
+                {isAdding ? "Saving..." : "Save Note"}
               </Button>
             </div>
           </div>
         )}
 
-        {/* Notes list */}
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full rounded-[6px]" />
+            <Skeleton className="h-16 w-full rounded-[6px]" />
           </div>
         ) : notes && notes.length > 0 ? (
           <div className="space-y-2">
             {notes.map((note) => (
               <div
                 key={note.id}
-                className="group flex gap-3 rounded-lg border bg-muted/30 p-3"
+                className="group flex gap-3 rounded-[6px] border border-hairline bg-surface-1/40 hover:bg-surface-2 p-3 transition-all"
               >
-                <p className="flex-1 text-sm whitespace-pre-wrap break-words">
+                <p className="flex-1 text-xs text-ink whitespace-pre-wrap break-words leading-relaxed">
                   {note.content}
                 </p>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <Button
-                    size="icon"
+                    size="icon-xs"
                     variant="ghost"
                     className="h-6 w-6 text-destructive opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                     onClick={() => handleDelete(note.id)}
                     disabled={isDeleting}
                     title="Delete note"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="size-3" />
                   </Button>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[10px] font-mono text-ink-subtle">
                     {formatDistanceToNow(new Date(note.createdAt), {
                       addSuffix: true,
                     })}
@@ -143,8 +142,8 @@ export function AccountNotes({ username }: AccountNotesProps) {
           </div>
         ) : (
           !showForm && (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              No notes yet. Click &ldquo;Add Note&rdquo; to get started.
+            <p className="py-4 text-center text-xs text-ink-muted font-mono">
+              No notes yet. Click &ldquo;Add Note&rdquo; to add thoughts or tags.
             </p>
           )
         )}
