@@ -88,7 +88,12 @@ export function ProfilePicker() {
                   <ProfileFormDialog
                     profile={p}
                     trigger={
-                      <Button size="icon" variant="outline" className="size-8">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="size-8"
+                        aria-label={`Edit profile ${p.name}`}
+                      >
                         <Pencil className="size-4" />
                       </Button>
                     }
@@ -99,6 +104,7 @@ export function ProfilePicker() {
                     className="size-8 text-destructive"
                     onClick={() => handleDelete(p)}
                     disabled={del.isPending}
+                    aria-label={`Delete profile ${p.name}`}
                   >
                     <Trash2 className="size-4" />
                   </Button>
