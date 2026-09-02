@@ -1,3 +1,8 @@
+---
+title: "Reverse Proxy & Authentik SSO Guide"
+description: "Protect your instance behind Cloudflare Tunnels, Nginx Proxy Manager, and Authentik with viewer role enforcement."
+---
+
 # 🔒 Reverse Proxy & Authentik SSO Guide
 
 InstaSave Tracker is designed to sit cleanly behind any reverse proxy and supports header-based SSO authentication with built-in role enforcement.

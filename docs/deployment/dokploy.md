@@ -1,3 +1,8 @@
+---
+title: "Dokploy Self-Hosting Guide"
+description: "Deploy as a multi-service stack with automated Traefik SSL on Dokploy."
+---
+
 # 🟣 Dokploy Self-Hosting Guide
 
 [Dokploy](https://dokploy.com) is a modern, lightweight, open-source alternative to Heroku, Netlify, and Portainer with built-in Traefik reverse proxy and SSL automation.

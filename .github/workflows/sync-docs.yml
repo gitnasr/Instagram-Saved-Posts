@@ -1,0 +1,47 @@
+name: Sync Documentation to Landing Page
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "docs/**"
+      - ".github/workflows/sync-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Sync to Landing Page Repository
+        env:
+          DOCS_TOKEN: ${{ secrets.DOCS_SYNC_PAT || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          LANDING_REPO="https://x-access-token:${DOCS_TOKEN}@github.com/gitnasr/instagram-saved-posts-landing.git"
+
+          echo "Cloning landing page repository..."
+          git clone --depth 1 "$LANDING_REPO" landing-repo
+
+          cd landing-repo
+          echo "Updating content/docs from main docs/..."
+          rm -rf content/docs
+          mkdir -p content/docs
+          cp -r ../docs/* content/docs/
+
+          git add content/docs
+          if git diff-index --quiet HEAD; then
+            echo "No documentation changes to commit."
+          else
+            git commit -m "docs: synchronize documentation from Instagram-Saved-Posts [skip ci]"
+            git push origin master
+            echo "Successfully pushed docs to landing repository."
+          fi

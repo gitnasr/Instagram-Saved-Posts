@@ -1,3 +1,8 @@
+---
+title: "Backup & Database Migration Guide"
+description: "Automated MongoDB snapshot creation, archive extraction, and migration between host servers."
+---
+
 # 💾 Backup & Database Migration Guide
 
 This guide covers backing up your MongoDB database, restoring data, and migrating between servers.
