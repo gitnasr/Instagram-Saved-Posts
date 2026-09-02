@@ -125,7 +125,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-opacity"
+                    className="h-6 w-6 text-destructive opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                     onClick={() => handleDelete(note.id)}
                     disabled={isDeleting}
                     title="Delete note"
