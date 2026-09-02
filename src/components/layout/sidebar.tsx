@@ -52,11 +52,15 @@ export function Sidebar() {
         <div className="p-3 border-t border-hairline bg-surface-1/30 flex flex-col gap-2">
           <ThemeToggle showLabel />
           <div className="flex items-center justify-between px-1 text-[11px] text-ink-subtle font-mono">
-            <span>Amber Zinc v0.1</span>
-            <span className="flex items-center gap-1 text-amber-500/80">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live
-            </span>
+            <a
+              href="https://gitnasr.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground hover:underline transition-colors"
+            >
+              gitnasr.com
+            </a>{" "}
+            softwares
           </div>
         </div>
       </aside>

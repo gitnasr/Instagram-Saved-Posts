@@ -46,7 +46,7 @@ export function PostDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-surface-1 border border-hairline rounded-[8px] p-5">
+      <DialogContent className="max-w-lg bg-surface-1 border border-hairline rounded-[8px] p-5 overflow-y-auto">
         <DialogHeader className="pb-2 border-b border-hairline">
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             Post Archive
