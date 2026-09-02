@@ -1,3 +1,8 @@
+---
+title: "Docker Compose Deployment"
+description: "Deploy Instagram Saved Posts Tracker using Docker Compose on VPS, home labs, or bare metal."
+---
+
 # 🐳 Docker Compose Deployment Guide
 
 Deploying **Instagram Saved Posts Tracker** using Docker Compose is the most straightforward method for standalone servers, home labs, and VPS instances.

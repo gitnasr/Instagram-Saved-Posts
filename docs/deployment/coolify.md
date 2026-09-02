@@ -1,3 +1,8 @@
+---
+title: "Coolify Self-Hosting Guide"
+description: "Deploy Instagram Saved Posts Tracker on Coolify PaaS with 1-click Docker Compose."
+---
+
 # 🔷 Coolify Self-Hosting Guide
 
 [Coolify](https://coolify.io) is an all-in-one self-hostable PaaS with support for multiple servers, push-to-deploy, and automatic SSL certificates.

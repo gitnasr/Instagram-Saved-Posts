@@ -1,3 +1,8 @@
+---
+title: "How to Get Your Instagram Cookie"
+description: "Step-by-step visual walkthrough to securely extract your Instagram session cookie from your desktop browser."
+---
+
 # 🔑 How to Get Your Instagram Cookie
 
 This guide explains how to extract your Instagram session cookie to authenticate the scraper.

@@ -1,3 +1,8 @@
+---
+title: "Troubleshooting & FAQ"
+description: "Diagnose and resolve login challenges, Instagram rate limits, checkpoint errors, and Docker connectivity issues."
+---
+
 # ❓ Troubleshooting & Frequently Asked Questions
 
 Common questions, error resolutions, and operational tips.
