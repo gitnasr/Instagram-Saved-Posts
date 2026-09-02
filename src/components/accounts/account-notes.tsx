@@ -44,7 +44,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
   };
 
   return (
-    <Card className="hover:border-hairline-strong transition-all">
+    <Card className="h-fit self-start hover:border-hairline-strong transition-all">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
           <StickyNote className="size-4 text-amber-500" />
