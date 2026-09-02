@@ -102,6 +102,7 @@ export function PostDetailDialog({
                 {post.captionText}
               </p>
             </div>
+          )}
 
           {/* Date */}
           <div className="flex items-center justify-between text-xs text-ink-subtle font-mono">
