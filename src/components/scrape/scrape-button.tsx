@@ -25,7 +25,7 @@ export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
     if (isViewer) return;
     triggerScrape.mutate(undefined, {
       onSuccess: () => {
-        toast.success("Scrape started");
+        toast.success("Synchronization started");
       },
       onError: (error) => {
         toast.error(error.message);
@@ -39,17 +39,18 @@ export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
     <Button
       onClick={handleClick}
       disabled={buttonDisabled}
-      size="lg"
+      size="default"
+      className="font-semibold text-xs h-9 px-4 shadow-none"
     >
       {isRunning ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Scraping...
+          <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+          Syncing Bookmarks...
         </>
       ) : (
         <>
-          <Play className="mr-2 h-4 w-4" />
-          Run Scraper
+          <Play className="mr-1.5 size-3.5 fill-current" />
+          Run Sync
         </>
       )}
     </Button>
@@ -62,7 +63,7 @@ export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
           <TooltipTrigger asChild>
             <span>{buttonElement}</span>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent className="text-xs bg-surface-2 border border-hairline text-ink">
             Viewers do not have permission to run the scraper.
           </TooltipContent>
         </Tooltip>

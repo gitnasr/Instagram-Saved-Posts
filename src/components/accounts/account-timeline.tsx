@@ -19,6 +19,7 @@ import {
   Unlock,
   UserPlus,
   UserX,
+  History,
 } from "lucide-react";
 import type { AccountEvent } from "@/types";
 
@@ -31,72 +32,72 @@ const EVENT_META: Record<
   discovered: {
     label: "First discovered",
     icon: UserPlus,
-    tone: "text-emerald-600 dark:text-emerald-400",
+    tone: "text-emerald-400",
   },
   new_post: {
     label: "New saved post",
     icon: ImageIcon,
-    tone: "text-sky-600 dark:text-sky-400",
+    tone: "text-amber-400",
   },
   privacy_private: {
     label: "Went private",
     icon: Lock,
-    tone: "text-amber-600 dark:text-amber-400",
+    tone: "text-amber-500",
   },
   privacy_public: {
     label: "Went public",
     icon: Unlock,
-    tone: "text-emerald-600 dark:text-emerald-400",
+    tone: "text-emerald-400",
   },
   username_changed: {
     label: "Username changed",
     icon: AtSign,
-    tone: "text-violet-600 dark:text-violet-400",
+    tone: "text-purple-400",
   },
   full_name_changed: {
     label: "Display name changed",
     icon: Sparkles,
-    tone: "text-violet-600 dark:text-violet-400",
+    tone: "text-purple-400",
   },
   verified_gained: {
     label: "Became verified",
     icon: BadgeCheck,
-    tone: "text-sky-600 dark:text-sky-400",
+    tone: "text-blue-400",
   },
   verified_lost: {
     label: "Lost verification",
     icon: BadgeX,
-    tone: "text-amber-600 dark:text-amber-400",
+    tone: "text-amber-500",
   },
   profile_pic_changed: {
     label: "Profile picture changed",
     icon: ImageIcon,
-    tone: "text-muted-foreground",
+    tone: "text-ink-muted",
   },
   lost: {
     label: "Lost from saved posts",
     icon: UserX,
-    tone: "text-destructive",
+    tone: "text-red-400",
   },
   recovered: {
     label: "Recovered",
     icon: UserPlus,
-    tone: "text-emerald-600 dark:text-emerald-400",
+    tone: "text-emerald-400",
   },
   status_changed: {
     label: "Status changed",
     icon: Tag,
-    tone: "text-muted-foreground",
+    tone: "text-ink-muted",
   },
   ignored: {
     label: "Marked ignored",
     icon: EyeOff,
-    tone: "text-muted-foreground",
+    tone: "text-ink-muted",
   },
   unignored: {
     label: "Un-ignored",
     icon: Eye,
-    tone: "text-muted-foreground",
+    tone: "text-ink-muted",
   },
 };
 
@@ -113,30 +114,29 @@ function parseTakenAt(metadata: string | null): number | null {
   }
 }
 
-/** The change itself, rendered per event type. */
 function EventDetail({ event }: { event: AccountEvent }) {
   if (event.type === "username_changed") {
     return (
-      <span className="text-sm">
-        @{event.fromValue} &rarr; <span className="font-medium">@{event.toValue}</span>
+      <span className="text-xs font-mono">
+        @{event.fromValue} &rarr; <span className="font-semibold text-ink">@{event.toValue}</span>
       </span>
     );
   }
 
   if (event.type === "full_name_changed") {
     return (
-      <span className="text-sm">
+      <span className="text-xs font-mono">
         {event.fromValue || "(empty)"} &rarr;{" "}
-        <span className="font-medium">{event.toValue || "(empty)"}</span>
+        <span className="font-semibold text-ink">{event.toValue || "(empty)"}</span>
       </span>
     );
   }
 
   if (event.type === "status_changed") {
     return (
-      <span className="text-sm">
+      <span className="text-xs font-mono">
         {event.fromValue ?? "No status"} &rarr;{" "}
-        <span className="font-medium">{event.toValue ?? "No status"}</span>
+        <span className="font-semibold text-ink">{event.toValue ?? "No status"}</span>
       </span>
     );
   }
@@ -144,9 +144,9 @@ function EventDetail({ event }: { event: AccountEvent }) {
   if (event.type === "new_post") {
     const takenAt = parseTakenAt(event.metadata);
     return (
-      <span className="text-sm text-muted-foreground">
+      <span className="text-xs text-ink-muted font-mono">
         {takenAt
-          ? `Posted ${format(new Date(takenAt * 1000), "PPP")}`
+          ? `Posted ${format(new Date(takenAt * 1000), "MMM d, yyyy")}`
           : "Post details unavailable"}
         {event.toValue ? ` · ${event.toValue}` : ""}
       </span>
@@ -158,14 +158,12 @@ function EventDetail({ event }: { event: AccountEvent }) {
 
 interface AccountTimelineProps {
   events: AccountEvent[];
-  /** Server-side cap; a full page means older entries exist but were trimmed. */
   eventsLimit: number;
 }
 
 export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
 
-  // Grouped by calendar day, newest first. The API already sorts descending.
   const groups = useMemo(() => {
     const byDay = new Map<string, AccountEvent[]>();
     for (const event of events.slice(0, visible)) {
@@ -179,34 +177,36 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
   const truncatedByServer = events.length >= eventsLimit;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-1">
-            <CardTitle className="text-base">Timeline</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Recorded automatically on every scrape and manual edit.
-            </p>
-          </div>
-          <Badge variant="outline">{events.length}</Badge>
+    <Card className="hover:border-hairline-strong transition-all">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <div className="space-y-0.5">
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="size-4 text-amber-500" />
+            Activity Timeline
+          </CardTitle>
+          <p className="text-xs text-ink-muted">
+            State transitions and events recorded across all sync operations
+          </p>
         </div>
+        <Badge variant="secondary" className="font-mono text-[10px]">
+          {events.length} events
+        </Badge>
       </CardHeader>
 
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-4">
         {events.length === 0 ? (
-          <p className="rounded-lg border border-dashed px-3 py-4 text-sm text-muted-foreground">
-            No timeline entries yet. Privacy, verification and name changes are
-            recorded from the next scrape onwards.
+          <p className="rounded-[6px] border border-dashed border-hairline px-3 py-4 text-xs text-ink-muted text-center font-mono">
+            No timeline entries recorded yet.
           </p>
         ) : (
           <>
             {groups.map(([day, dayEvents]) => (
               <div key={day} className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  {format(new Date(day), "PPP")}
+                <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">
+                  {format(new Date(day), "MMMM d, yyyy")}
                 </p>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {dayEvents.map((event) => {
                     const meta = EVENT_META[event.type];
                     const Icon = meta.icon;
@@ -215,14 +215,16 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                     return (
                       <div
                         key={event.id}
-                        className="flex items-start gap-3 rounded-lg border bg-muted/20 px-3 py-2"
+                        className="flex items-start gap-3 rounded-[6px] border border-hairline bg-surface-1/50 hover:bg-surface-2 px-3 py-2 transition-all"
                       >
-                        <Icon className={`mt-0.5 size-4 shrink-0 ${meta.tone}`} />
+                        <div className="p-1 rounded-[4px] bg-surface-2 border border-hairline shrink-0 mt-0.5">
+                          <Icon className={`size-3.5 ${meta.tone}`} />
+                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="font-medium">{meta.label}</span>
+                            <span className="text-xs font-semibold text-ink">{meta.label}</span>
                             <span
-                              className="text-xs text-muted-foreground"
+                              className="text-[10px] font-mono text-ink-subtle"
                               title={timestamp.absolute}
                             >
                               {timestamp.relative || timestamp.absolute}
@@ -238,19 +240,20 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
             ))}
 
             {visible < events.length && (
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-2">
                 <Button
                   variant="outline"
                   size="sm"
+                  className="text-xs font-semibold"
                   onClick={() => setVisible((v) => v + PAGE_SIZE)}
                 >
-                  Show more
+                  Show more events
                 </Button>
               </div>
             )}
 
             {visible >= events.length && truncatedByServer && (
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="text-center text-[11px] font-mono text-ink-subtle">
                 Showing the {eventsLimit} most recent entries.
               </p>
             )}

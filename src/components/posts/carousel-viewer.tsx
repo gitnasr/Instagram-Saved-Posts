@@ -51,7 +51,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
   const current = items[currentIndex];
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center select-none">
+    <div className="relative flex w-full items-center justify-center select-none">
       {/* Preload other images for instant transitions */}
       <div className="hidden" aria-hidden="true">
         {items.map((item) =>
@@ -67,7 +67,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
       </div>
 
       {/* Main Slide Media */}
-      <div className="relative flex h-full max-h-[46vh] w-full items-center justify-center overflow-hidden md:max-h-[75vh]">
+      <div className="relative flex max-h-[46vh] w-full items-center justify-center overflow-hidden rounded-[6px] bg-surface-2 border border-hairline md:max-h-[75vh]">
         {current.mediaType === 2 && current.videoUrl ? (
           <video
             key={current.id}

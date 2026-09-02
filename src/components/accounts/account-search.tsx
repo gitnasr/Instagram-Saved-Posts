@@ -54,17 +54,12 @@ export function AccountSearch({
   onExport,
 }: AccountSearchProps) {
   const [draftSearch, setDraftSearch] = useState(search);
-  // Re-sync the draft when the committed search changes underneath us (a
-  // cleared chip, a back navigation). Adjusting during render rather than in
-  // an effect keeps it to a single render pass, with no frame showing the
-  // stale draft. See https://react.dev/reference/react/useState#storing-information-from-previous-renders
   const [lastSearch, setLastSearch] = useState(search);
   if (search !== lastSearch) {
     setLastSearch(search);
     setDraftSearch(search);
   }
-  // Chip labels come from the same registry that defines the filters, so a new
-  // filter shows up here without a parallel list to keep in step.
+
   const activeFilters = useMemo(
     () => activeChips(ACCOUNT_FILTERS as readonly AccountFilter[], filters),
     [filters]
@@ -87,15 +82,15 @@ export function AccountSearch({
   }, [draftSearch, onSearchChange, search]);
 
   return (
-    <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 border-y bg-background/95 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-lg sm:border md:top-0">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+    <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 border-y border-hairline bg-surface-1/80 px-4 py-3 backdrop-blur-xl sm:mx-0 sm:rounded-[8px] sm:border md:top-0 shadow-sm">
+      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-subtle" />
           <Input
-            placeholder="Search accounts..."
+            placeholder="Search by username, full name, or tag..."
             value={draftSearch}
             onChange={(e) => setDraftSearch(e.target.value)}
-            className="h-10 pl-9"
+            className="h-9 pl-9 bg-surface-1/90 border-hairline text-sm"
             inputMode="search"
           />
         </div>
@@ -111,20 +106,20 @@ export function AccountSearch({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-10 w-full sm:w-auto"
+                className="h-9 w-full sm:w-auto text-xs"
               >
-                <ArrowUpDown data-icon="inline-start" />
+                <ArrowUpDown className="size-3.5" />
                 {SORT_LABELS[sort] ?? "Sort"}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-surface-1 border border-hairline">
               <DropdownMenuRadioGroup value={sort} onValueChange={onSortChange}>
-                <DropdownMenuRadioItem value="post_count">Post Count</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="username">Username</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="last_seen">Last Scraped</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="first_seen">First Discovered</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="verified">Verified</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="lost_at">Went Missing</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="post_count" className="text-xs">Post Count</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="username" className="text-xs">Username</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="last_seen" className="text-xs">Last Scraped</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="first_seen" className="text-xs">First Discovered</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="verified" className="text-xs">Verified</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="lost_at" className="text-xs">Went Missing</DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -132,7 +127,7 @@ export function AccountSearch({
           <Button
             variant="outline"
             size="sm"
-            className="h-10 w-full sm:w-auto"
+            className="h-9 w-full sm:w-auto text-xs"
             onClick={() => onOrderChange(order === "desc" ? "asc" : "desc")}
             title={
               order === "desc"
@@ -141,9 +136,9 @@ export function AccountSearch({
             }
           >
             {order === "desc" ? (
-              <ArrowDown data-icon="inline-start" />
+              <ArrowDown className="size-3.5" />
             ) : (
-              <ArrowUp data-icon="inline-start" />
+              <ArrowUp className="size-3.5" />
             )}
             {order === "desc" ? "Desc" : "Asc"}
           </Button>
@@ -151,7 +146,7 @@ export function AccountSearch({
           <Button
             variant="outline"
             size="sm"
-            className="col-span-2 h-10 w-full sm:col-span-1 sm:w-auto"
+            className="col-span-2 h-9 w-full sm:col-span-1 sm:w-auto text-xs"
             onClick={onExport}
             disabled={filters.ignoredStatus === "ignored"}
             title={
@@ -160,21 +155,21 @@ export function AccountSearch({
                 : "Export the filtered accounts, excluding ignored ones"
             }
           >
-            <Download data-icon="inline-start" />
+            <Download className="size-3.5" />
             Export CSV
           </Button>
         </div>
       </div>
 
       {activeFilters.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {activeFilters.map((chip) => (
-            <Badge key={chip.key} variant="secondary" className="shrink-0 gap-1">
+            <Badge key={chip.key} variant="secondary" className="shrink-0 gap-1 text-[10px] bg-surface-2 border-hairline py-0.5">
               {chip.label}
               <button
                 type="button"
                 aria-label={`Remove filter ${chip.label}`}
-                className="-mr-0.5 rounded-sm opacity-60 hover:opacity-100"
+                className="-mr-0.5 rounded-[2px] opacity-60 hover:opacity-100 hover:text-red-400 transition-colors"
                 onClick={() => removeFilter(chip.key as AccountFilterKey)}
               >
                 <X className="h-3 w-3" />
