@@ -1,6 +1,9 @@
 services:
   app:
+    # Use :latest for newest production release, or pin/rollback to a specific version
+    # (e.g. ghcr.io/gitnasr/instagram-saved-posts:v1.0.1). See GitHub Releases for all tags.
     image: ghcr.io/gitnasr/instagram-saved-posts:latest
+    pull_policy: always
     build:
       context: .
       dockerfile: Dockerfile

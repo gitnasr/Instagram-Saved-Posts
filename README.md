@@ -49,6 +49,7 @@ Create a `docker-compose.yml` file and launch:
 services:
   app:
     image: ghcr.io/gitnasr/instagram-saved-posts:latest
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -111,7 +112,20 @@ Deploy easily to your self-hosted cloud platform of choice:
 
 ---
 
-## ✨ Key Features
+## 📦 Versioning, Releases & Rollbacks
+
+This project follows an automated semantic CI/CD versioning lifecycle directly connected to GitHub Releases:
+
+- **Production (`:latest`)**: Every release merged to `main`/`master` automatically calculates the semantic version bump, generates a signed Git tag (e.g., `v1.1.0`), publishes a [GitHub Release](https://github.com/gitnasr/Instagram-Saved-Posts/releases) with auto-generated changelogs, and pushes to GHCR.
+- **Rollbacks & Version Pinning**: Every release tag is permanently archived on GitHub Container Registry (GHCR). To rollback or pin a version, simply replace `:latest` with the desired release tag in your compose configuration:
+  ```yaml
+  # Pin or rollback to any version:
+  image: ghcr.io/gitnasr/instagram-saved-posts:v1.0.1
+  ```
+  Check the [GitHub Releases Page](https://github.com/gitnasr/Instagram-Saved-Posts/releases) for the full list of tags and version notes.
+- **PR Beta Versions**: Pull requests automatically build preview beta containers tagged as `ghcr.io/gitnasr/instagram-saved-posts:beta-pr-<number>` and `:beta` for preview testing before merging.
+
+---
 
 | Feature | Description |
 | :--- | :--- |
