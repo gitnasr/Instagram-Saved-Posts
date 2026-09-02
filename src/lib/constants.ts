@@ -27,3 +27,14 @@ export const PROFILE_PIC_FETCH_USER_AGENT =
 
 /** A hung avatar download must never stall the scrape loop. */
 export const PROFILE_PIC_FETCH_TIMEOUT_MS = 5_000;
+
+/** Current application version embedded at build time */
+export const APP_VERSION =
+  process.env.NEXT_PUBLIC_APP_VERSION || "1.0.1";
+
+export const GITHUB_REPO_URL =
+  "https://github.com/gitnasr/Instagram-Saved-Posts";
+
+export const GITHUB_RELEASES_URL =
+  `${GITHUB_REPO_URL}/releases`;
+

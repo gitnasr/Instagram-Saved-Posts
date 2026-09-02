@@ -4,7 +4,9 @@ version: "3.8"
 
 services:
   app:
+    # Use :latest for newest release, or pin/rollback to a specific release tag (e.g. :v1.0.1)
     image: ghcr.io/gitnasr/instagram-saved-posts:latest
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "3000:3000"

@@ -20,6 +20,7 @@ version: "3.8"
 services:
   app:
     image: ghcr.io/gitnasr/instagram-saved-posts:latest
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "3000:3000"

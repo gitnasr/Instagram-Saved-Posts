@@ -42,6 +42,9 @@ You should see:
 - `instagram_saved_posts_app`: Next.js frontend and scraper engine (port 3000).
 - `instagram_saved_posts_mongo`: MongoDB database instance (healthy).
 
+> [!NOTE]
+> The compose configuration uses `pull_policy: always` for the `app` service. This ensures `docker compose up -d` always pulls the latest image update from GitHub Container Registry (GHCR) when tracking `:latest` or `:beta`.
+
 ---
 
 ## ⚙️ Volume & Data Persistence

@@ -43,6 +43,9 @@ You will see:
 - `instagram_saved_posts_app`: Next.js web application and scraper engine (port 3000).
 - `instagram_saved_posts_mongo`: MongoDB 7.0 database configured with replica set `rs0` (healthy).
 
+> [!NOTE]
+> The compose configuration uses `pull_policy: always` for the `app` service. This ensures `docker compose up -d` always checks and pulls the latest container image from GHCR when tracking `:latest` or `:beta`.
+
 Access your dashboard at `http://localhost:3000` (or your server's IP address) to start the onboarding wizard!
 
 ---
