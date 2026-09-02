@@ -15,10 +15,13 @@ export default async function DashboardLayout({
     });
     const profileCount = await prisma.profile.count();
 
-    if (onboardingSetting?.value !== "true" && profileCount === 0) {
+    if (onboardingSetting?.value !== "true" || profileCount === 0) {
       redirect("/onboarding");
     }
-  } catch {
+  } catch (e) {
+    if (e && typeof e === "object" && "digest" in e && typeof (e as { digest: unknown }).digest === "string" && (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")) {
+      throw e;
+    }
     // DB unreachable or during build — fall through to profile check
   }
 

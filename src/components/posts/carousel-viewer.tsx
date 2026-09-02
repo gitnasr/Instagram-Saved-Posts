@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCarousel } from "@/hooks/use-carousel";
 import { proxyImageUrl } from "@/lib/proxy-image";
@@ -34,19 +33,27 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
   }, [goNext, goPrev]);
 
   if (isLoading) {
-    return <Skeleton className="aspect-square w-full rounded-lg" />;
+    return (
+      <div className="flex h-full min-h-[300px] w-full items-center justify-center p-4">
+        <Skeleton className="aspect-square w-full max-w-[400px] rounded-lg" />
+      </div>
+    );
   }
 
   if (!items || items.length === 0) {
-    return null;
+    return (
+      <div className="flex h-full min-h-[250px] w-full items-center justify-center text-xs text-muted-foreground">
+        No media available
+      </div>
+    );
   }
 
   const current = items[currentIndex];
 
   return (
-    <div className="relative">
-      {/* Preload all images when carousel opens */}
-      <div className="hidden">
+    <div className="relative flex h-full w-full items-center justify-center select-none">
+      {/* Preload other images for instant transitions */}
+      <div className="hidden" aria-hidden="true">
         {items.map((item) =>
           item.mediaType !== 2 ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -59,13 +66,15 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
         )}
       </div>
 
-      <div className="relative overflow-hidden rounded-lg bg-muted flex items-center justify-center max-h-[70vh]">
+      {/* Main Slide Media */}
+      <div className="relative flex h-full max-h-[46vh] w-full items-center justify-center overflow-hidden md:max-h-[75vh]">
         {current.mediaType === 2 && current.videoUrl ? (
           <video
             key={current.id}
             src={current.cloudinaryUrl ?? proxyImageUrl(current.videoUrl)}
             controls
-            className="max-h-[70vh] w-full object-contain"
+            playsInline
+            className="max-h-[46vh] w-full max-w-full rounded-md object-contain md:max-h-[75vh]"
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
@@ -73,54 +82,58 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
             key={current.id}
             src={current.cloudinaryUrl ?? proxyImageUrl(current.mediaUrl)}
             alt={`Slide ${currentIndex + 1} of ${items.length}`}
-            className="max-h-[70vh] w-full object-contain"
+            className="max-h-[46vh] w-full max-w-full rounded-md object-contain md:max-h-[75vh]"
           />
         )}
 
-        {/* Counter badge */}
-        <div className="absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white">
-          {currentIndex + 1}/{items.length}
-        </div>
+        {/* Counter Badge */}
+        {items.length > 1 && (
+          <div className="absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-black/70 px-2.5 py-1 text-xs font-semibold text-white shadow-md backdrop-blur-md">
+            {currentIndex + 1} / {items.length}
+          </div>
+        )}
 
-        {/* Navigation buttons */}
+        {/* Navigation Arrows */}
         {currentIndex > 0 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute left-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-black/40 text-white hover:bg-black/60"
+          <button
+            type="button"
+            className="absolute left-3 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
             onClick={goPrev}
+            aria-label="Previous slide"
           >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
+            <ChevronLeft className="size-5" />
+          </button>
         )}
         {currentIndex < items.length - 1 && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-black/40 text-white hover:bg-black/60"
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
             onClick={goNext}
+            aria-label="Next slide"
           >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+            <ChevronRight className="size-5" />
+          </button>
+        )}
+
+        {/* Indicator Dots */}
+        {items.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 backdrop-blur-md">
+            {items.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className={`h-1.5 rounded-full transition-all duration-200 ${
+                  idx === currentIndex
+                    ? "w-5 bg-white"
+                    : "w-1.5 bg-white/40 hover:bg-white/70"
+                }`}
+                onClick={() => setCurrentIndex(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Dot indicators */}
-      {items.length > 1 && (
-        <div className="mt-2 flex justify-center gap-1">
-          {items.map((_, idx) => (
-            <button
-              key={idx}
-              className={`h-1.5 rounded-full transition-all ${
-                idx === currentIndex
-                  ? "w-4 bg-primary"
-                  : "w-1.5 bg-muted-foreground/30"
-              }`}
-              onClick={() => setCurrentIndex(idx)}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

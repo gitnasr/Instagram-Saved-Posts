@@ -17,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Instagram Saved Posts Tracker",
-  description: "Track and manage your Instagram saved posts",
+  description:
+    "Track and manage your Instagram saved posts — by gitnasr.com softwares",
 };
 
 export default function RootLayout({
