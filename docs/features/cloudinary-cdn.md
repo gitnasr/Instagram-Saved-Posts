@@ -1,3 +1,8 @@
+---
+title: "Cloudinary Permanent Media CDN"
+description: "Permanent media hosting and live CDN usage analytics to safeguard against expiring Instagram links."
+---
+
 # ☁️ Cloudinary Permanent Media CDN
 
 By default, Instagram media CDN URLs expire after a few days or weeks. To ensure your saved post images and profile pictures remain accessible forever, InstaSave Tracker includes first-class **Cloudinary integration**.
