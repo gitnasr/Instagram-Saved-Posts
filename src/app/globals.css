@@ -73,7 +73,7 @@
 :root {
   --radius: 0.375rem;
 
-  /* Amber Zinc Archive - Light Theme */
+  /* Light Theme */
   --canvas: #ffffff;
   --background: #ffffff;
   --foreground: #09090b;
@@ -132,7 +132,7 @@
 }
 
 .dark {
-  /* Amber Zinc Archive - Dark Theme (Canonical) */
+  /* Dark Theme */
   --canvas: #09090b;
   --background: #09090b;
   --foreground: #fafafa;
