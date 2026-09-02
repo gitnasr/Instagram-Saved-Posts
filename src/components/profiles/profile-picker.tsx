@@ -109,8 +109,13 @@ export function ProfilePicker() {
                   <ProfileFormDialog
                     profile={p}
                     trigger={
-                      <Button size="icon-xs" variant="outline" className="size-7 rounded-[4px] border-hairline">
-                        <Pencil className="size-3 text-ink-muted" />
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="size-8"
+                        aria-label={`Edit profile ${p.name}`}
+                      >
+                        <Pencil className="size-4" />
                       </Button>
                     }
                   />
@@ -120,6 +125,7 @@ export function ProfilePicker() {
                     className="size-7 rounded-[4px] border-hairline text-red-400 hover:bg-red-500/10"
                     onClick={() => handleDelete(p)}
                     disabled={del.isPending}
+                    aria-label={`Delete profile ${p.name}`}
                   >
                     <Trash2 className="size-3" />
                   </Button>
