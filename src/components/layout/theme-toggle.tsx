@@ -31,16 +31,20 @@ export function ThemeToggle({
       type="button"
       variant="outline"
       size={showLabel ? "sm" : "icon-sm"}
-      className={cn(showLabel && "w-full justify-start", className)}
+      className={cn(
+        "border-hairline bg-surface-1/40 hover:bg-surface-2 text-ink-muted hover:text-foreground transition-all",
+        showLabel && "w-full justify-start text-xs font-medium gap-2",
+        className
+      )}
       aria-label={actionLabel}
       aria-pressed={mounted ? isDark : undefined}
       title={actionLabel}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       {isDark ? (
-        <Sun data-icon="inline-start" />
+        <Sun className="size-3.5 text-amber-400" />
       ) : (
-        <Moon data-icon="inline-start" />
+        <Moon className="size-3.5 text-ink-muted" />
       )}
       {showLabel && <span>{labelText ?? actionLabel}</span>}
     </Button>

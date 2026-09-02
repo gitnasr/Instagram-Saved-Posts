@@ -33,104 +33,112 @@ export function RunDetailStats({
   usernameChangesCount,
 }: RunDetailStatsProps) {
   return (
-    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pages Scraped</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
+    <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 xl:grid-cols-8">
+      {/* Pages Scraped */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">Pages</CardTitle>
+          <FileText className="size-3.5 text-ink-muted" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{pagesScraped}</div>
-          <p className="text-xs text-muted-foreground">
-            {pagesScraped * 48} max posts checked
+        <CardContent className="px-4">
+          <div className="text-xl font-bold font-mono text-ink">{pagesScraped}</div>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">
+            {pagesScraped * 48} checked
           </p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Posts Found</CardTitle>
-          <Search className="h-4 w-4 text-muted-foreground" />
+      {/* Posts Found */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">Found</CardTitle>
+          <Search className="size-3.5 text-ink-muted" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalPostsFound}</div>
-          <p className="text-xs text-muted-foreground">total from Instagram</p>
+        <CardContent className="px-4">
+          <div className="text-xl font-bold font-mono text-ink">{totalPostsFound}</div>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">from IG feed</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">New Posts</CardTitle>
-          <Plus className="h-4 w-4 text-muted-foreground" />
+      {/* New Posts */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3 border-amber-500/30">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-amber-500">New Posts</CardTitle>
+          <Plus className="size-3.5 text-amber-500" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{newPostsAdded}</div>
-          <p className="text-xs text-muted-foreground">
+        <CardContent className="px-4">
+          <div className="text-xl font-bold font-mono text-amber-500">+{newPostsAdded}</div>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">
             {totalPostsFound > 0
-              ? `${Math.round((newPostsAdded / totalPostsFound) * 100)}% were new`
-              : "added this run"}
+              ? `${Math.round((newPostsAdded / totalPostsFound) * 100)}% new`
+              : "saved"}
           </p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">New Accounts</CardTitle>
-          <UserPlus className="h-4 w-4 text-muted-foreground" />
+      {/* New Creators */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">Creators</CardTitle>
+          <UserPlus className="size-3.5 text-ink-muted" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{newAccountsFound}</div>
-          <p className="text-xs text-muted-foreground">first time seen</p>
+        <CardContent className="px-4">
+          <div className="text-xl font-bold font-mono text-ink">+{newAccountsFound}</div>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">first seen</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Newly Lost</CardTitle>
-          <UserX className={cn("h-4 w-4", newlyLostAccountsCount > 0 ? "text-destructive" : "text-muted-foreground")} />
+      {/* Newly Lost */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">Newly Lost</CardTitle>
+          <UserX className={cn("size-3.5", newlyLostAccountsCount > 0 ? "text-red-400" : "text-ink-subtle")} />
         </CardHeader>
-        <CardContent>
-          <div className={cn("text-2xl font-bold", newlyLostAccountsCount > 0 && "text-destructive")}>
+        <CardContent className="px-4">
+          <div className={cn("text-xl font-bold font-mono", newlyLostAccountsCount > 0 ? "text-red-400" : "text-ink")}>
             {newlyLostAccountsCount}
           </div>
-          <p className="text-xs text-muted-foreground">missing this run</p>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">missing now</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Newly Recovered</CardTitle>
-          <UserCheck className={cn("h-4 w-4", newlyRecoveredAccountsCount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
+      {/* Newly Recovered */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">Recovered</CardTitle>
+          <UserCheck className={cn("size-3.5", newlyRecoveredAccountsCount > 0 ? "text-emerald-400" : "text-ink-subtle")} />
         </CardHeader>
-        <CardContent>
-          <div className={cn("text-2xl font-bold", newlyRecoveredAccountsCount > 0 && "text-emerald-600 dark:text-emerald-400")}>
+        <CardContent className="px-4">
+          <div className={cn("text-xl font-bold font-mono", newlyRecoveredAccountsCount > 0 ? "text-emerald-400" : "text-ink")}>
             {newlyRecoveredAccountsCount}
           </div>
-          <p className="text-xs text-muted-foreground">reappeared this run</p>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">reappeared</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">All Lost</CardTitle>
-          <UserMinus className={cn("h-4 w-4", lostAccountsCount > 0 ? "text-destructive" : "text-muted-foreground")} />
+      {/* All Lost Total */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">All Lost</CardTitle>
+          <UserMinus className={cn("size-3.5", lostAccountsCount > 0 ? "text-red-400" : "text-ink-subtle")} />
         </CardHeader>
-        <CardContent>
-          <div className={cn("text-2xl font-bold", lostAccountsCount > 0 && "text-destructive")}>
+        <CardContent className="px-4">
+          <div className={cn("text-xl font-bold font-mono", lostAccountsCount > 0 ? "text-red-400" : "text-ink")}>
             {lostAccountsCount}
           </div>
-          <p className="text-xs text-muted-foreground">cumulative total</p>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">total missing</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Renamed</CardTitle>
-          <UserRoundPen className="h-4 w-4 text-muted-foreground" />
+      {/* Renamed */}
+      <Card className="rounded-[8px] bg-surface-1 border-hairline hover:border-hairline-strong transition-all py-3">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+          <CardTitle className="text-[10px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">Renamed</CardTitle>
+          <UserRoundPen className="size-3.5 text-ink-muted" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{usernameChangesCount}</div>
-          <p className="text-xs text-muted-foreground">username changes</p>
+        <CardContent className="px-4">
+          <div className="text-xl font-bold font-mono text-ink">{usernameChangesCount}</div>
+          <p className="text-[10px] text-ink-subtle font-mono truncate">handle shifts</p>
         </CardContent>
       </Card>
     </div>

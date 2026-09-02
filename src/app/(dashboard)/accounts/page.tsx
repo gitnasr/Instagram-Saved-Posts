@@ -12,7 +12,7 @@ import { useBulkIgnore } from "@/hooks/use-bulk-ignore";
 import { useScrollUrlSync } from "@/hooks/use-scroll-url-sync";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { serializeAccountFilters } from "@/lib/account-filter-params";
-import { ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff, CheckSquare } from "lucide-react";
 import type { Account } from "@/types";
 
 function AccountsContent() {
@@ -135,11 +135,11 @@ function AccountsContent() {
   return (
     <div className="flex flex-col gap-6">
       <Header
-        title="Accounts"
+        title="Accounts Directory"
         description={
           data
-            ? `${data.pagination.total} unique accounts found`
-            : "Loading..."
+            ? `${data.pagination.total.toLocaleString()} unique creators discovered`
+            : "Scanning preserved accounts..."
         }
       />
 
@@ -158,7 +158,7 @@ function AccountsContent() {
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="h-20" />
+            <Skeleton key={i} className="h-20 rounded-[8px]" />
           ))}
         </div>
       ) : (
@@ -169,13 +169,15 @@ function AccountsContent() {
               size="sm"
               onClick={toggleSelectAllOnPage}
               disabled={pageAccounts.length === 0}
+              className="text-xs h-8"
             >
-              {allOnPageSelected ? "Deselect page" : "Select page"}
+              <CheckSquare className="size-3.5" />
+              {allOnPageSelected ? "Deselect Page" : "Select Page"}
             </Button>
 
             {selectedPks.size > 0 && (
               <>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs font-mono text-ink-muted bg-surface-2 px-2.5 py-1 rounded-[4px] border border-hairline">
                   {selectedPks.size} selected
                 </span>
                 <Button
@@ -183,8 +185,9 @@ function AccountsContent() {
                   size="sm"
                   disabled={isBulkPending}
                   onClick={() => handleBulkIgnore(true)}
+                  className="text-xs h-8"
                 >
-                  <EyeOff data-icon="inline-start" />
+                  <EyeOff className="size-3.5" />
                   Ignore
                 </Button>
                 <Button
@@ -192,14 +195,16 @@ function AccountsContent() {
                   size="sm"
                   disabled={isBulkPending}
                   onClick={() => handleBulkIgnore(false)}
+                  className="text-xs h-8"
                 >
-                  <Eye data-icon="inline-start" />
+                  <Eye className="size-3.5" />
                   Un-ignore
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedPks(new Set())}
+                  className="text-xs h-8"
                 >
                   Clear
                 </Button>
@@ -215,17 +220,18 @@ function AccountsContent() {
           />
 
           {data && data.pagination.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 pt-4">
               <Button
                 variant="outline"
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
+                className="text-xs"
               >
-                <ChevronLeft data-icon="inline-start" />
+                <ChevronLeft className="size-3.5 mr-1" />
                 Previous
               </Button>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs font-mono text-ink-muted px-2">
                 Page {page} of {data.pagination.totalPages}
               </span>
               <Button
@@ -233,9 +239,10 @@ function AccountsContent() {
                 size="sm"
                 disabled={page >= data.pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
+                className="text-xs"
               >
                 Next
-                <ChevronRight data-icon="inline-end" />
+                <ChevronRight className="size-3.5 ml-1" />
               </Button>
             </div>
           )}
@@ -250,11 +257,11 @@ export default function AccountsPage() {
     <Suspense
       fallback={
         <div className="flex flex-col gap-6">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-10 w-48 rounded-[8px]" />
+          <Skeleton className="h-10 w-full max-w-md rounded-[8px]" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="h-20" />
+              <Skeleton key={i} className="h-20 rounded-[8px]" />
             ))}
           </div>
         </div>
@@ -264,3 +271,4 @@ export default function AccountsPage() {
     </Suspense>
   );
 }
+

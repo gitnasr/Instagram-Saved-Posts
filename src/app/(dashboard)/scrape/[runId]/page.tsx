@@ -232,8 +232,8 @@ export default function RunDetailPage({
       {/* Username Changes */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">Username Changes</h3>
-          <Badge variant={usernameChanges.length > 0 ? "default" : "secondary"}>
+          <h3 className="text-base font-semibold text-ink">Username Handle Shifts</h3>
+          <Badge variant={usernameChanges.length > 0 ? "default" : "secondary"} className="font-mono text-[10px]">
             {usernameChanges.length}
           </Badge>
         </div>
@@ -243,27 +243,27 @@ export default function RunDetailPage({
               <Link
                 key={change.id}
                 href={`/accounts/${change.account.username}`}
-                className="rounded-lg border bg-card p-4 text-card-foreground transition-colors hover:bg-accent/50"
+                className="rounded-[8px] border border-hairline bg-surface-1 p-4 transition-all hover:border-hairline-strong hover:bg-surface-2 group"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium">@{change.account.username}</span>
-                  <Badge variant="outline">pk {change.accountPk}</Badge>
+                  <span className="font-semibold text-sm text-ink group-hover:text-primary transition-colors">@{change.account.username}</span>
+                  <Badge variant="outline" className="font-mono text-[9px] text-ink-subtle">pk {change.accountPk}</Badge>
                 </div>
-                <div className="mt-3 text-sm">
-                  <span className="text-muted-foreground">was </span>
-                  <span className="font-medium">@{change.oldUsername}</span>
-                  <span className="text-muted-foreground"> now </span>
-                  <span className="font-medium">@{change.newUsername}</span>
+                <div className="mt-2.5 text-xs font-mono">
+                  <span className="text-ink-muted">was </span>
+                  <span className="text-red-400">@{change.oldUsername}</span>
+                  <span className="text-ink-muted"> &rarr; </span>
+                  <span className="text-emerald-400 font-semibold">@{change.newUsername}</span>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Detected {format(new Date(change.changedAt), "MMM d, yyyy 'at' HH:mm")}
+                <p className="mt-2 text-[10px] font-mono text-ink-subtle">
+                  Detected {format(new Date(change.changedAt), "MMM d, yyyy · HH:mm")}
                 </p>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground py-4">
-            No username changes were detected in this run.
+          <p className="text-xs font-mono text-ink-muted py-2">
+            No username changes detected in this sync run.
           </p>
         )}
       </div>

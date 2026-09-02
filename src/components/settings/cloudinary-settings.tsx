@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -24,7 +23,7 @@ import {
   Eye,
   EyeOff,
   HardDrive,
-  Image as ImageIcon,
+  ImageIcon,
   Zap,
   RefreshCw,
   Trash2,
@@ -46,7 +45,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-/** Format bytes into a human-readable string (e.g. "1.2 GB") */
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -66,28 +64,23 @@ export function CloudinarySettings() {
   const saveConfig = useSaveCloudinaryConfig();
   const deleteConfig = useDeleteCloudinaryConfig();
 
-  // Credential form state
   const [cloudName, setCloudName] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [showSecret, setShowSecret] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // When config loads and user is not editing, sync the cloudName field
-  const prevConfiguredRef = useRef(false);
-  useEffect(() => {
-    if (!prevConfiguredRef.current && configData?.configured && configData.cloudName && !isEditing) {
-      prevConfiguredRef.current = true;
-      setCloudName(configData.cloudName);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when config first becomes available
-  }, [configData?.configured, configData?.cloudName]);
+  // Render-time state sync pattern to avoid cascading useEffect setState
+  const [syncedCloudName, setSyncedCloudName] = useState<string | null>(null);
+  if (!isEditing && configData?.configured && configData.cloudName && configData.cloudName !== syncedCloudName) {
+    setSyncedCloudName(configData.cloudName);
+    setCloudName(configData.cloudName);
+  }
 
   const syncState = syncStatus?.current;
   const configured = configData?.configured ?? syncStatus?.configured ?? false;
   const isSyncing = syncState?.status === "running";
 
-  // Toast on sync completion
   const prevStatusRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const prevStatus = prevStatusRef.current;
@@ -123,23 +116,27 @@ export function CloudinarySettings() {
         onSuccess: () => {
           setApiSecret("");
           setIsEditing(false);
+          toast.success("Cloudinary connection verified and saved");
         },
+        onError: (e) => toast.error(e.message),
       }
     );
   };
 
   const handleDisconnect = () => {
+    if (!window.confirm("Disconnect Cloudinary credentials?")) return;
     deleteConfig.mutate(undefined, {
       onSuccess: () => {
         setCloudName("");
         setApiKey("");
         setApiSecret("");
         setIsEditing(false);
+        toast.success("Cloudinary disconnected");
       },
+      onError: (e) => toast.error(e.message),
     });
   };
 
-  // Calculate sync progress percentage
   const syncTotal =
     (syncState?.totalAccounts ?? 0) +
     (syncState?.totalPosts ?? 0) +
@@ -164,156 +161,140 @@ export function CloudinarySettings() {
       onClick={handleSync}
       disabled={syncDisabled}
       variant="outline"
-      className="w-full"
+      size="sm"
+      className="text-xs font-semibold border-hairline hover:bg-surface-2"
     >
-      <Upload className="mr-2 h-4 w-4" />
-      {isSyncing ? "Syncing..." : "Sync All Media to Cloudinary"}
+      {isSyncing ? (
+        <>
+          <RefreshCw className="mr-1.5 size-3.5 animate-spin" />
+          Syncing Media...
+        </>
+      ) : (
+        <>
+          <Upload className="mr-1.5 size-3.5" />
+          Sync All Media to Cloudinary
+        </>
+      )}
     </Button>
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Cloud className="h-5 w-5" />
-          Cloudinary CDN
-        </CardTitle>
-        <CardDescription>
-          Store profile photos and post images on Cloudinary for permanent URLs
-          that never expire. Credentials are saved securely in the database.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Connection Status */}
-        <div className="flex items-center gap-2">
-          {isConfigLoading ? (
-            <Badge variant="outline" className="gap-1">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
-            </Badge>
-          ) : configured ? (
-            <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-600 gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Connected
-            </Badge>
-          ) : (
-            <Badge variant="destructive" className="gap-1">
-              <AlertCircle className="h-3.5 w-3.5" /> Not configured
-            </Badge>
-          )}
-          {configured && configData?.cloudName && (
-            <span className="text-xs text-muted-foreground font-mono">
-              {configData.cloudName}
-            </span>
-          )}
-          {configured && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto h-7 px-2 text-xs gap-1"
-              onClick={() => refetchConfig()}
-              disabled={isConfigLoading}
-            >
-              <RefreshCw className="size-3" /> Refresh Stats
-            </Button>
-          )}
+    <Card className="border border-hairline bg-surface-1 shadow-sm">
+      <CardHeader className="pb-4 border-b border-hairline">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-[6px] bg-surface-2 border border-hairline text-amber-500">
+              <Cloud className="size-4" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold">Cloudinary Permanent Storage</CardTitle>
+              <CardDescription className="text-xs text-ink-muted">
+                Archive media assets with permanent, durable URLs independent of Instagram CDN expiration
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {isConfigLoading ? (
+              <Badge variant="outline" className="text-[10px] font-mono">
+                <Loader2 className="size-3 mr-1 animate-spin" /> Checking...
+              </Badge>
+            ) : configured ? (
+              <Badge variant="default" className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                <CheckCircle2 className="size-3 mr-1" />
+                Connected
+              </Badge>
+            ) : (
+              <Badge variant="destructive" className="text-[10px] px-2 py-0.5 font-mono">
+                <AlertCircle className="size-3 mr-1" />
+                Not configured
+              </Badge>
+            )}
+            {configured && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="size-7 text-ink-muted hover:text-ink"
+                onClick={() => refetchConfig()}
+                disabled={isConfigLoading}
+                title="Refresh stats"
+              >
+                <RefreshCw className="size-3" />
+              </Button>
+            )}
+          </div>
         </div>
-
-        {/* Live Stats (when connected) */}
+      </CardHeader>
+      <CardContent className="space-y-4 pt-4">
+        {/* Live Stats */}
         {configured && stats && !isEditing && (
-          <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Account Usage
+          <div className="rounded-[6px] border border-hairline bg-surface-2/40 p-3.5 space-y-3">
+            <p className="text-[10px] font-mono font-semibold text-ink-subtle uppercase tracking-wider">
+              Cloudinary Account Usage ({configData?.cloudName})
             </p>
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg border bg-background p-3 text-center space-y-1">
-                <HardDrive className="size-4 text-muted-foreground mx-auto" />
-                <p className="text-[10px] text-muted-foreground">Storage</p>
-                <p className="text-xs font-semibold">
+              <div className="rounded-[6px] border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
+                <HardDrive className="size-3.5 text-amber-500 mx-auto" />
+                <p className="text-[10px] font-mono text-ink-subtle">Storage</p>
+                <p className="text-xs font-mono font-bold text-ink">
                   {formatBytes(stats.storageUsed)}
                 </p>
               </div>
-              <div className="rounded-lg border bg-background p-3 text-center space-y-1">
-                <ImageIcon className="size-4 text-muted-foreground mx-auto" />
-                <p className="text-[10px] text-muted-foreground">Assets</p>
-                <p className="text-xs font-semibold">
+              <div className="rounded-[6px] border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
+                <ImageIcon className="size-3.5 text-amber-500 mx-auto" />
+                <p className="text-[10px] font-mono text-ink-subtle">Assets</p>
+                <p className="text-xs font-mono font-bold text-ink">
                   {stats.resources.toLocaleString()}
                 </p>
               </div>
-              <div className="rounded-lg border bg-background p-3 text-center space-y-1">
-                <Zap className="size-4 text-muted-foreground mx-auto" />
-                <p className="text-[10px] text-muted-foreground">Plan</p>
-                <p className="text-xs font-semibold capitalize">{stats.plan}</p>
+              <div className="rounded-[6px] border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
+                <Zap className="size-3.5 text-amber-500 mx-auto" />
+                <p className="text-[10px] font-mono text-ink-subtle">Plan</p>
+                <p className="text-xs font-mono font-bold text-ink capitalize">{stats.plan}</p>
               </div>
             </div>
 
             {stats.storageLimit > 0 && (
               <div className="space-y-1">
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-[11px] font-mono text-ink-muted">
                   <span>Storage</span>
                   <span>
                     {formatBytes(stats.storageUsed)} / {formatBytes(stats.storageLimit)}
                   </span>
                 </div>
-                <Progress value={storagePercent} className="h-1.5" />
+                <Progress value={storagePercent} className="h-1.5 bg-surface-2 [&>div]:bg-amber-500" />
               </div>
             )}
-
-            {stats.bandwidthLimit > 0 && (
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Bandwidth</span>
-                  <span>
-                    {formatBytes(stats.bandwidthUsed)} / {formatBytes(stats.bandwidthLimit)}
-                  </span>
-                </div>
-                <Progress
-                  value={
-                    stats.bandwidthLimit > 0
-                      ? Math.min(100, Math.round((stats.bandwidthUsed / stats.bandwidthLimit) * 100))
-                      : 0
-                  }
-                  className="h-1.5"
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Stats unavailable notice */}
-        {configured && configData?.statsError && !isEditing && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
-            <AlertCircle className="size-3.5 shrink-0" />
-            Could not load stats: {configData.statsError}
           </div>
         )}
 
         {/* Credentials Form */}
         {(!configured || isEditing) && !isViewer && (
-          <div className="space-y-3">
-            <p className="text-sm font-medium">
-              {configured ? "Update Credentials" : "Enter Credentials"}
+          <div className="space-y-3 p-3.5 rounded-[6px] border border-hairline bg-surface-2/40">
+            <p className="text-xs font-semibold text-ink uppercase tracking-wider font-mono">
+              {configured ? "Update Credentials" : "Enter Cloudinary Credentials"}
             </p>
-            <div className="space-y-2">
-              <Label htmlFor="cloud-name-settings">Cloud Name</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="cloud-name-settings" className="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Cloud Name</Label>
               <Input
                 id="cloud-name-settings"
                 placeholder="e.g. my-cloud"
                 value={cloudName}
                 onChange={(e) => setCloudName(e.target.value)}
-                className="font-mono text-sm"
+                className="font-mono text-xs bg-surface-1"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="api-key-settings">API Key</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="api-key-settings" className="text-xs font-semibold text-ink-subtle uppercase tracking-wider">API Key</Label>
               <Input
                 id="api-key-settings"
                 placeholder="123456789012345"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                className="font-mono text-sm"
+                className="font-mono text-xs bg-surface-1"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="api-secret-settings">API Secret</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="api-secret-settings" className="text-xs font-semibold text-ink-subtle uppercase tracking-wider">API Secret</Label>
               <div className="relative">
                 <Input
                   id="api-secret-settings"
@@ -321,13 +302,13 @@ export function CloudinarySettings() {
                   placeholder="••••••••••••••••••••••••••"
                   value={apiSecret}
                   onChange={(e) => setApiSecret(e.target.value)}
-                  className="font-mono text-sm pr-10"
+                  className="font-mono text-xs bg-surface-1 pr-9"
                 />
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                  size="icon-xs"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 size-7 text-ink-muted hover:text-ink"
                   onClick={() => setShowSecret(!showSecret)}
                 >
                   {showSecret ? (
@@ -337,39 +318,30 @@ export function CloudinarySettings() {
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Find these in your{" "}
-                <a
-                  href="https://console.cloudinary.com/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary underline"
-                >
-                  Cloudinary Console
-                </a>{" "}
-                → Settings → Access keys.
-              </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-1">
               <Button
                 onClick={handleSaveCredentials}
                 disabled={saveConfig.isPending || !cloudName || !apiKey || !apiSecret}
-                className="flex-1 gap-2"
+                size="sm"
+                className="text-xs font-semibold gap-1.5"
               >
                 {saveConfig.isPending ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" /> Verifying...
+                    <Loader2 className="size-3.5 animate-spin" /> Verifying...
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="size-4" /> Save & Test Connection
+                    <CheckCircle2 className="size-3.5" /> Save & Test Connection
                   </>
                 )}
               </Button>
               {isEditing && (
                 <Button
                   variant="outline"
+                  size="sm"
+                  className="text-xs"
                   onClick={() => {
                     setIsEditing(false);
                     setApiSecret("");
@@ -383,13 +355,13 @@ export function CloudinarySettings() {
           </div>
         )}
 
-        {/* Edit / Disconnect buttons (when connected and not editing) */}
+        {/* Edit / Disconnect buttons */}
         {configured && !isEditing && !isViewer && (
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5"
+              className="text-xs font-semibold border-hairline hover:bg-surface-2"
               onClick={() => setIsEditing(true)}
             >
               Update Credentials
@@ -397,7 +369,7 @@ export function CloudinarySettings() {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-destructive hover:text-destructive"
+              className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
               onClick={handleDisconnect}
               disabled={deleteConfig.isPending}
             >
@@ -407,71 +379,53 @@ export function CloudinarySettings() {
           </div>
         )}
 
-        <Separator />
-
-        {/* Bulk Sync */}
-        <div className="space-y-3">
-          <div>
-            <p className="text-sm font-medium">Sync All Media to Cloudinary</p>
-            <p className="text-xs text-muted-foreground">
-              Upload all existing media that hasn&apos;t been uploaded yet. Run
-              a scrape first to refresh expired CDN URLs.
-            </p>
+        {/* Bulk Sync Box */}
+        <div className="p-3.5 rounded-[6px] border border-hairline bg-surface-2/40 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold text-ink">Bulk Media Sync</p>
+              <p className="text-[11px] text-ink-subtle">
+                Uploads all historical account pictures and saved post carousels.
+              </p>
+            </div>
+            {isViewer ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>{syncButton}</span>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs bg-surface-2 border border-hairline">
+                    Viewers do not have permission to sync media.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              syncButton
+            )}
           </div>
 
-          {isViewer ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>{syncButton}</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Viewers do not have permission to sync media.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            syncButton
-          )}
-
           {isSyncing && syncState && (
-            <div className="space-y-2">
-              <Progress value={syncPercent} className="h-2" />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>
-                  Accounts: {syncState.uploadedAccounts}/{syncState.totalAccounts}
-                </span>
-                <span>
-                  Posts: {syncState.uploadedPosts}/{syncState.totalPosts}
-                </span>
-                <span>
-                  Carousel: {syncState.uploadedCarouselItems}/
-                  {syncState.totalCarouselItems}
-                </span>
+            <div className="space-y-2 pt-2 border-t border-hairline">
+              <div className="flex justify-between text-[11px] font-mono text-ink-muted">
+                <span>Progress: {syncPercent}%</span>
+                <span>{syncDone} of {syncTotal} items</span>
               </div>
-              {syncState.failedUploads > 0 && (
-                <p className="text-xs text-destructive">
-                  {syncState.failedUploads} failed (expired URLs?)
-                </p>
-              )}
+              <Progress value={syncPercent} className="h-1.5 bg-surface-2 [&>div]:bg-amber-500" />
+              <div className="flex flex-wrap gap-4 text-[10px] font-mono text-ink-subtle">
+                <span>Accounts: {syncState.uploadedAccounts}/{syncState.totalAccounts}</span>
+                <span>Posts: {syncState.uploadedPosts}/{syncState.totalPosts}</span>
+                <span>Carousel: {syncState.uploadedCarouselItems}/{syncState.totalCarouselItems}</span>
+                {syncState.failedUploads > 0 && (
+                  <span className="text-red-400 font-bold">{syncState.failedUploads} failed</span>
+                )}
+              </div>
             </div>
           )}
 
           {syncState?.status === "completed" && (
-            <p className="text-xs text-muted-foreground">
-              Last sync:{" "}
-              {syncState.uploadedAccounts +
-                syncState.uploadedPosts +
-                syncState.uploadedCarouselItems}{" "}
-              uploaded
-              {syncState.failedUploads > 0 &&
-                `, ${syncState.failedUploads} failed`}
-            </p>
-          )}
-
-          {syncState?.status === "failed" && (
-            <p className="text-xs text-destructive">
-              Sync failed: {syncState.errorMessage}
+            <p className="text-[11px] font-mono text-ink-subtle pt-1 border-t border-hairline">
+              Latest sync: {syncState.uploadedAccounts + syncState.uploadedPosts + syncState.uploadedCarouselItems} items uploaded
+              {syncState.failedUploads > 0 && ` · ${syncState.failedUploads} failed`}
             </p>
           )}
         </div>
