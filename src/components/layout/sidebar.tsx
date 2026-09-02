@@ -1,19 +1,13 @@
 "use client";
 
 import { NavLink } from "./nav-link";
-<<<<<<< HEAD
-import { BarChart3, Users, Play, Settings } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-=======
 import { BrandLogo } from "./brand-logo";
 import {
   LayoutDashboard,
   Users,
   Play,
-  Search,
   Settings,
 } from "lucide-react";
->>>>>>> 0a69dfb (feat(layout): redesign application shell, sidebar, profile switcher, and brand header)
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { ProfileSwitcher } from "@/components/layout/profile-switcher";
 
@@ -67,12 +61,8 @@ export function Sidebar() {
         </div>
       </aside>
 
-<<<<<<< HEAD
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t bg-background/95 p-2 backdrop-blur md:hidden">
-=======
       {/* Mobile Bottom Bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 gap-1 border-t border-hairline bg-surface-1/90 p-2 backdrop-blur-xl md:hidden">
->>>>>>> 0a69dfb (feat(layout): redesign application shell, sidebar, profile switcher, and brand header)
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-1 border-t border-hairline bg-surface-1/90 p-2 backdrop-blur-xl md:hidden">
         {navItems.map(({ href, label, icon: Icon }) => (
           <NavLink
             key={href}
@@ -83,11 +73,6 @@ export function Sidebar() {
             {label}
           </NavLink>
         ))}
-        <ThemeToggle
-          showLabel
-          labelText="Theme"
-          className="mx-auto min-h-12 w-full flex-col justify-center gap-1 rounded-[4px] px-1 py-2 text-[10px]"
-        />
       </nav>
     </>
   );

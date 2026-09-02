@@ -19,7 +19,6 @@ import { useCreateProfile, useUpdateProfile } from "@/hooks/use-profiles";
 import type { ProfilePublic } from "@/types";
 
 interface ProfileFormDialogProps {
-  /** When provided, the dialog edits this profile; otherwise it creates a new one. */
   profile?: ProfilePublic;
   trigger: React.ReactNode;
 }
@@ -35,8 +34,6 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
   const update = useUpdateProfile();
   const pending = create.isPending || update.isPending;
 
-  // Reset the form each time the dialog transitions to open (render-time sync,
-  // avoids a setState-in-effect cascade).
   const [wasOpen, setWasOpen] = useState(false);
   if (open !== wasOpen) {
     setWasOpen(open);
@@ -91,32 +88,37 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit profile" : "Add profile"}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-md bg-surface-1 border border-hairline rounded-[8px] p-6">
+        <DialogHeader className="pb-2 border-b border-hairline">
+          <DialogTitle className="text-base font-semibold">
+            {isEdit ? "Edit Profile" : "Create New Profile"}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-ink-muted">
             {isEdit
-              ? "Update this profile's name or paste a fresh cookie."
-              : "Give the profile a name and paste its Instagram cookie."}
+              ? "Update profile details or refresh its Instagram session cookie."
+              : "Define a new tracked account identity and session credentials."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-w-0 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="profile-name">Name</Label>
+        <div className="min-w-0 space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+              Profile Name
+            </Label>
             <Input
               id="profile-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Sama"
+              placeholder="e.g. My Account"
+              className="text-xs"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="profile-cookie">
-              Instagram cookie{" "}
+          <div className="space-y-1.5">
+            <Label htmlFor="profile-cookie" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+              Instagram Cookie{" "}
               {isEdit && (
-                <span className="text-muted-foreground">
-                  (leave blank to keep current)
+                <span className="text-ink-subtle text-[10px] font-normal">
+                  (leave blank to retain current)
                 </span>
               )}
             </Label>
@@ -125,36 +127,36 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
               value={cookie}
               onChange={(e) => setCookie(e.target.value)}
               rows={4}
-              className="w-full min-w-0 break-all font-mono text-xs"
-              placeholder="Paste cookie string..."
+              className="w-full min-w-0 break-all font-mono text-xs bg-surface-2/40"
+              placeholder="sessionid=...; ds_user_id=..."
             />
             {isEdit && profile?.hasCookie && (
-              <p className="text-xs text-muted-foreground">
-                A cookie is already set for this profile.
+              <p className="text-[11px] font-mono text-emerald-400">
+                ✓ A session cookie is configured for this profile.
               </p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="profile-ua">
-              User-Agent <span className="text-muted-foreground">(optional)</span>
+          <div className="space-y-1.5">
+            <Label htmlFor="profile-ua" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+              User-Agent <span className="text-ink-subtle text-[10px] font-normal font-mono">(optional)</span>
             </Label>
             <Input
               id="profile-ua"
               value={userAgent}
               onChange={(e) => setUserAgent(e.target.value)}
-              className="font-mono text-xs"
+              className="font-mono text-xs bg-surface-2/40"
               placeholder="Defaults to Instagram Android UA"
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={pending}>
+          <Button onClick={handleSubmit} disabled={pending} size="sm" className="text-xs font-semibold">
             {pending
               ? "Saving..."
               : isEdit
-                ? "Save changes"
-                : "Create profile"}
+                ? "Save Changes"
+                : "Create Profile"}
           </Button>
         </DialogFooter>
       </DialogContent>

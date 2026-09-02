@@ -10,7 +10,7 @@ import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { Play, Users, Search } from "lucide-react";
+import { Play, Users } from "lucide-react";
 
 export default function OverviewPage() {
   const { data, isLoading } = useAnalytics();
@@ -21,12 +21,6 @@ export default function OverviewPage() {
         title="Overview"
         description="Unified archive metrics and synchronization status"
       >
-        <Button asChild variant="outline" size="sm">
-          <Link href="/search">
-            <Search className="size-3.5" />
-            Search
-          </Link>
-        </Button>
         <Button asChild variant="outline" size="sm">
           <Link href="/accounts">
             <Users className="size-3.5" />
@@ -73,4 +67,3 @@ export default function OverviewPage() {
     </div>
   );
 }
-
