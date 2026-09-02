@@ -138,7 +138,7 @@ export default function AccountDetailPage({
         existsAlsoOptions={data.existsAlsoOptions}
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid items-start gap-6 lg:grid-cols-2">
         <AccountTimeline events={data.events} eventsLimit={data.eventsLimit} />
         <AccountNotes username={account.username} />
       </div>
