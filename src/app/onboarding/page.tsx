@@ -19,7 +19,10 @@ export default async function OnboardingPage() {
     if (onboardingSetting?.value === "true" && profileCount > 0) {
       redirect("/");
     }
-  } catch {
+  } catch (e) {
+    if (e && typeof e === "object" && "digest" in e && typeof (e as { digest: unknown }).digest === "string" && (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")) {
+      throw e;
+    }
     // If DB is unreachable or during build, allow rendering wizard
   }
 

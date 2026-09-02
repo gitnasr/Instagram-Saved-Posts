@@ -64,9 +64,12 @@ export function PostDetailDialog({
               <div className="relative overflow-hidden rounded-[6px] bg-surface-2 border border-hairline flex items-center justify-center max-h-[70vh]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={post.cloudinaryThumbnailUrl ?? proxyImageUrl(post.thumbnailUrl)}
-                  alt="Post"
-                  className="max-h-[70vh] w-full object-contain"
+                  src={
+                    post.cloudinaryThumbnailUrl ??
+                    proxyImageUrl(post.thumbnailUrl)
+                  }
+                  alt="Post preview"
+                  className="max-h-[46vh] w-full max-w-full rounded-md object-contain md:max-h-[75vh]"
                 />
               </div>
             )
@@ -99,7 +102,6 @@ export function PostDetailDialog({
                 {post.captionText}
               </p>
             </div>
-          )}
 
           {/* Date */}
           <div className="flex items-center justify-between text-xs text-ink-subtle font-mono">

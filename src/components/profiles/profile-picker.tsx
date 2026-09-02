@@ -158,6 +158,19 @@ export function ProfilePicker() {
           </Button>
         </div>
       )}
+
+      <div className="text-center text-xs text-muted-foreground">
+        by{" "}
+        <a
+          href="https://gitnasr.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-foreground hover:underline transition-colors"
+        >
+          gitnasr.com
+        </a>{" "}
+        softwares
+      </div>
     </div>
   );
 }
