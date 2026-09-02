@@ -212,9 +212,9 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
         isExtendedWidth && "lg:col-span-2"
       )}
     >
-      <CardHeader className="pb-3 flex flex-row items-center justify-between gap-3">
-        <div className="space-y-0.5 min-w-0">
-          <CardTitle className="text-base flex items-center gap-2">
+      <CardHeader className="pb-3 flex flex-row items-start justify-between gap-3">
+        <div className="space-y-1 min-w-0">
+          <CardTitle className="text-base flex items-center gap-2 h-6">
             <History className="size-4 text-amber-500 shrink-0" />
             <span className="truncate">Activity Timeline</span>
           </CardTitle>
@@ -222,36 +222,39 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
             State transitions and events recorded across all sync operations
           </p>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Badge variant="secondary" className="font-mono text-[10px]">
+        <div className="flex items-center gap-1.5 shrink-0 h-6">
+          <Badge
+            variant="secondary"
+            className="font-mono text-[10px] h-6 px-2 flex items-center justify-center"
+          >
             {events.length} events
           </Badge>
           <Button
             variant="ghost"
             size="icon-xs"
-            className="text-ink-muted hover:text-ink hover:bg-surface-2"
+            className="size-6 rounded-[4px] border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
             onClick={() => setIsExtendedWidth((v) => !v)}
             title={isExtendedWidth ? "Restore split view" : "Extend to full width"}
             aria-label={isExtendedWidth ? "Restore split view" : "Extend to full width"}
           >
             {isExtendedWidth ? (
-              <Minimize2 className="size-3.5" />
+              <Minimize2 className="size-3" />
             ) : (
-              <Maximize2 className="size-3.5" />
+              <Maximize2 className="size-3" />
             )}
           </Button>
           <Button
             variant="ghost"
             size="icon-xs"
-            className="text-ink-muted hover:text-ink hover:bg-surface-2"
+            className="size-6 rounded-[4px] border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
             onClick={() => setIsCardCollapsed((v) => !v)}
             title={isCardCollapsed ? "Expand card" : "Collapse card"}
             aria-label={isCardCollapsed ? "Expand card" : "Collapse card"}
           >
             {isCardCollapsed ? (
-              <ChevronDown className="size-3.5" />
+              <ChevronDown className="size-3" />
             ) : (
-              <ChevronUp className="size-3.5" />
+              <ChevronUp className="size-3" />
             )}
           </Button>
         </div>
@@ -282,14 +285,14 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                           key={event.id}
                           className="flex items-start gap-3 rounded-[6px] border border-hairline bg-surface-1/50 hover:bg-surface-2 px-3 py-2 transition-all"
                         >
-                          <div className="p-1 rounded-[4px] bg-surface-2 border border-hairline shrink-0 mt-0.5">
+                          <div className="size-6 rounded-[4px] bg-surface-2 border border-hairline shrink-0 flex items-center justify-center">
                             <Icon className={`size-3.5 ${meta.tone}`} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-ink">{meta.label}</span>
+                            <div className="min-h-6 flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-xs font-semibold text-ink leading-tight">{meta.label}</span>
                               <span
-                                className="text-[10px] font-mono text-ink-subtle"
+                                className="text-[10px] font-mono text-ink-subtle leading-tight"
                                 title={timestamp.absolute}
                               >
                                 {timestamp.relative || timestamp.absolute}
