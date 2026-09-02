@@ -68,7 +68,7 @@ jobs:
             type=sha,format=long,enable=${{ github.event_name == 'push' }}
 
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build and push
         uses: docker/build-push-action@v7
