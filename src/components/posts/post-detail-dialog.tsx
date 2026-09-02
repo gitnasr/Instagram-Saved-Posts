@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CarouselViewer } from "@/components/posts/carousel-viewer";
-import { Heart, MessageCircle, ExternalLink } from "lucide-react";
+import { Heart, MessageCircle, ExternalLink, Calendar, Layers } from "lucide-react";
 import { proxyImageUrl } from "@/lib/proxy-image";
 import { format } from "date-fns";
 import type { Post } from "@/types";
@@ -29,7 +29,7 @@ function mediaTypeLabel(type: number) {
     case 8:
       return "Carousel";
     default:
-      return "Unknown";
+      return "Post";
   }
 }
 
@@ -46,20 +46,22 @@ export function PostDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Post Details
-            <Badge variant="secondary">{mediaTypeLabel(post.mediaType)}</Badge>
+      <DialogContent className="max-w-lg bg-surface-1 border border-hairline rounded-[8px] p-5">
+        <DialogHeader className="pb-2 border-b border-hairline">
+          <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+            Post Archive
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+              {mediaTypeLabel(post.mediaType)}
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 pt-2">
           {isCarousel ? (
             <CarouselViewer key={post.pk} postPk={post.pk} />
           ) : (
             post.thumbnailUrl && (
-              <div className="relative overflow-hidden rounded-lg bg-muted flex items-center justify-center max-h-[70vh]">
+              <div className="relative overflow-hidden rounded-[6px] bg-surface-2 border border-hairline flex items-center justify-center max-h-[70vh]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={post.cloudinaryThumbnailUrl ?? proxyImageUrl(post.thumbnailUrl)}
@@ -70,36 +72,48 @@ export function PostDetailDialog({
             )
           )}
 
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1 text-sm">
-              <Heart className="h-4 w-4" />
-              {post.likeCount} likes
-            </span>
-            <span className="flex items-center gap-1 text-sm">
-              <MessageCircle className="h-4 w-4" />
-              {post.commentCount} comments
-            </span>
-          </div>
-
-          {post.captionText && (
-            <div className="max-h-32 overflow-y-auto rounded-lg bg-muted p-3">
-              <p className="text-sm whitespace-pre-wrap">{post.captionText}</p>
+          {/* Stats Bar */}
+          <div className="flex items-center justify-between p-2.5 rounded-[6px] bg-surface-2/60 border border-hairline">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-xs font-semibold font-mono text-ink">
+                <Heart className="size-3.5 text-amber-500 fill-amber-500" />
+                {post.likeCount.toLocaleString()} likes
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-semibold font-mono text-ink">
+                <MessageCircle className="size-3.5 text-ink-muted" />
+                {post.commentCount.toLocaleString()} comments
+              </span>
             </div>
-          )}
-
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              Posted {format(new Date(post.takenAt * 1000), "MMM d, yyyy")}
-            </span>
             {post.carouselMediaCount && (
-              <span>{post.carouselMediaCount} slides</span>
+              <span className="flex items-center gap-1 text-[11px] font-mono text-ink-muted">
+                <Layers className="size-3" />
+                {post.carouselMediaCount} slides
+              </span>
             )}
           </div>
 
-          <Button asChild variant="outline" className="w-full">
+          {/* Caption */}
+          {post.captionText && (
+            <div className="max-h-36 overflow-y-auto rounded-[6px] bg-surface-2/40 border border-hairline p-3">
+              <p className="text-xs text-ink whitespace-pre-wrap leading-relaxed">
+                {post.captionText}
+              </p>
+            </div>
+          )}
+
+          {/* Date */}
+          <div className="flex items-center justify-between text-xs text-ink-subtle font-mono">
+            <span className="flex items-center gap-1">
+              <Calendar className="size-3" />
+              Posted {format(new Date(post.takenAt * 1000), "MMM d, yyyy · HH:mm")}
+            </span>
+          </div>
+
+          {/* Instagram Link CTA */}
+          <Button asChild variant="outline" className="w-full text-xs font-semibold border-hairline hover:bg-surface-2">
             <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              View on Instagram
+              <ExternalLink className="mr-1.5 size-3.5" />
+              Open Original on Instagram
             </a>
           </Button>
         </div>
