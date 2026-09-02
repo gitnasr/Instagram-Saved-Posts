@@ -36,14 +36,17 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    <div className="flex h-dvh overflow-hidden bg-canvas">
       <Sidebar />
       <main
         data-dashboard-scroll
-        className="h-dvh min-w-0 flex-1 overflow-y-auto px-4 py-4 pb-24 sm:px-6 sm:py-6 md:pb-6"
+        className="h-dvh min-w-0 flex-1 overflow-y-auto px-4 py-6 pb-24 sm:px-8 sm:py-8 md:pb-8"
       >
-        {children}
+        <div className="mx-auto max-w-6xl w-full">
+          {children}
+        </div>
       </main>
     </div>
   );
 }
+
