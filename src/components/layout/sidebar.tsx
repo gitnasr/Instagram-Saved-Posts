@@ -28,8 +28,20 @@ export function Sidebar() {
             </NavLink>
           ))}
         </nav>
-        <div className="p-3">
+        <div className="mt-auto border-t p-3 space-y-2">
           <ThemeToggle showLabel />
+          <div className="text-center text-[11px] text-muted-foreground">
+            by{" "}
+            <a
+              href="https://gitnasr.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground hover:underline transition-colors"
+            >
+              gitnasr.com
+            </a>{" "}
+            softwares
+          </div>
         </div>
       </aside>
 
