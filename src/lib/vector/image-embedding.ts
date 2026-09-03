@@ -1,23 +1,43 @@
-import { pipeline, RawImage, type ImageFeatureExtractionPipeline } from "@huggingface/transformers";
+import {
+  AutoProcessor,
+  CLIPVisionModelWithProjection,
+  RawImage,
+  type Processor,
+} from "@huggingface/transformers";
 
-let extractorPromise: Promise<ImageFeatureExtractionPipeline> | null = null;
+let processorPromise: Promise<Processor> | null = null;
+let visionModelPromise: Promise<CLIPVisionModelWithProjection> | null = null;
 
-function getExtractor(): Promise<ImageFeatureExtractionPipeline> {
-  if (!extractorPromise) {
-    extractorPromise = pipeline("image-feature-extraction", "Xenova/clip-vit-base-patch32", {
-      dtype: "q8",
-    });
+function getProcessor(): Promise<Processor> {
+  if (!processorPromise) {
+    processorPromise = AutoProcessor.from_pretrained("Xenova/clip-vit-base-patch32");
   }
-  return extractorPromise;
+  return processorPromise;
+}
+
+function getVisionModel(): Promise<CLIPVisionModelWithProjection> {
+  if (!visionModelPromise) {
+    visionModelPromise = CLIPVisionModelWithProjection.from_pretrained(
+      "Xenova/clip-vit-base-patch32",
+      { dtype: "q8" }
+    );
+  }
+  return visionModelPromise;
 }
 
 async function embed(image: RawImage): Promise<number[]> {
-  const extractor = await getExtractor();
-  // clip-vit-base-patch32's ONNX export has no pooler layer, so `{ pool: true }`
-  // (the only option the .d.ts documents) throws. `pooling`/`normalize` are the
-  // actual runtime-supported options for this pipeline; types just lag the lib.
-  const output = await extractor(image, { pooling: "mean", normalize: true } as never);
-  return Array.from(output.data as Float32Array);
+  const [processor, visionModel] = await Promise.all([
+    getProcessor(),
+    getVisionModel(),
+  ]);
+
+  const imageInputs = await processor(image);
+  const { image_embeds } = await visionModel(imageInputs);
+
+  const raw = Array.from(image_embeds.data as Float32Array);
+  // L2 normalize so cosine distance in Qdrant aligns perfectly with normalized text embeddings
+  const norm = Math.sqrt(raw.reduce((sum, v) => sum + v * v, 0)) || 1;
+  return raw.map((v) => v / norm);
 }
 
 /** 512-d CLIP embedding for an image at a stable HTTPS URL (Cloudinary or Instagram CDN). */

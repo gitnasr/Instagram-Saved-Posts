@@ -175,6 +175,7 @@ export async function runVectorIndex(profileId: string): Promise<void> {
           mediaType: target.mediaType,
           source: target.source,
           carouselPosition: target.position,
+          imageUrl: target.imageUrl,
         };
 
         const imageVector = await embedImageFromUrl(target.imageUrl);

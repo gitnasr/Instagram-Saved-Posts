@@ -470,12 +470,37 @@ export default function SearchPage() {
                 const pct = Math.round(hit.score * 100);
                 return (
                   <div key={hit.post.pk} className="relative group">
-                    <PostCard post={hit.post} onClick={() => setSelectedPost(hit.post)} />
-                    <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-[4px] bg-black/80 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-white backdrop-blur-xs border border-white/10">
-                      <span className={pct >= 80 ? "text-amber-400" : "text-zinc-300"}>
+                    <PostCard
+                      post={hit.post}
+                      onClick={() => setSelectedPost(hit.post)}
+                      thumbnailOverride={hit.matchedImageUrl}
+                      matchedSlideIndex={hit.matchedSlideIndex}
+                    />
+                    <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-[4px] bg-black/80 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-white backdrop-blur-xs border border-white/10">
+                      <span
+                        className={
+                          pct >= 85
+                            ? "text-amber-400"
+                            : pct >= 70
+                              ? "text-emerald-400"
+                              : "text-zinc-300"
+                        }
+                      >
                         {pct}%
                       </span>
-                      <span className="text-[9px] text-zinc-400">match</span>
+                      {hit.matchType && (
+                        <span className="text-[9px] text-zinc-400 uppercase tracking-wider font-normal">
+                          {hit.matchType === "hybrid"
+                            ? "Hybrid"
+                            : hit.matchType === "caption"
+                              ? "Caption"
+                              : hit.matchType === "account"
+                                ? "Author"
+                                : hit.matchType === "face"
+                                  ? "Face"
+                                  : "Visual"}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

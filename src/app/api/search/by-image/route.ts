@@ -38,24 +38,57 @@ export async function POST(request: NextRequest) {
     const vector = await embedImageFromBuffer(buffer);
     const hits = await searchByVector(COLLECTIONS.POST_IMAGES, vector, profile.id, RESULT_LIMIT);
 
-    // Keep only the best-scoring hit per post
-    const bestScoreByPk = new Map<string, number>();
+    // Keep only the best-scoring hit per post, recording slide attribution
+    interface HitDetails {
+      score: number;
+      source?: "thumbnail" | "carousel";
+      carouselPosition?: number;
+      imageUrl?: string;
+    }
+    const bestHitByPk = new Map<string, HitDetails>();
     for (const hit of hits) {
       const pk = hit.payload?.postPk;
       if (typeof pk !== "string") continue;
-      const prev = bestScoreByPk.get(pk);
-      if (prev === undefined || hit.score > prev) bestScoreByPk.set(pk, hit.score);
+      // Filter out low similarity noise
+      if (hit.score < 0.26) continue;
+      const prev = bestHitByPk.get(pk);
+      if (prev === undefined || hit.score > prev.score) {
+        bestHitByPk.set(pk, {
+          score: hit.score,
+          source: hit.payload?.source as "thumbnail" | "carousel" | undefined,
+          carouselPosition: hit.payload?.carouselPosition as number | undefined,
+          imageUrl: hit.payload?.imageUrl as string | undefined,
+        });
+      }
     }
 
+    const sortedHits = [...bestHitByPk.entries()].sort((a, b) => b[1].score - a[1].score);
+    const topScore = sortedHits.length > 0 ? sortedHits[0][1].score : 0;
+
+    // Filter by elbow drop-off (keep hits with score >= 65% of top score)
+    const filteredHits = sortedHits.filter(([, h]) => topScore > 0 && h.score >= topScore * 0.65);
+
     const posts = await prisma.post.findMany({
-      where: { profileId: profile.id, pk: { in: [...bestScoreByPk.keys()] } },
+      where: { profileId: profile.id, pk: { in: filteredHits.map(([pk]) => pk) } },
     });
     const postByPk = new Map(posts.map((p) => [p.pk, p]));
 
-    const results: VectorSearchHit[] = [...bestScoreByPk.entries()]
-      .map(([pk, score]) => ({ post: postByPk.get(pk), score }))
-      .filter((r): r is VectorSearchHit => !!r.post)
-      .sort((a, b) => b.score - a.score);
+    const results: VectorSearchHit[] = [];
+    for (const [pk, hit] of filteredHits) {
+      const post = postByPk.get(pk);
+      if (!post) continue;
+      // Calibrate image-to-image score [0.26, 0.85] -> [0.45, 0.99]
+      const norm = Math.max(0, Math.min(1, (hit.score - 0.26) / 0.55));
+      const calibratedScore = Math.min(0.99, Math.max(0.45, 0.45 + norm * 0.54));
+      results.push({
+        post,
+        score: calibratedScore,
+        rawScore: hit.score,
+        matchType: "visual",
+        matchedSlideIndex: hit.carouselPosition,
+        matchedImageUrl: hit.imageUrl,
+      });
+    }
 
     return NextResponse.json({ results });
   } catch (err: unknown) {

@@ -242,6 +242,7 @@ export interface PostVectorPayload {
   mediaType: number;
   source: VectorSource;
   carouselPosition?: number;
+  imageUrl?: string;
   [key: string]: unknown;
 }
 

@@ -3,11 +3,17 @@
  * the Transformers.js cache so the image ships with them baked in instead
  * of fetching from huggingface.co on first request.
  */
-import { pipeline, AutoTokenizer, CLIPTextModelWithProjection } from "@huggingface/transformers";
+import {
+  AutoProcessor,
+  CLIPVisionModelWithProjection,
+  AutoTokenizer,
+  CLIPTextModelWithProjection,
+} from "@huggingface/transformers";
 
 async function main() {
-  console.log("[warm-models] Warming CLIP vision model...");
-  await pipeline("image-feature-extraction", "Xenova/clip-vit-base-patch32", {
+  console.log("[warm-models] Warming CLIP vision processor & projection model...");
+  await AutoProcessor.from_pretrained("Xenova/clip-vit-base-patch32");
+  await CLIPVisionModelWithProjection.from_pretrained("Xenova/clip-vit-base-patch32", {
     dtype: "q8",
   });
 
