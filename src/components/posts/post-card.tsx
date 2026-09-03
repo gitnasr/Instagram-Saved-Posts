@@ -8,19 +8,24 @@ import type { Post } from "@/types";
 interface PostCardProps {
   post: Post;
   onClick?: () => void;
+  thumbnailOverride?: string | null;
+  matchedSlideIndex?: number | null;
 }
 
-export function PostCard({ post, onClick }: PostCardProps) {
+export function PostCard({ post, onClick, thumbnailOverride, matchedSlideIndex }: PostCardProps) {
+  const displayUrl =
+    thumbnailOverride ?? post.cloudinaryThumbnailUrl ?? proxyImageUrl(post.thumbnailUrl);
+
   return (
     <Card
       className="group cursor-pointer overflow-hidden rounded-[8px] border border-hairline bg-surface-1 p-0 transition-all hover:border-hairline-strong hover:scale-[1.01]"
       onClick={onClick}
     >
       <div className="relative aspect-square bg-surface-2 overflow-hidden">
-        {(post.cloudinaryThumbnailUrl ?? post.thumbnailUrl) ? (
+        {displayUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={post.cloudinaryThumbnailUrl ?? proxyImageUrl(post.thumbnailUrl)}
+            src={displayUrl.startsWith("http") && !displayUrl.includes("/api/proxy-image") && !thumbnailOverride?.includes("res.cloudinary.com") ? proxyImageUrl(displayUrl) : displayUrl}
             alt={post.captionText?.slice(0, 50) ?? "Post thumbnail"}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
@@ -50,7 +55,11 @@ export function PostCard({ post, onClick }: PostCardProps) {
         {post.carouselMediaCount && post.carouselMediaCount > 1 && (
           <div className="absolute right-2 top-2 flex items-center gap-1 rounded-[4px] bg-black/70 px-1.5 py-0.5 text-[10px] font-mono font-medium text-white backdrop-blur-xs border border-white/10">
             <Layers className="size-3" />
-            <span>1/{post.carouselMediaCount}</span>
+            <span>
+              {matchedSlideIndex !== undefined && matchedSlideIndex !== null
+                ? `Slide ${matchedSlideIndex + 1}/${post.carouselMediaCount}`
+                : `1/${post.carouselMediaCount}`}
+            </span>
           </div>
         )}
       </div>

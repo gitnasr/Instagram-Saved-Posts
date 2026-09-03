@@ -114,6 +114,10 @@ export interface CloudinarySyncProgress {
 export interface VectorSearchHit {
   post: Post;
   score: number;
+  rawScore?: number;
+  matchType?: "hybrid" | "visual" | "caption" | "account" | "face";
+  matchedSlideIndex?: number;
+  matchedImageUrl?: string;
   /** Only present for search-by-face results — the matched face's location in the post's image. */
   bbox?: { x: number; y: number; width: number; height: number };
 }

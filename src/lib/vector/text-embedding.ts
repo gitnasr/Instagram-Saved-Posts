@@ -27,15 +27,47 @@ function getTextModel(): Promise<CLIPTextModelWithProjection> {
 /**
  * Generates a 512-dimensional, L2-normalized CLIP text embedding for a natural-language
  * search prompt. Embeds into the exact same vector space as the saved post images.
+ * Uses prompt ensembling (averaging variations) to significantly boost retrieval accuracy.
  */
 export async function embedText(text: string): Promise<number[]> {
   const [tokenizer, textModel] = await Promise.all([getTokenizer(), getTextModel()]);
 
-  const inputs = tokenizer([text], { padding: true, truncation: true });
+  const trimmed = text.trim();
+  // Prompt ensembling: query + descriptive templates stabilize linguistic variance
+  const prompts = [
+    trimmed,
+    `a photo of ${trimmed}`,
+    `a picture of ${trimmed}`,
+  ];
+
+  const inputs = tokenizer(prompts, { padding: true, truncation: true });
   const { text_embeds } = await textModel(inputs);
 
-  const raw = Array.from(text_embeds.data as Float32Array);
-  // L2 normalize so cosine distance in Qdrant aligns perfectly with normalized image embeddings
-  const norm = Math.sqrt(raw.reduce((sum, v) => sum + v * v, 0)) || 1;
-  return raw.map((v) => v / norm);
+  const dims = 512;
+  const data = text_embeds.data as Float32Array;
+  const avg = new Float32Array(dims);
+
+  for (let i = 0; i < prompts.length; i++) {
+    const offset = i * dims;
+    let sumSq = 0;
+    for (let d = 0; d < dims; d++) {
+      const val = data[offset + d];
+      sumSq += val * val;
+    }
+    const norm = Math.sqrt(sumSq) || 1;
+    for (let d = 0; d < dims; d++) {
+      avg[d] += data[offset + d] / norm;
+    }
+  }
+
+  // Final L2 normalization of ensembled vector
+  let totalSumSq = 0;
+  for (let d = 0; d < dims; d++) totalSumSq += avg[d] * avg[d];
+  const finalNorm = Math.sqrt(totalSumSq) || 1;
+
+  const result: number[] = new Array(dims);
+  for (let d = 0; d < dims; d++) {
+    result[d] = avg[d] / finalNorm;
+  }
+  return result;
 }

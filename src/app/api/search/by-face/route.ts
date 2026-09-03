@@ -51,16 +51,47 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    const bestByPk = new Map<string, { score: number; bbox?: VectorSearchHit["bbox"] }>();
+    // Helper to extract true Euclidean distance regardless of Qdrant score representation
+    const getEuclideanDistance = (score: number): number => {
+      if (score <= 0) return Math.abs(score);
+      if (score <= 1) return 1 / score - 1;
+      return score;
+    };
+
+    interface FaceHitDetails {
+      score: number;
+      calibratedScore: number;
+      distance: number;
+      bbox?: VectorSearchHit["bbox"];
+      carouselPosition?: number;
+      imageUrl?: string;
+    }
+
+    const bestByPk = new Map<string, FaceHitDetails>();
+    const FACE_DISTANCE_THRESHOLD = 0.62; // Standard FaceNet same-person identity boundary
+
     for (const hits of hitLists) {
       for (const hit of hits) {
         const pk = hit.payload?.postPk;
         if (typeof pk !== "string") continue;
+
+        const distance = getEuclideanDistance(hit.score);
+        // Exclude faces that exceed identity threshold
+        if (distance > FACE_DISTANCE_THRESHOLD) continue;
+
+        // Calibrate Euclidean distance [0.15, 0.62] -> [0.99, 0.50]
+        const norm = Math.max(0, Math.min(1, (distance - 0.15) / (FACE_DISTANCE_THRESHOLD - 0.15)));
+        const calibratedScore = Math.min(0.99, Math.max(0.50, 0.99 - norm * 0.49));
+
         const prev = bestByPk.get(pk);
-        if (prev === undefined || hit.score > prev.score) {
+        if (prev === undefined || calibratedScore > prev.calibratedScore) {
           bestByPk.set(pk, {
             score: hit.score,
+            calibratedScore,
+            distance,
             bbox: hit.payload?.bbox as VectorSearchHit["bbox"],
+            carouselPosition: hit.payload?.carouselPosition as number | undefined,
+            imageUrl: hit.payload?.imageUrl as string | undefined,
           });
         }
       }
@@ -73,7 +104,15 @@ export async function POST(request: NextRequest) {
 
     const results: VectorSearchHit[] = [...bestByPk.entries()]
       .filter(([pk]) => postByPk.has(pk))
-      .map(([pk, { score, bbox }]) => ({ post: postByPk.get(pk)!, score, bbox }))
+      .map(([pk, details]) => ({
+        post: postByPk.get(pk)!,
+        score: details.calibratedScore,
+        rawScore: details.score,
+        matchType: "face" as const,
+        matchedSlideIndex: details.carouselPosition,
+        matchedImageUrl: details.imageUrl,
+        bbox: details.bbox,
+      }))
       .sort((a, b) => b.score - a.score);
 
     return NextResponse.json({ results });
