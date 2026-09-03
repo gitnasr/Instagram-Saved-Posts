@@ -24,6 +24,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > MAX_FILE_SIZE + 1024 * 1024) {
+    return NextResponse.json(
+      { error: "Request payload exceeds maximum allowed size of 10MB." },
+      { status: 413 }
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get("image");
   if (!(file instanceof Blob)) {
@@ -33,7 +42,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json(
       { error: "Image file exceeds maximum allowed size of 10MB." },

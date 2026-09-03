@@ -18,7 +18,7 @@ export async function GET() {
     latencyMs: 0,
   }));
 
-  const isHealthy = mongoConnected && qdrantLiveness.status !== "disconnected";
+  const isHealthy = mongoConnected && qdrantLiveness.status === "healthy";
   const status = isHealthy ? "healthy" : mongoConnected ? "degraded" : "unhealthy";
 
   return NextResponse.json(

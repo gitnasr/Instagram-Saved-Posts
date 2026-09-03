@@ -25,10 +25,12 @@ export interface DetectedFace {
   descriptor: number[];
 }
 
+export const MAX_FACE_IMAGE_PIXELS = 16_000_000; // 16 Megapixels
+
 async function detectFacesInBuffer(buffer: Buffer): Promise<DetectedFace[]> {
   await loadModels();
 
-  const { data, info } = await sharp(buffer)
+  const { data, info } = await sharp(buffer, { limitInputPixels: MAX_FACE_IMAGE_PIXELS })
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
