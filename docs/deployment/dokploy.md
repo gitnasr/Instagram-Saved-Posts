@@ -28,18 +28,22 @@ services:
     pull_policy: always
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "5050:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
-      # Optional: Cloudinary credentials
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - QDRANT_PORT=6335
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
       mongo:
+        condition: service_healthy
+      qdrant:
         condition: service_healthy
 
   mongo:
@@ -65,24 +69,45 @@ services:
       retries: 10
       start_period: 2s
 
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    restart: unless-stopped
+    ports:
+      - "6335:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ': >/dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 2s
+
 volumes:
   mongo_data:
+  qdrant_data:
 ```
 
 ### Step 3: Configure Domain & SSL
 1. In Dokploy, open the **Domains** tab for the `app` service.
 2. Add your custom domain (e.g. `instagram.yourdomain.com`).
-3. Select Port `3000`.
+3. Select Port `5050`.
 4. Enable **HTTPS (Let's Encrypt)**.
+5. (Optional) To expose the Qdrant Dashboard UI, create a domain mapping for service `qdrant` on port `6335` (e.g. `qdrant.yourdomain.com/dashboard`).
 
 ### Step 4: Deploy
-Click **Deploy** at the top right. Dokploy will pull the container images, verify MongoDB health, and start the application automatically!
+Click **Deploy** at the top right. Dokploy will pull the container images, verify MongoDB and Qdrant health, and start the application automatically!
 
 ---
 
 ## 🔒 Optional: Dokploy Environment Variables
 
-If you wish to configure permanent Cloudinary media sync, go to the **Environment** tab in Dokploy and add:
+If you wish to configure permanent Cloudinary media sync or custom Qdrant keys, go to the **Environment** tab in Dokploy and add:
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+- `QDRANT_API_KEY`

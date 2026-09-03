@@ -13,8 +13,9 @@ import {
   type FaceVectorPayload,
   type PostVectorPayload,
 } from "./qdrant-client";
+import { saveProfileVectorStats, type VectorIndexStats } from "./stats";
 
-// Per-profile index state, mirrors src/lib/cloudinary-sync.ts's syncStates map.
+// Per-profile index state in memory for real-time polling
 const indexStates = new Map<string, VectorIndexProgress>();
 
 export function getCurrentIndexState(profileId: string): VectorIndexProgress | null {
@@ -87,6 +88,8 @@ async function collectTargets(profileId: string): Promise<IndexTarget[]> {
   return targets;
 }
 
+const UPSERT_BATCH_SIZE = 25;
+
 export async function runVectorIndex(profileId: string): Promise<void> {
   if (indexStates.get(profileId)?.status === "running") {
     throw new Error("A vector index run is already in progress for this profile");
@@ -96,6 +99,24 @@ export async function runVectorIndex(profileId: string): Promise<void> {
   if (!isQdrantConfigured(qdrantConfig)) {
     throw new Error("Qdrant is not configured. Set QDRANT_URL/QDRANT_API_KEY env vars.");
   }
+
+  const startTime = Date.now();
+  const startIso = new Date(startTime).toISOString();
+
+  // Find profile name and newest post timestamp for cutoff tracking
+  const [profileRecord, newestPost] = await Promise.all([
+    prisma.profile.findUnique({ where: { id: profileId }, select: { name: true } }),
+    prisma.post.findFirst({
+      where: { profileId },
+      orderBy: { takenAt: "desc" },
+      select: { takenAt: true },
+    }),
+  ]);
+
+  const cutoffPostTakenAt = newestPost?.takenAt ?? null;
+  const cutoffPostDate = cutoffPostTakenAt
+    ? new Date(cutoffPostTakenAt * 1000).toISOString()
+    : null;
 
   const targets = await collectTargets(profileId);
 
@@ -108,10 +129,45 @@ export async function runVectorIndex(profileId: string): Promise<void> {
   };
   indexStates.set(profileId, state);
 
+  // Initial stats record
+  const currentStats: VectorIndexStats = {
+    profileId,
+    profileName: profileRecord?.name ?? profileId,
+    status: "running",
+    lastRunAt: startIso,
+    lastCompletedAt: null,
+    durationMs: null,
+    cutoffPostTakenAt,
+    cutoffPostDate,
+    totalItems: targets.length,
+    indexedItems: 0,
+    facesIndexed: 0,
+    failedItems: 0,
+    lastError: null,
+    updatedAt: startIso,
+  };
+  await saveProfileVectorStats(currentStats);
+
   try {
     await ensureCollections();
 
-    for (const target of targets) {
+    // Batched queues to avoid RocksDB open file limits and connection saturation
+    const imageBatch: { id: string; vector: number[]; payload: Record<string, unknown> }[] = [];
+    const faceBatch: { id: string; vector: number[]; payload: Record<string, unknown> }[] = [];
+
+    const flushBatches = async (force = false) => {
+      if (imageBatch.length >= UPSERT_BATCH_SIZE || (force && imageBatch.length > 0)) {
+        await upsertPoints(COLLECTIONS.POST_IMAGES, [...imageBatch]);
+        imageBatch.length = 0;
+      }
+      if (faceBatch.length >= UPSERT_BATCH_SIZE || (force && faceBatch.length > 0)) {
+        await upsertPoints(COLLECTIONS.POST_FACES, [...faceBatch]);
+        faceBatch.length = 0;
+      }
+    };
+
+    for (let i = 0; i < targets.length; i++) {
+      const target = targets[i];
       try {
         const imagePayload: PostVectorPayload = {
           profileId,
@@ -122,31 +178,39 @@ export async function runVectorIndex(profileId: string): Promise<void> {
         };
 
         const imageVector = await embedImageFromUrl(target.imageUrl);
-        await upsertPoints(COLLECTIONS.POST_IMAGES, [
-          {
-            id: pointId(profileId, target.postPk, target.source, target.position),
-            vector: imageVector,
-            payload: imagePayload,
-          },
-        ]);
+        imageBatch.push({
+          id: pointId(profileId, target.postPk, target.source, target.position),
+          vector: imageVector,
+          payload: imagePayload,
+        });
 
         const faces = await detectFacesFromUrl(target.imageUrl);
         if (faces.length > 0) {
-          const facePoints = faces.map((face, i) => {
+          for (let faceIdx = 0; faceIdx < faces.length; faceIdx++) {
+            const face = faces[faceIdx];
             const payload: FaceVectorPayload = { ...imagePayload, bbox: face.bbox };
-            return {
-              id: pointId(profileId, target.postPk, target.source, target.position, i),
+            faceBatch.push({
+              id: pointId(profileId, target.postPk, target.source, target.position, faceIdx),
               vector: face.descriptor,
               payload,
-            };
-          });
-          await upsertPoints(COLLECTIONS.POST_FACES, facePoints);
+            });
+          }
           state.facesIndexed += faces.length;
         }
 
         state.indexedItems += 1;
+        await flushBatches(false);
+
+        // Periodically sync stats every 50 items
+        if (i > 0 && i % 50 === 0) {
+          currentStats.indexedItems = state.indexedItems;
+          currentStats.facesIndexed = state.facesIndexed;
+          currentStats.failedItems = state.failedItems;
+          await saveProfileVectorStats(currentStats);
+        }
       } catch (error) {
         state.failedItems += 1;
+        currentStats.lastError = error instanceof Error ? error.message : String(error);
         logger.error(
           { err: error, profileId, postPk: target.postPk, source: target.source },
           "[vector-index] Failed to index item"
@@ -154,19 +218,38 @@ export async function runVectorIndex(profileId: string): Promise<void> {
       }
     }
 
+    // Flush any remaining batched points
+    await flushBatches(true);
+
+    const completionIso = new Date().toISOString();
     state.status = "completed";
+    currentStats.status = "completed";
+    currentStats.lastCompletedAt = completionIso;
+    currentStats.durationMs = Date.now() - startTime;
+    currentStats.indexedItems = state.indexedItems;
+    currentStats.facesIndexed = state.facesIndexed;
+    currentStats.failedItems = state.failedItems;
+    await saveProfileVectorStats(currentStats);
+
     logger.info(
       {
         profileId,
         indexedItems: state.indexedItems,
         facesIndexed: state.facesIndexed,
         failedItems: state.failedItems,
+        durationMs: currentStats.durationMs,
       },
       "[vector-index] Index run completed"
     );
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
     state.status = "failed";
-    state.errorMessage = error instanceof Error ? error.message : "Unknown error";
+    state.errorMessage = errorMsg;
+    currentStats.status = "failed";
+    currentStats.lastError = errorMsg;
+    currentStats.durationMs = Date.now() - startTime;
+    await saveProfileVectorStats(currentStats);
+
     logger.error({ err: error, profileId }, "[vector-index] Index run failed");
   }
 }

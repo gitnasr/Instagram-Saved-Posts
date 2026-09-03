@@ -9,6 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { PostCard } from "@/components/posts/post-card";
 import { PostDetailDialog } from "@/components/posts/post-detail-dialog";
 import {
@@ -16,7 +24,9 @@ import {
   useSearchByImage,
   useSearchByFace,
   useVectorIndexStatus,
+  useVectorStats,
   useReindexVectors,
+  type VectorSearchError,
 } from "@/hooks/use-vector-search";
 import {
   Search as SearchIcon,
@@ -28,6 +38,13 @@ import {
   Database,
   X,
   AlertCircle,
+  ExternalLink,
+  BarChart3,
+  Clock,
+  Calendar,
+  Layers,
+  Activity,
+  CheckCircle2,
 } from "lucide-react";
 import type { Post, VectorSearchHit } from "@/types";
 
@@ -49,16 +66,31 @@ export default function SearchPage() {
   const [results, setResults] = useState<VectorSearchHit[] | null>(null);
   const [activeQueryLabel, setActiveQueryLabel] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [showIndexModal, setShowIndexModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [searchErrorMessage, setSearchErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const searchByText = useSearchByText();
   const searchByImage = useSearchByImage();
   const searchByFace = useSearchByFace();
   const { data: indexStatusData, isLoading: isLoadingStatus } = useVectorIndexStatus();
+  const { data: vectorStatsData, isLoading: isLoadingStats } = useVectorStats();
   const reindexMutation = useReindexVectors();
 
   const isPending =
     searchByText.isPending || searchByImage.isPending || searchByFace.isPending;
+
+  const handleSearchError = (err: VectorSearchError | Error) => {
+    const isIndexNeeded = "needsIndexing" in err ? err.needsIndexing : false;
+    if (isIndexNeeded) {
+      setShowIndexModal(true);
+      setSearchErrorMessage("Vector index has not been built yet. Please run the indexer first.");
+    } else {
+      setSearchErrorMessage(err.message);
+      toast.error(err.message);
+    }
+  };
 
   const handleTextSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -66,10 +98,11 @@ export default function SearchPage() {
     if (!query) return;
 
     setResults(null);
+    setSearchErrorMessage(null);
     setActiveQueryLabel(`"${query}"`);
     searchByText.mutate(query, {
       onSuccess: (hits) => setResults(hits),
-      onError: (err) => toast.error(err.message),
+      onError: (err) => handleSearchError(err),
     });
   };
 
@@ -77,22 +110,24 @@ export default function SearchPage() {
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
     setResults(null);
+    setSearchErrorMessage(null);
     setActiveQueryLabel(file.name);
 
     if (mode === "image") {
       searchByImage.mutate(file, {
         onSuccess: (hits) => setResults(hits),
-        onError: (err) => toast.error(err.message),
+        onError: (err) => handleSearchError(err),
       });
     } else {
       searchByFace.mutate(file, {
         onSuccess: (hits) => setResults(hits),
-        onError: (err) => toast.error(err.message),
+        onError: (err) => handleSearchError(err),
       });
     }
   };
 
   const handleReindex = () => {
+    setShowIndexModal(false);
     reindexMutation.mutate(undefined, {
       onSuccess: () => toast.success("Vector indexing initiated in background."),
       onError: (err) => toast.error(err.message),
@@ -106,24 +141,86 @@ export default function SearchPage() {
       ? Math.round((currentIndex.indexedItems / currentIndex.totalItems) * 100)
       : 0;
 
+  const liveness = indexStatusData?.liveness;
+  const stats = indexStatusData?.stats;
+  const dashboardUrl = liveness?.dashboardUrl ?? "http://localhost:6335/dashboard";
+  const hasNeverIndexed = !isIndexRunning && (!stats || stats.indexedItems === 0);
+
   return (
     <div className="flex flex-col gap-6">
       <Header
         title="Vector Search"
-        description="Semantic, visual similarity, and facial recognition search across saved posts."
+        description="Semantic natural-language prompts, visual similarity, and facial recognition search across your archive."
       >
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleReindex}
-          disabled={reindexMutation.isPending || isIndexRunning || isLoadingStatus}
-          className="gap-1.5"
-        >
-          <RefreshCw
-            className={`size-3.5 ${isIndexRunning || reindexMutation.isPending ? "animate-spin" : ""}`}
-          />
-          {isIndexRunning ? "Indexing..." : "Reindex Vectors"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Qdrant Liveness Badge */}
+          {liveness && (
+            <div
+              className={`flex items-center gap-1.5 rounded-[4px] border px-2 py-1 text-[11px] font-mono ${
+                liveness.status === "healthy"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  : liveness.status === "degraded"
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                    : "border-red-500/30 bg-red-500/10 text-red-400"
+              }`}
+            >
+              <div
+                className={`size-1.5 rounded-full ${
+                  liveness.status === "healthy"
+                    ? "bg-emerald-400 animate-pulse"
+                    : liveness.status === "degraded"
+                      ? "bg-amber-400"
+                      : "bg-red-400"
+                }`}
+              />
+              <span>
+                {liveness.status === "healthy"
+                  ? `Qdrant (${liveness.latencyMs}ms)`
+                  : liveness.status === "degraded"
+                    ? "Qdrant (Empty)"
+                    : "Qdrant Offline"}
+              </span>
+            </div>
+          )}
+
+          {/* Statistics Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowStatsModal(true)}
+            className="gap-1.5 text-xs font-mono"
+          >
+            <BarChart3 className="size-3.5 text-amber-500" />
+            Statistics
+          </Button>
+
+          {/* Qdrant Dashboard Link */}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs font-mono"
+          >
+            <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="size-3.5 text-blue-400" />
+              Qdrant UI
+            </a>
+          </Button>
+
+          {/* Reindex Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReindex}
+            disabled={reindexMutation.isPending || isIndexRunning || isLoadingStatus}
+            className="gap-1.5 text-xs font-mono"
+          >
+            <RefreshCw
+              className={`size-3.5 ${isIndexRunning || reindexMutation.isPending ? "animate-spin" : ""}`}
+            />
+            {isIndexRunning ? "Indexing..." : "Reindex"}
+          </Button>
+        </div>
       </Header>
 
       {/* Database connection warning */}
@@ -135,6 +232,47 @@ export default function SearchPage() {
             Qdrant is running in Docker Compose and <code className="font-mono bg-black/30 px-1 py-0.5 rounded">QDRANT_URL</code> is set.
           </div>
         </div>
+      )}
+
+      {/* Unindexed Archive Warning Callout */}
+      {hasNeverIndexed && (
+        <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[8px] border border-amber-500/40 bg-amber-500/10 p-4 text-xs text-amber-100">
+          <div className="flex items-center gap-3">
+            <Database className="size-5 shrink-0 text-amber-400" />
+            <div>
+              <p className="font-semibold text-sm text-foreground">Archive Vector Index Not Found</p>
+              <p className="text-ink-muted">
+                Your saved posts must be embedded into Qdrant before search queries can find matches.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleReindex}
+            disabled={reindexMutation.isPending || isIndexRunning}
+            className="gap-1.5 shrink-0"
+          >
+            <Sparkles className="size-3.5" />
+            Index Archive Now
+          </Button>
+        </Card>
+      )}
+
+      {/* Search Error Callout Banner */}
+      {searchErrorMessage && (
+        <Card className="flex items-center justify-between gap-3 rounded-[8px] border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-200">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="size-4 shrink-0 text-red-400" />
+            <span className="font-mono">{searchErrorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSearchErrorMessage(null)}
+            className="text-red-400 hover:text-white"
+          >
+            <X className="size-4" />
+          </button>
+        </Card>
       )}
 
       {/* Index progress banner */}
@@ -168,6 +306,7 @@ export default function SearchPage() {
             setResults(null);
             setPreviewUrl(null);
             setActiveQueryLabel(null);
+            setSearchErrorMessage(null);
           }}
         >
           <TabsList className="mb-2">
@@ -226,10 +365,11 @@ export default function SearchPage() {
                   onClick={() => {
                     setTextQuery(prompt);
                     setResults(null);
+                    setSearchErrorMessage(null);
                     setActiveQueryLabel(`"${prompt}"`);
                     searchByText.mutate(prompt, {
                       onSuccess: (hits) => setResults(hits),
-                      onError: (err) => toast.error(err.message),
+                      onError: (err) => handleSearchError(err),
                     });
                   }}
                   className="rounded-[4px] border border-hairline bg-surface-2/60 px-2 py-0.5 text-[11px] text-ink-muted hover:border-hairline-strong hover:text-foreground transition-colors font-mono"
@@ -344,6 +484,183 @@ export default function SearchPage() {
           )}
         </div>
       )}
+
+      {/* Vector Index Required Popup / Modal */}
+      <Dialog open={showIndexModal} onOpenChange={setShowIndexModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-amber-500 mb-1">
+              <Database className="size-5" />
+              <DialogTitle className="text-base">Vector Index Required</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-ink-muted leading-relaxed">
+              Your saved posts have not been indexed into the vector database yet. Vector search
+              requires generating CLIP and face embeddings for your saved posts before searches can be run.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-[6px] bg-surface-2/60 border border-hairline p-3 text-xs space-y-1.5 font-mono text-ink-muted">
+            <div className="flex items-center justify-between">
+              <span>Required Collections:</span>
+              <span className="text-foreground font-semibold">post_images, post_faces</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Current Status:</span>
+              <span className="text-amber-400">Not Indexed</span>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" size="sm" onClick={() => setShowIndexModal(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleReindex} className="gap-1.5">
+              <Sparkles className="size-3.5" />
+              Index Saved Posts Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vector Search Statistics Modal */}
+      <Dialog open={showStatsModal} onOpenChange={setShowStatsModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-foreground mb-1">
+              <BarChart3 className="size-5 text-amber-500" />
+              <DialogTitle className="text-base">Vector Search Statistics</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-ink-muted">
+              Telemetry, index coverage, and Qdrant cluster statistics across your profiles.
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingStats ? (
+            <div className="space-y-2 py-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : (
+            <div className="space-y-4 py-2 text-xs">
+              {/* Profile Stats Card */}
+              <div className="rounded-[8px] border border-hairline bg-surface-2/40 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between font-mono font-semibold text-foreground border-b border-hairline pb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Activity className="size-3.5 text-amber-500" />
+                    Active Profile Index
+                  </span>
+                  <span className="text-[11px] text-ink-subtle">
+                    {stats?.status === "completed" ? (
+                      <span className="text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="size-3" /> Completed
+                      </span>
+                    ) : stats?.status === "running" ? (
+                      <span className="text-amber-400 animate-pulse">Running</span>
+                    ) : (
+                      <span className="text-ink-subtle">Not Indexed</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                  <div>
+                    <span className="text-ink-subtle flex items-center gap-1">
+                      <Clock className="size-3" /> Last Run:
+                    </span>
+                    <span className="text-foreground">
+                      {stats?.lastRunAt
+                        ? new Date(stats.lastRunAt).toLocaleString()
+                        : "Never"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-ink-subtle flex items-center gap-1">
+                      <Calendar className="size-3" /> Post Cutoff:
+                    </span>
+                    <span className="text-foreground">
+                      {stats?.cutoffPostDate
+                        ? new Date(stats.cutoffPostDate).toLocaleDateString()
+                        : "None"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-ink-subtle flex items-center gap-1">
+                      <Layers className="size-3" /> Indexed Items:
+                    </span>
+                    <span className="text-foreground">
+                      {stats?.indexedItems ?? 0} / {stats?.totalItems ?? 0}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-ink-subtle flex items-center gap-1">
+                      <ScanFace className="size-3" /> Faces Found:
+                    </span>
+                    <span className="text-foreground">{stats?.facesIndexed ?? 0}</span>
+                  </div>
+                </div>
+
+                {stats?.failedItems && stats.failedItems > 0 ? (
+                  <div className="rounded bg-red-500/10 border border-red-500/20 p-2 text-red-300 font-mono text-[11px]">
+                    Failed Items: {stats.failedItems} ({stats.lastError || "Unknown error"})
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Cluster & Global Stats Card */}
+              <div className="rounded-[8px] border border-hairline bg-surface-2/40 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between font-mono font-semibold text-foreground border-b border-hairline pb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Database className="size-3.5 text-blue-400" />
+                    Qdrant Database & Cluster
+                  </span>
+                  <span className="text-[11px] text-ink-subtle">
+                    {vectorStatsData?.totalProfilesIndexed ?? 0} Profiles Indexed
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                  <div>
+                    <span className="text-ink-subtle">Image Vectors:</span>
+                    <p className="text-foreground text-sm font-semibold">
+                      {vectorStatsData?.qdrant?.profilePoints?.images?.toLocaleString() ?? 0}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-ink-subtle">Face Vectors:</span>
+                    <p className="text-foreground text-sm font-semibold">
+                      {vectorStatsData?.qdrant?.profilePoints?.faces?.toLocaleString() ?? 0}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-ink-subtle">Cluster Latency:</span>
+                    <p className="text-emerald-400">{liveness?.latencyMs ?? 0} ms</p>
+                  </div>
+                  <div>
+                    <span className="text-ink-subtle">Storage Backend:</span>
+                    <p className="text-foreground">Qdrant RocksDB</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex justify-between sm:justify-between w-full">
+            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs font-mono">
+              <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="size-3.5" />
+                Open Qdrant Dashboard
+              </a>
+            </Button>
+            <Button size="sm" onClick={() => setShowStatsModal(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <PostDetailDialog
         post={selectedPost}

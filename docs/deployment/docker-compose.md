@@ -44,7 +44,8 @@ docker compose up -d
 docker compose ps
 ```
 You should see:
-- `instagram_saved_posts_app`: Next.js frontend and scraper engine (port 3000).
+- `instagram_saved_posts_app`: Next.js frontend and scraper engine (port 5050, accessible at `http://localhost:5050`).
+- `instagram_saved_posts_qdrant`: Qdrant vector database engine (port 6335, Web Dashboard at `http://localhost:6335/dashboard`).
 - `instagram_saved_posts_mongo`: MongoDB database instance (healthy).
 
 > [!NOTE]
@@ -54,11 +55,12 @@ You should see:
 
 ## ⚙️ Volume & Data Persistence
 
-The MongoDB database stores all profiles, saved posts, carousel media, account history, and notes inside the Docker volume `instagram_saved_posts_mongo_data`.
+The MongoDB database stores all profiles, saved posts, carousel media, account history, and notes inside the Docker volume `instagram_saved_posts_mongo_data`. Qdrant stores multimodal vectors in `instagram_saved_posts_qdrant_data`.
 
 To check volume details:
 ```bash
 docker volume inspect instagram_saved_posts_mongo_data
+docker volume inspect instagram_saved_posts_qdrant_data
 ```
 
 ---

@@ -59,10 +59,11 @@ Write-Host " 🎉 InstaSave Tracker is successfully installed!" -ForegroundColor
 Write-Host "======================================================`n" -ForegroundColor Green
 
 Write-Host "Access your instance at:"
-Write-Host "  👉 Local: http://localhost:3000" -ForegroundColor Cyan
+Write-Host "  👉 Web App:          http://localhost:5050" -ForegroundColor Cyan
+Write-Host "  👉 Qdrant Dashboard: http://localhost:6335/dashboard" -ForegroundColor Cyan
 
 Write-Host "`nNext steps:"
-Write-Host "  1. Open http://localhost:3000 in your browser."
+Write-Host "  1. Open http://localhost:5050 in your browser."
 Write-Host "  2. Complete the quick onboarding wizard."
 Write-Host "  3. Start archiving and exploring your saved posts!`n"
 

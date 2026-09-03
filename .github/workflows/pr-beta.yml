@@ -84,7 +84,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "# Pull and run this beta container locally:" >> $GITHUB_STEP_SUMMARY
-          echo "docker run -d -p 3000:3000 --name test-beta \\" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -d -p 5050:3000 --name test-beta \\" >> $GITHUB_STEP_SUMMARY
           echo "  -e DATABASE_URL=\"mongodb://...\" \\" >> $GITHUB_STEP_SUMMARY
           echo "  ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta-pr-${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

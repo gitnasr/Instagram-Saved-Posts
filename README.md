@@ -52,11 +52,14 @@ services:
     pull_policy: always
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "5050:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
+      - QDRANT_URL=http://qdrant:6333
     depends_on:
       mongo:
+        condition: service_healthy
+      qdrant:
         condition: service_healthy
 
   mongo:
@@ -82,15 +85,35 @@ services:
       retries: 10
       start_period: 2s
 
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    restart: unless-stopped
+    ports:
+      - "6335:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ': >/dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 2s
+
 volumes:
   mongo_data:
+  qdrant_data:
 ```
 
 ```bash
 docker compose up -d
 ```
 
-🎉 Open **`http://localhost:3000`** in your browser and complete the 60-second onboarding wizard!
+🎉 Open **`http://localhost:5050`** in your browser and complete the 60-second onboarding wizard!  
+🔍 Explore your vector database & embeddings via the built-in **Qdrant Dashboard** at **`http://localhost:6335/dashboard`**.
 
 ---
 
@@ -129,6 +152,7 @@ This project follows an automated semantic CI/CD versioning lifecycle directly c
 
 | Feature | Description |
 | :--- | :--- |
+| 🔍 **Multimodal Vector Search** | Natural-language prompt search (CLIP), visual similarity image search, and facial recognition search with Qdrant. |
 | 🧙‍♂️ **Interactive Onboarding** | Built-in setup wizard with real-time Instagram cookie testing and avatar preview. |
 | 👥 **Multi-Profile Support** | Manage multiple Instagram accounts with separate sessions and isolated bookmarks. |
 | 📈 **Account Timelines** | Automatically records username changes, bio updates, verification changes, and lost accounts. |
@@ -160,7 +184,9 @@ When running via Docker Compose, **zero environment variables are required**. Op
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
-| `PORT` | `3000` | Port exposed on host |
+| `PORT` | `5050` | Port exposed on host for web app |
+| `QDRANT_PORT` | `6335` | Port exposed on host for Qdrant API & Dashboard UI |
+| `QDRANT_URL` | `http://qdrant:6333` | Qdrant endpoint connection URL |
 | `DATABASE_URL` | `mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` | MongoDB connection string (replica set enabled) |
 | `CLOUDINARY_CLOUD_NAME` | `""` | Optional Cloudinary cloud name for permanent media |
 | `CLOUDINARY_API_KEY` | `""` | Optional Cloudinary API key |

@@ -6,19 +6,50 @@ export interface QdrantConfig {
   apiKey?: string;
 }
 
+export class VectorIndexNotBuiltError extends Error {
+  code = "INDEX_NOT_BUILT";
+  constructor(message = "Vector index has not been built yet. Please index your saved posts first.") {
+    super(message);
+    this.name = "VectorIndexNotBuiltError";
+  }
+}
+
 /**
  * Qdrant configuration from env vars (QDRANT_URL, QDRANT_API_KEY).
- * Defaults to http://localhost:6333 in development if unset.
+ * Defaults to http://localhost:6335 in development if unset (or http://qdrant:6333 in docker).
  */
 export function getQdrantConfig(): QdrantConfig {
   return {
-    url: process.env.QDRANT_URL || (process.env.NODE_ENV === "development" ? "http://localhost:6333" : ""),
+    url: process.env.QDRANT_URL || (process.env.NODE_ENV === "development" ? "http://localhost:6335" : ""),
     apiKey: process.env.QDRANT_API_KEY,
   };
 }
 
 export function isQdrantConfigured(config: QdrantConfig = getQdrantConfig()): boolean {
   return !!config.url;
+}
+
+/**
+ * Returns the public/browser-accessible Qdrant Dashboard URL for user exploration.
+ */
+export function getQdrantDashboardUrl(): string {
+  if (process.env.QDRANT_DASHBOARD_URL) {
+    return process.env.QDRANT_DASHBOARD_URL;
+  }
+  const config = getQdrantConfig();
+  if (!config.url) return `http://localhost:${process.env.QDRANT_PORT || 6335}/dashboard`;
+
+  try {
+    const parsed = new URL(config.url);
+    if (parsed.hostname === "qdrant") {
+      // In docker network, browser accesses host mapped port
+      const port = process.env.QDRANT_PORT || "6335";
+      return `http://localhost:${port}/dashboard`;
+    }
+    return `${config.url.replace(/\/$/, "")}/dashboard`;
+  } catch {
+    return `http://localhost:${process.env.QDRANT_PORT || 6335}/dashboard`;
+  }
 }
 
 export const COLLECTIONS = {
@@ -55,6 +86,126 @@ export function getQdrantClient(): QdrantClient {
     checkCompatibility: false,
   });
   return client;
+}
+
+/** Checks whether a specific collection exists in Qdrant. */
+export async function checkCollectionExists(name: string): Promise<boolean> {
+  try {
+    const qdrant = getQdrantClient();
+    const existing = await qdrant.getCollections();
+    return existing.collections.some((c) => c.name === name);
+  } catch {
+    return false;
+  }
+}
+
+/** Counts total points in a collection, optionally filtered by profileId. */
+export async function countCollectionPoints(name: string, profileId?: string): Promise<number> {
+  try {
+    const qdrant = getQdrantClient();
+    const filter = profileId
+      ? { must: [{ key: "profileId", match: { value: profileId } }] }
+      : undefined;
+    const res = await qdrant.count(name, { filter, exact: true });
+    return res.count;
+  } catch {
+    return 0;
+  }
+}
+
+export interface QdrantLivenessResult {
+  status: "healthy" | "degraded" | "unhealthy" | "disconnected";
+  latencyMs: number;
+  url: string;
+  dashboardUrl: string;
+  version?: string;
+  collections: {
+    post_images: { exists: boolean; pointsCount: number };
+    post_faces: { exists: boolean; pointsCount: number };
+  };
+  error?: string;
+}
+
+/** Deep liveness and readiness probe for the Qdrant service. */
+export async function checkQdrantLiveness(profileId?: string): Promise<QdrantLivenessResult> {
+  const config = getQdrantConfig();
+  const dashboardUrl = getQdrantDashboardUrl();
+
+  if (!isQdrantConfigured(config)) {
+    return {
+      status: "disconnected",
+      latencyMs: 0,
+      url: config.url,
+      dashboardUrl,
+      collections: {
+        post_images: { exists: false, pointsCount: 0 },
+        post_faces: { exists: false, pointsCount: 0 },
+      },
+      error: "QDRANT_URL environment variable is not configured",
+    };
+  }
+
+  const start = performance.now();
+  try {
+    // 1. Direct HTTP probe to /livez
+    const livezRes = await fetch(`${config.url.replace(/\/$/, "")}/livez`, {
+      headers: config.apiKey ? { "api-key": config.apiKey } : undefined,
+      signal: AbortSignal.timeout(4000),
+    });
+
+    const latencyMs = Math.round(performance.now() - start);
+
+    if (!livezRes.ok) {
+      return {
+        status: "unhealthy",
+        latencyMs,
+        url: config.url,
+        dashboardUrl,
+        collections: {
+          post_images: { exists: false, pointsCount: 0 },
+          post_faces: { exists: false, pointsCount: 0 },
+        },
+        error: `HTTP ${livezRes.status}: ${livezRes.statusText}`,
+      };
+    }
+
+    // 2. Query collections status and point counts
+    const qdrant = getQdrantClient();
+    const [existingColls, imagesCount, facesCount] = await Promise.all([
+      qdrant.getCollections().catch(() => ({ collections: [] })),
+      countCollectionPoints(COLLECTIONS.POST_IMAGES, profileId),
+      countCollectionPoints(COLLECTIONS.POST_FACES, profileId),
+    ]);
+
+    const collNames = new Set(existingColls.collections.map((c) => c.name));
+    const imagesExist = collNames.has(COLLECTIONS.POST_IMAGES);
+    const facesExist = collNames.has(COLLECTIONS.POST_FACES);
+
+    return {
+      status: imagesExist ? "healthy" : "degraded",
+      latencyMs,
+      url: config.url,
+      dashboardUrl,
+      collections: {
+        post_images: { exists: imagesExist, pointsCount: imagesCount },
+        post_faces: { exists: facesExist, pointsCount: facesCount },
+      },
+    };
+  } catch (err: unknown) {
+    const latencyMs = Math.round(performance.now() - start);
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    return {
+      status: "disconnected",
+      latencyMs,
+      url: config.url,
+      dashboardUrl,
+      collections: {
+        post_images: { exists: false, pointsCount: 0 },
+        post_faces: { exists: false, pointsCount: 0 },
+      },
+      error: errorMsg,
+    };
+  }
 }
 
 /** Creates the post_images/post_faces collections (+ profileId payload index) if missing. Safe to call repeatedly. */
@@ -135,11 +286,26 @@ export async function searchByVector(
   limit: number
 ): Promise<SearchHit[]> {
   const qdrant = getQdrantClient();
-  const result = await qdrant.query(collection, {
-    query: vector,
-    filter: { must: [{ key: "profileId", match: { value: profileId } }] },
-    limit,
-    with_payload: true,
-  });
-  return result.points.map((p) => ({ score: p.score, payload: p.payload }));
+
+  try {
+    const result = await qdrant.query(collection, {
+      query: vector,
+      filter: { must: [{ key: "profileId", match: { value: profileId } }] },
+      limit,
+      with_payload: true,
+    });
+    return result.points.map((p) => ({ score: p.score, payload: p.payload }));
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (
+      message.includes("doesn't exist") ||
+      message.includes("Not found: Collection") ||
+      message.includes("404")
+    ) {
+      throw new VectorIndexNotBuiltError(
+        `Collection '${collection}' does not exist in Qdrant. Please run the vector indexer first.`
+      );
+    }
+    throw err;
+  }
 }
