@@ -78,8 +78,10 @@ ${DOCKER_COMPOSE} up -d
 
 # Completion Banner
 HOST_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
-PORT="5050"
-QDRANT_PORT="6335"
+RESOLVED_APP_PORT=$(${DOCKER_COMPOSE} port app 3000 2>/dev/null | awk -F: '{print $NF}')
+PORT="${RESOLVED_APP_PORT:-5050}"
+RESOLVED_QDRANT_PORT=$(${DOCKER_COMPOSE} port qdrant 6333 2>/dev/null | awk -F: '{print $NF}')
+QDRANT_PORT="${RESOLVED_QDRANT_PORT:-6335}"
 
 echo -e "\n${GREEN}${BOLD}======================================================${NC}"
 echo -e "${GREEN}${BOLD} 🎉 InstaSave Tracker is successfully installed!${NC}"

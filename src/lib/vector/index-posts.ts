@@ -95,60 +95,64 @@ export async function runVectorIndex(profileId: string): Promise<void> {
     throw new Error("A vector index run is already in progress for this profile");
   }
 
-  const qdrantConfig = getQdrantConfig();
-  if (!isQdrantConfigured(qdrantConfig)) {
-    throw new Error("Qdrant is not configured. Set QDRANT_URL/QDRANT_API_KEY env vars.");
-  }
-
   const startTime = Date.now();
   const startIso = new Date(startTime).toISOString();
 
-  // Find profile name and newest post timestamp for cutoff tracking
-  const [profileRecord, newestPost] = await Promise.all([
-    prisma.profile.findUnique({ where: { id: profileId }, select: { name: true } }),
-    prisma.post.findFirst({
-      where: { profileId },
-      orderBy: { takenAt: "desc" },
-      select: { takenAt: true },
-    }),
-  ]);
-
-  const cutoffPostTakenAt = newestPost?.takenAt ?? null;
-  const cutoffPostDate = cutoffPostTakenAt
-    ? new Date(cutoffPostTakenAt * 1000).toISOString()
-    : null;
-
-  const targets = await collectTargets(profileId);
-
+  // Synchronously reserve in-flight state immediately before any async awaits
   const state: VectorIndexProgress = {
     status: "running",
-    totalItems: targets.length,
+    totalItems: 0,
     indexedItems: 0,
     facesIndexed: 0,
     failedItems: 0,
   };
   indexStates.set(profileId, state);
 
-  // Initial stats record
   const currentStats: VectorIndexStats = {
     profileId,
-    profileName: profileRecord?.name ?? profileId,
+    profileName: profileId,
     status: "running",
     lastRunAt: startIso,
     lastCompletedAt: null,
     durationMs: null,
-    cutoffPostTakenAt,
-    cutoffPostDate,
-    totalItems: targets.length,
+    cutoffPostTakenAt: null,
+    cutoffPostDate: null,
+    totalItems: 0,
     indexedItems: 0,
     facesIndexed: 0,
     failedItems: 0,
     lastError: null,
     updatedAt: startIso,
   };
-  await saveProfileVectorStats(currentStats);
 
   try {
+    const qdrantConfig = getQdrantConfig();
+    if (!isQdrantConfigured(qdrantConfig)) {
+      throw new Error("Qdrant is not configured. Set QDRANT_URL/QDRANT_API_KEY env vars.");
+    }
+
+    // Find profile name and newest post timestamp for cutoff tracking
+    const [profileRecord, newestPost] = await Promise.all([
+      prisma.profile.findUnique({ where: { id: profileId }, select: { name: true } }),
+      prisma.post.findFirst({
+        where: { profileId },
+        orderBy: { takenAt: "desc" },
+        select: { takenAt: true },
+      }),
+    ]);
+
+    currentStats.profileName = profileRecord?.name ?? profileId;
+    const cutoffPostTakenAt = newestPost?.takenAt ?? null;
+    currentStats.cutoffPostTakenAt = cutoffPostTakenAt;
+    currentStats.cutoffPostDate = cutoffPostTakenAt
+      ? new Date(cutoffPostTakenAt * 1000).toISOString()
+      : null;
+
+    const targets = await collectTargets(profileId);
+    state.totalItems = targets.length;
+    currentStats.totalItems = targets.length;
+    await saveProfileVectorStats(currentStats);
+
     await ensureCollections();
 
     // Batched queues to avoid RocksDB open file limits and connection saturation

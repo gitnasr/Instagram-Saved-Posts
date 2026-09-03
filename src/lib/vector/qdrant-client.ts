@@ -37,18 +37,27 @@ export function getQdrantDashboardUrl(): string {
     return process.env.QDRANT_DASHBOARD_URL;
   }
   const config = getQdrantConfig();
-  if (!config.url) return `http://localhost:${process.env.QDRANT_PORT || 6335}/dashboard`;
+  if (!config.url) {
+    return process.env.NODE_ENV === "production"
+      ? ""
+      : `http://localhost:${process.env.QDRANT_PORT || 6335}/dashboard`;
+  }
 
   try {
     const parsed = new URL(config.url);
+    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
+      const port = parsed.port || process.env.QDRANT_PORT || "6335";
+      return `http://localhost:${port}/dashboard`;
+    }
     if (parsed.hostname === "qdrant") {
-      // In docker network, browser accesses host mapped port
+      // In docker network, only default to localhost when not in production
+      if (process.env.NODE_ENV === "production") return "";
       const port = process.env.QDRANT_PORT || "6335";
       return `http://localhost:${port}/dashboard`;
     }
     return `${config.url.replace(/\/$/, "")}/dashboard`;
   } catch {
-    return `http://localhost:${process.env.QDRANT_PORT || 6335}/dashboard`;
+    return "";
   }
 }
 
@@ -74,6 +83,19 @@ export function getQdrantClient(): QdrantClient {
   // port, so an HTTPS URL behind a reverse proxy (Dokploy domain) silently
   // gets the wrong port unless it's set explicitly here.
   const url = new URL(config.url);
+  if (
+    config.apiKey &&
+    url.protocol !== "https:" &&
+    url.hostname !== "localhost" &&
+    url.hostname !== "127.0.0.1" &&
+    url.hostname !== "qdrant" &&
+    !url.hostname.endsWith(".local")
+  ) {
+    throw new Error(
+      "Insecure Qdrant configuration: QDRANT_API_KEY must not be sent over unencrypted HTTP."
+    );
+  }
+
   const port = url.port
     ? Number(url.port)
     : url.protocol === "https:"
@@ -182,7 +204,7 @@ export async function checkQdrantLiveness(profileId?: string): Promise<QdrantLiv
     const facesExist = collNames.has(COLLECTIONS.POST_FACES);
 
     return {
-      status: imagesExist ? "healthy" : "degraded",
+      status: imagesExist && facesExist ? "healthy" : "degraded",
       latencyMs,
       url: config.url,
       dashboardUrl,
@@ -208,29 +230,75 @@ export async function checkQdrantLiveness(profileId?: string): Promise<QdrantLiv
   }
 }
 
-/** Creates the post_images/post_faces collections (+ profileId payload index) if missing. Safe to call repeatedly. */
-export async function ensureCollections(): Promise<void> {
+function isAlreadyExistsError(err: unknown): boolean {
+  if (!err) return false;
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/already exists/i.test(msg)) return true;
+  if (typeof err === "object" && "status" in err && (err as { status?: number }).status === 409) {
+    return true;
+  }
+  return false;
+}
+
+let ensureCollectionsPromise: Promise<void> | null = null;
+
+async function doEnsureCollections(): Promise<void> {
   const qdrant = getQdrantClient();
-  const existing = await qdrant.getCollections();
+  const existing = await qdrant.getCollections().catch(() => ({ collections: [] }));
   const existingNames = new Set(existing.collections.map((c) => c.name));
 
-  if (!existingNames.has(COLLECTIONS.POST_IMAGES)) {
-    await qdrant.createCollection(COLLECTIONS.POST_IMAGES, {
-      vectors: { size: IMAGE_VECTOR_SIZE, distance: "Cosine" },
-    });
-  }
-  if (!existingNames.has(COLLECTIONS.POST_FACES)) {
-    await qdrant.createCollection(COLLECTIONS.POST_FACES, {
-      vectors: { size: FACE_VECTOR_SIZE, distance: "Euclid" },
-    });
-  }
+  const specs = [
+    {
+      name: COLLECTIONS.POST_IMAGES,
+      vectors: { size: IMAGE_VECTOR_SIZE, distance: "Cosine" as const },
+    },
+    {
+      name: COLLECTIONS.POST_FACES,
+      vectors: { size: FACE_VECTOR_SIZE, distance: "Euclid" as const },
+    },
+  ];
 
-  for (const name of [COLLECTIONS.POST_IMAGES, COLLECTIONS.POST_FACES]) {
-    await qdrant.createPayloadIndex(name, {
-      field_name: "profileId",
-      field_schema: "keyword",
+  for (const spec of specs) {
+    if (!existingNames.has(spec.name)) {
+      try {
+        await qdrant.createCollection(spec.name, {
+          vectors: spec.vectors,
+        });
+      } catch (err: unknown) {
+        if (isAlreadyExistsError(err)) {
+          // Recheck the collection exists before treating initialization as successful
+          const exists = await checkCollectionExists(spec.name);
+          if (!exists) {
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    // Ensure its profileId payload index exists
+    try {
+      await qdrant.createPayloadIndex(spec.name, {
+        field_name: "profileId",
+        field_schema: "keyword",
+      });
+    } catch (err: unknown) {
+      if (!isAlreadyExistsError(err)) {
+        throw err;
+      }
+    }
+  }
+}
+
+/** Creates the post_images/post_faces collections (+ profileId payload index) if missing. Safe to call repeatedly and concurrently. */
+export function ensureCollections(): Promise<void> {
+  if (!ensureCollectionsPromise) {
+    ensureCollectionsPromise = doEnsureCollections().finally(() => {
+      ensureCollectionsPromise = null;
     });
   }
+  return ensureCollectionsPromise;
 }
 
 /** Media the vector belongs to — a post's own thumbnail or one carousel slide. */

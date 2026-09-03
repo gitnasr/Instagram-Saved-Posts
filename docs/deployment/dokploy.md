@@ -73,7 +73,7 @@ services:
     image: qdrant/qdrant:v1.13.4
     restart: unless-stopped
     ports:
-      - "6335:6333"
+      - "127.0.0.1:6335:6333"
     volumes:
       - qdrant_data:/qdrant/storage
     ulimits:
@@ -97,7 +97,7 @@ volumes:
 2. Add your custom domain (e.g. `instagram.yourdomain.com`).
 3. Select Port `5050`.
 4. Enable **HTTPS (Let's Encrypt)**.
-5. (Optional) To expose the Qdrant Dashboard UI, create a domain mapping for service `qdrant` on port `6335` (e.g. `qdrant.yourdomain.com/dashboard`).
+5. (Optional) The Qdrant Dashboard UI is bound to `127.0.0.1:6335` for security. To access it, use an SSH tunnel (`ssh -L 6335:localhost:6335 user@server`) or route through an authenticated reverse proxy pointing to internal container network `http://qdrant:6333/dashboard`.
 
 ### Step 4: Deploy
 Click **Deploy** at the top right. Dokploy will pull the container images, verify MongoDB and Qdrant health, and start the application automatically!

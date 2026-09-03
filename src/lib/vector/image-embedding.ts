@@ -10,7 +10,12 @@ let visionModelPromise: Promise<CLIPVisionModelWithProjection> | null = null;
 
 function getProcessor(): Promise<Processor> {
   if (!processorPromise) {
-    processorPromise = AutoProcessor.from_pretrained("Xenova/clip-vit-base-patch32");
+    processorPromise = AutoProcessor.from_pretrained("Xenova/clip-vit-base-patch32").catch(
+      (err) => {
+        processorPromise = null;
+        throw err;
+      }
+    );
   }
   return processorPromise;
 }
@@ -20,7 +25,10 @@ function getVisionModel(): Promise<CLIPVisionModelWithProjection> {
     visionModelPromise = CLIPVisionModelWithProjection.from_pretrained(
       "Xenova/clip-vit-base-patch32",
       { dtype: "q8" }
-    );
+    ).catch((err) => {
+      visionModelPromise = null;
+      throw err;
+    });
   }
   return visionModelPromise;
 }

@@ -49,6 +49,15 @@ async function main() {
     await runVectorIndex(profile.id);
     const state = getCurrentIndexState(profile.id);
     console.log(`[reindex-vectors] Done:`, state);
+
+    if (
+      state?.status === "failed" ||
+      (typeof state?.failedItems === "number"
+        ? state.failedItems > 0
+        : Boolean(state?.failedItems && (state.failedItems as unknown as unknown[]).length > 0))
+    ) {
+      process.exitCode = 1;
+    }
   }
 
   await prisma.$disconnect();

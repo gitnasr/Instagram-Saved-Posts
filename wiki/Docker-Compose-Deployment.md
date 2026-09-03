@@ -48,7 +48,7 @@ You will see:
 > The compose configuration uses `pull_policy: always` for the `app` service. This ensures `docker compose up -d` always checks and pulls the latest container image from GHCR when tracking `:latest` or `:beta`.
 
 Access your dashboard at `http://localhost:5050` (or your server's IP address) to start the onboarding wizard!
-Explore vectors in the Qdrant Dashboard at `http://localhost:6335/dashboard`.
+Explore vectors in the Qdrant Dashboard at `http://localhost:6335/dashboard` (bound to localhost `127.0.0.1` for security; use an SSH tunnel `ssh -L 6335:localhost:6335 user@server` when accessing a remote instance).
 
 ---
 

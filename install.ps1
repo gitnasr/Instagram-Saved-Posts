@@ -54,16 +54,22 @@ Write-Host "==> Pulling container images and starting services..." -ForegroundCo
 docker compose pull
 docker compose up -d
 
+# Resolve effective published ports
+$resolvedAppPort = (docker compose port app 3000 2>$null) -replace '.*:'
+$appPort = if ($resolvedAppPort) { $resolvedAppPort.Trim() } else { "5050" }
+$resolvedQdrantPort = (docker compose port qdrant 6333 2>$null) -replace '.*:'
+$qdrantPort = if ($resolvedQdrantPort) { $resolvedQdrantPort.Trim() } else { "6335" }
+
 Write-Host "`n======================================================" -ForegroundColor Green
 Write-Host " 🎉 InstaSave Tracker is successfully installed!" -ForegroundColor Green
 Write-Host "======================================================`n" -ForegroundColor Green
 
 Write-Host "Access your instance at:"
-Write-Host "  👉 Web App:          http://localhost:5050" -ForegroundColor Cyan
-Write-Host "  👉 Qdrant Dashboard: http://localhost:6335/dashboard" -ForegroundColor Cyan
+Write-Host "  👉 Web App:          http://localhost:$appPort" -ForegroundColor Cyan
+Write-Host "  👉 Qdrant Dashboard: http://localhost:$qdrantPort/dashboard" -ForegroundColor Cyan
 
 Write-Host "`nNext steps:"
-Write-Host "  1. Open http://localhost:5050 in your browser."
+Write-Host "  1. Open http://localhost:$appPort in your browser."
 Write-Host "  2. Complete the quick onboarding wizard."
 Write-Host "  3. Start archiving and exploring your saved posts!`n"
 

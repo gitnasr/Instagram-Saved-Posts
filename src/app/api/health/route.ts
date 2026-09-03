@@ -32,6 +32,6 @@ export async function GET() {
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
     },
-    { status: mongoConnected ? 200 : 503 }
+    { status: isHealthy ? 200 : 503 }
   );
 }

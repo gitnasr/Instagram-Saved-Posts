@@ -9,7 +9,12 @@ let textModelPromise: Promise<CLIPTextModelWithProjection> | null = null;
 
 function getTokenizer(): Promise<PreTrainedTokenizer> {
   if (!tokenizerPromise) {
-    tokenizerPromise = AutoTokenizer.from_pretrained("Xenova/clip-vit-base-patch32");
+    tokenizerPromise = AutoTokenizer.from_pretrained("Xenova/clip-vit-base-patch32").catch(
+      (err) => {
+        tokenizerPromise = null;
+        throw err;
+      }
+    );
   }
   return tokenizerPromise;
 }
@@ -19,7 +24,10 @@ function getTextModel(): Promise<CLIPTextModelWithProjection> {
     textModelPromise = CLIPTextModelWithProjection.from_pretrained(
       "Xenova/clip-vit-base-patch32",
       { dtype: "q8" }
-    );
+    ).catch((err) => {
+      textModelPromise = null;
+      throw err;
+    });
   }
   return textModelPromise;
 }

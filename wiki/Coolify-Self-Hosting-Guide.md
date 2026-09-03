@@ -23,7 +23,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     expose:
-      - "5050"
+      - "3000"
     ports:
       - "${PORT:-5050}:3000"
     environment:
@@ -66,7 +66,7 @@ services:
     image: qdrant/qdrant:v1.13.4
     restart: unless-stopped
     ports:
-      - "${QDRANT_PORT:-6335}:6333"
+      - "127.0.0.1:${QDRANT_PORT:-6335}:6333"
     volumes:
       - qdrant_data:/qdrant/storage
     ulimits:
@@ -87,8 +87,8 @@ volumes:
 
 ### Step 3: Domain & Routing
 1. In the Coolify resource view, enter your **FQDN / Domain** (e.g. `https://instagram.example.com`).
-2. Set the destination port to `5050`.
-3. (Optional) To expose the Qdrant Dashboard UI, create a subdomain pointing to port `6335` (`https://qdrant.example.com/dashboard`).
+2. Set the destination port to `3000`.
+3. (Optional) The Qdrant Dashboard UI is bound to `127.0.0.1:6335` for security. To access it, use an SSH tunnel (`ssh -L 6335:localhost:6335 user@server`) or configure an authenticated reverse proxy pointing to internal container network `http://qdrant:6333/dashboard`.
 
 ### Step 4: Deploy
 Click **Deploy**. Coolify will orchestrate the containers, provision Traefik routing, issue Let's Encrypt certificates, and make your app accessible securely over HTTPS!

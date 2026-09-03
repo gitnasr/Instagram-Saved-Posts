@@ -18,10 +18,18 @@ export async function POST() {
       { status: 400 }
     );
   }
+  if (getCurrentIndexState(profile.id)?.status === "running") {
+    return NextResponse.json(
+      { error: "A vector index run is already in progress for this profile." },
+      { status: 409 }
+    );
+  }
+
   try {
     // Fire and forget — index run happens in background
-    runVectorIndex(profile.id).catch(() => {
+    runVectorIndex(profile.id).catch((err) => {
       // Error is captured in the profile's index state and persisted stats
+      console.error(`[reindex] Background index failed for profile ${profile.id}:`, err);
     });
     return NextResponse.json({ status: "started" });
   } catch (error) {

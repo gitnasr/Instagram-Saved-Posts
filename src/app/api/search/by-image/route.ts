@@ -33,6 +33,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: "Image file exceeds maximum allowed size of 10MB." },
+      { status: 413 }
+    );
+  }
+
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const vector = await embedImageFromBuffer(buffer);
