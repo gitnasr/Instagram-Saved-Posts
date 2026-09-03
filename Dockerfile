@@ -15,6 +15,10 @@ RUN npm ci --ignore-scripts
 COPY prisma ./prisma
 RUN npx prisma generate
 
+# Bake CLIP weights into the image (cached layer) instead of downloading at runtime
+COPY scripts/warm-models.ts ./scripts/warm-models.ts
+RUN npx tsx scripts/warm-models.ts
+
 COPY . .
 
 ARG APP_VERSION=1.0.1
