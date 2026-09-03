@@ -27,17 +27,39 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const MAX_PAYLOAD_SIZE = 64 * 1024; // 64KB
   const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > 64 * 1024) {
+  if (contentLength > MAX_PAYLOAD_SIZE) {
     return NextResponse.json(
       { error: "Request payload exceeds size limit." },
       { status: 413 }
     );
   }
 
+  let bodyText = "";
+  if (request.body) {
+    const reader = request.body.getReader();
+    let totalBytes = 0;
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_PAYLOAD_SIZE) {
+        await reader.cancel();
+        return NextResponse.json(
+          { error: "Request payload exceeds size limit." },
+          { status: 413 }
+        );
+      }
+      bodyText += decoder.decode(value, { stream: true });
+    }
+    bodyText += decoder.decode();
+  }
+
   let query: string | undefined;
   try {
-    const body = await request.json();
+    const body = JSON.parse(bodyText || "{}");
     query = body.query;
   } catch {
     return NextResponse.json(

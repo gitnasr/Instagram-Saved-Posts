@@ -24,6 +24,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > MAX_FILE_SIZE + 1024 * 1024) {
+    return NextResponse.json(
+      { error: "Request payload exceeds maximum allowed size of 10MB." },
+      { status: 413 }
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get("image");
   if (!(file instanceof Blob)) {
@@ -33,7 +42,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json(
       { error: "Image file exceeds maximum allowed size of 10MB." },
@@ -51,14 +59,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Bound concurrent face search queries (e.g. max 5 faces from a group shot)
     const MAX_SEARCH_FACES = 5;
-    const searchFaces = queryFaces.slice(0, MAX_SEARCH_FACES);
+    if (queryFaces.length > MAX_SEARCH_FACES) {
+      return NextResponse.json(
+        {
+          error: `Too many faces detected (${queryFaces.length}). Please upload an image with at most ${MAX_SEARCH_FACES} faces.`,
+          results: [],
+        },
+        { status: 400 }
+      );
+    }
 
-    // Multiple faces in the query photo (e.g. a group shot) are all searched;
+    // Multiple faces in the query photo (e.g. a small group shot) are all searched;
     // hits are merged by post below regardless of which query face matched.
     const hitLists = await Promise.all(
-      searchFaces.map((face) =>
+      queryFaces.map((face) =>
         searchByVector(COLLECTIONS.POST_FACES, face.descriptor, profile.id, RESULT_LIMIT)
       )
     );
@@ -109,12 +124,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const sortedHits = [...bestByPk.entries()]
+      .sort((a, b) => b[1].calibratedScore - a[1].calibratedScore)
+      .slice(0, RESULT_LIMIT);
+
+    const targetPks = sortedHits.map(([pk]) => pk);
     const posts = await prisma.post.findMany({
-      where: { profileId: profile.id, pk: { in: [...bestByPk.keys()] } },
+      where: { profileId: profile.id, pk: { in: targetPks } },
     });
     const postByPk = new Map(posts.map((p) => [p.pk, p]));
 
-    const results: VectorSearchHit[] = [...bestByPk.entries()]
+    const results: VectorSearchHit[] = sortedHits
       .filter(([pk]) => postByPk.has(pk))
       .map(([pk, details]) => ({
         post: postByPk.get(pk)!,
@@ -124,8 +144,7 @@ export async function POST(request: NextRequest) {
         matchedSlideIndex: details.carouselPosition,
         matchedImageUrl: details.imageUrl,
         bbox: details.bbox,
-      }))
-      .sort((a, b) => b.score - a.score);
+      }));
 
     return NextResponse.json({ results });
   } catch (err: unknown) {
