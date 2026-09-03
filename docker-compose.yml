@@ -61,7 +61,7 @@ services:
     container_name: instagram_saved_posts_qdrant
     restart: unless-stopped
     ports:
-      - "${QDRANT_PORT:-6335}:6333"
+      - "127.0.0.1:${QDRANT_PORT:-6335}:6333"
     volumes:
       - qdrant_data:/qdrant/storage
     ulimits:

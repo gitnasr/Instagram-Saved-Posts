@@ -89,7 +89,7 @@ services:
     image: qdrant/qdrant:v1.13.4
     restart: unless-stopped
     ports:
-      - "6335:6333"
+      - "127.0.0.1:6335:6333"
     volumes:
       - qdrant_data:/qdrant/storage
     ulimits:
@@ -113,7 +113,7 @@ docker compose up -d
 ```
 
 🎉 Open **`http://localhost:5050`** in your browser and complete the 60-second onboarding wizard!  
-🔍 Explore your vector database & embeddings via the built-in **Qdrant Dashboard** at **`http://localhost:6335/dashboard`**.
+🔍 Explore your vector database & embeddings via the built-in **Qdrant Dashboard** at **`http://localhost:6335/dashboard`** (bound to localhost for security).
 
 ---
 

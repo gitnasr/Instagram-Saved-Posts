@@ -9,7 +9,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     expose:
-      - "5050"
+      - "3000"
     ports:
       - "${PORT:-5050}:3000"
     environment:
@@ -58,7 +58,7 @@ services:
     image: qdrant/qdrant:v1.13.4
     restart: unless-stopped
     ports:
-      - "${QDRANT_PORT:-6335}:6333"
+      - "127.0.0.1:${QDRANT_PORT:-6335}:6333"
     volumes:
       - qdrant_data:/qdrant/storage
     ulimits:

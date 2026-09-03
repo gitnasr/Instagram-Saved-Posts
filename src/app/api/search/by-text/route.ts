@@ -27,6 +27,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > 64 * 1024) {
+    return NextResponse.json(
+      { error: "Request payload exceeds size limit." },
+      { status: 413 }
+    );
+  }
+
   let query: string | undefined;
   try {
     const body = await request.json();
@@ -42,6 +50,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Query cannot be empty." },
       { status: 400 }
+    );
+  }
+
+  const MAX_QUERY_LENGTH = 1000;
+  if (query.length > MAX_QUERY_LENGTH) {
+    return NextResponse.json(
+      { error: `Query exceeds maximum length of ${MAX_QUERY_LENGTH} characters.` },
+      { status: 413 }
     );
   }
 
@@ -85,8 +101,12 @@ export async function POST(request: NextRequest) {
       if (matchingAccountPks.length > 0) {
         textConditions.push({ accountPk: { in: matchingAccountPks } });
       }
-      for (const term of cleanTerms) {
-        textConditions.push({ captionText: { contains: term, mode: "insensitive" } });
+      if (cleanTerms.length > 1) {
+        textConditions.push({
+          AND: cleanTerms.map((term) => ({
+            captionText: { contains: term, mode: "insensitive" as const },
+          })),
+        });
       }
 
       const posts = await prisma.post.findMany({

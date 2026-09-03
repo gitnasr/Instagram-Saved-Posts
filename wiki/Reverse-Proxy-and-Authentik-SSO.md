@@ -67,5 +67,5 @@ server {
 
 If using Cloudflare Tunnels:
 1. In Cloudflare Zero Trust &rarr; **Access** &rarr; **Tunnels**, create a tunnel.
-2. Add a Public Hostname pointing to `http://localhost:5050` (or `http://app:5050` if on docker network).
+2. Add a Public Hostname pointing to `http://localhost:5050` (or `http://app:3000` if on docker network).
 3. Optional: Add Cloudflare Access Applications for email OTP or OAuth authentication.

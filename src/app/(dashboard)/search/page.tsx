@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
@@ -61,8 +61,24 @@ const EXAMPLE_PROMPTS = [
 
 export default function SearchPage() {
   const [mode, setMode] = useState<SearchMode>("text");
+  const modeRef = useRef<SearchMode>(mode);
+  const searchTokenRef = useRef(0);
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
   const [textQuery, setTextQuery] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Revoke object URLs on preview change and component unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
   const [results, setResults] = useState<VectorSearchHit[] | null>(null);
   const [activeQueryLabel, setActiveQueryLabel] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -79,7 +95,11 @@ export default function SearchPage() {
   const reindexMutation = useReindexVectors();
 
   const isPending =
-    searchByText.isPending || searchByImage.isPending || searchByFace.isPending;
+    mode === "text"
+      ? searchByText.isPending
+      : mode === "image"
+        ? searchByImage.isPending
+        : searchByFace.isPending;
 
   const handleSearchError = (err: VectorSearchError | Error) => {
     const isIndexNeeded = "needsIndexing" in err ? err.needsIndexing : false;
@@ -92,36 +112,78 @@ export default function SearchPage() {
     }
   };
 
-  const handleTextSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const query = textQuery.trim();
-    if (!query) return;
+  const handleModeChange = (newMode: SearchMode) => {
+    modeRef.current = newMode;
+    searchTokenRef.current += 1;
+    searchByText.reset();
+    searchByImage.reset();
+    searchByFace.reset();
+    setMode(newMode);
+    setResults(null);
+    setPreviewUrl(null);
+    setActiveQueryLabel(null);
+    setSearchErrorMessage(null);
+  };
+
+  const triggerTextSearch = (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+
+    const token = ++searchTokenRef.current;
+    const requestMode: SearchMode = "text";
 
     setResults(null);
     setSearchErrorMessage(null);
-    setActiveQueryLabel(`"${query}"`);
-    searchByText.mutate(query, {
-      onSuccess: (hits) => setResults(hits),
-      onError: (err) => handleSearchError(err),
+    setActiveQueryLabel(`"${trimmed}"`);
+
+    searchByText.mutate(trimmed, {
+      onSuccess: (hits) => {
+        if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
+        setResults(hits);
+      },
+      onError: (err) => {
+        if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
+        handleSearchError(err);
+      },
     });
   };
 
+  const handleTextSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    triggerTextSearch(textQuery);
+  };
+
   const handleFile = (file: File) => {
+    const token = ++searchTokenRef.current;
+    const requestMode = modeRef.current;
     const objectUrl = URL.createObjectURL(file);
+
     setPreviewUrl(objectUrl);
     setResults(null);
     setSearchErrorMessage(null);
     setActiveQueryLabel(file.name);
 
-    if (mode === "image") {
+    if (requestMode === "image") {
       searchByImage.mutate(file, {
-        onSuccess: (hits) => setResults(hits),
-        onError: (err) => handleSearchError(err),
+        onSuccess: (hits) => {
+          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
+          setResults(hits);
+        },
+        onError: (err) => {
+          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
+          handleSearchError(err);
+        },
       });
     } else {
       searchByFace.mutate(file, {
-        onSuccess: (hits) => setResults(hits),
-        onError: (err) => handleSearchError(err),
+        onSuccess: (hits) => {
+          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
+          setResults(hits);
+        },
+        onError: (err) => {
+          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
+          handleSearchError(err);
+        },
       });
     }
   };
@@ -143,8 +205,8 @@ export default function SearchPage() {
 
   const liveness = indexStatusData?.liveness;
   const stats = indexStatusData?.stats;
-  const dashboardUrl = liveness?.dashboardUrl ?? "http://localhost:6335/dashboard";
-  const hasNeverIndexed = !isIndexRunning && (!stats || stats.indexedItems === 0);
+  const dashboardUrl = liveness?.dashboardUrl || null;
+  const hasNeverIndexed = !isLoadingStatus && !isIndexRunning && (!stats || stats.indexedItems === 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -195,17 +257,19 @@ export default function SearchPage() {
           </Button>
 
           {/* Qdrant Dashboard Link */}
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs font-mono"
-          >
-            <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-3.5 text-blue-400" />
-              Qdrant UI
-            </a>
-          </Button>
+          {dashboardUrl && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-mono"
+            >
+              <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="size-3.5 text-blue-400" />
+                Qdrant UI
+              </a>
+            </Button>
+          )}
 
           {/* Reindex Button */}
           <Button
@@ -301,13 +365,7 @@ export default function SearchPage() {
       <Card className="flex flex-col gap-4 rounded-[8px] border border-hairline bg-surface-1 p-4 sm:p-6 shadow-xs">
         <Tabs
           value={mode}
-          onValueChange={(v) => {
-            setMode(v as SearchMode);
-            setResults(null);
-            setPreviewUrl(null);
-            setActiveQueryLabel(null);
-            setSearchErrorMessage(null);
-          }}
+          onValueChange={(v) => handleModeChange(v as SearchMode)}
         >
           <TabsList className="mb-2">
             <TabsTrigger value="text" className="gap-1.5">
@@ -364,13 +422,7 @@ export default function SearchPage() {
                   type="button"
                   onClick={() => {
                     setTextQuery(prompt);
-                    setResults(null);
-                    setSearchErrorMessage(null);
-                    setActiveQueryLabel(`"${prompt}"`);
-                    searchByText.mutate(prompt, {
-                      onSuccess: (hits) => setResults(hits),
-                      onError: (err) => handleSearchError(err),
-                    });
+                    triggerTextSearch(prompt);
                   }}
                   className="rounded-[4px] border border-hairline bg-surface-2/60 px-2 py-0.5 text-[11px] text-ink-muted hover:border-hairline-strong hover:text-foreground transition-colors font-mono"
                 >
@@ -395,9 +447,10 @@ export default function SearchPage() {
                 }}
               />
 
-              <div
+              <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="group flex flex-col items-center justify-center gap-3 rounded-[8px] border-2 border-dashed border-hairline bg-surface-2/40 p-8 text-center transition-all cursor-pointer hover:border-amber-500/60 hover:bg-surface-2/70"
+                className="group flex w-full flex-col items-center justify-center gap-3 rounded-[8px] border-2 border-dashed border-hairline bg-surface-2/40 p-8 text-center transition-all cursor-pointer hover:border-amber-500/60 hover:bg-surface-2/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
               >
                 {previewUrl ? (
                   <div className="relative flex flex-col items-center gap-2">
@@ -430,7 +483,7 @@ export default function SearchPage() {
                     </div>
                   </>
                 )}
-              </div>
+              </button>
             </TabsContent>
           )}
         </Tabs>
@@ -674,12 +727,14 @@ export default function SearchPage() {
           )}
 
           <DialogFooter className="flex justify-between sm:justify-between w-full">
-            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs font-mono">
-              <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-3.5" />
-                Open Qdrant Dashboard
-              </a>
-            </Button>
+            {dashboardUrl ? (
+              <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs font-mono">
+                <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="size-3.5" />
+                  Open Qdrant Dashboard
+                </a>
+              </Button>
+            ) : <div />}
             <Button size="sm" onClick={() => setShowStatsModal(false)}>
               Close
             </Button>

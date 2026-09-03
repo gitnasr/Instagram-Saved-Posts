@@ -33,6 +33,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: "Image file exceeds maximum allowed size of 10MB." },
+      { status: 413 }
+    );
+  }
+
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const queryFaces = await detectFacesFromBuffer(buffer);
@@ -43,10 +51,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Bound concurrent face search queries (e.g. max 5 faces from a group shot)
+    const MAX_SEARCH_FACES = 5;
+    const searchFaces = queryFaces.slice(0, MAX_SEARCH_FACES);
+
     // Multiple faces in the query photo (e.g. a group shot) are all searched;
     // hits are merged by post below regardless of which query face matched.
     const hitLists = await Promise.all(
-      queryFaces.map((face) =>
+      searchFaces.map((face) =>
         searchByVector(COLLECTIONS.POST_FACES, face.descriptor, profile.id, RESULT_LIMIT)
       )
     );
