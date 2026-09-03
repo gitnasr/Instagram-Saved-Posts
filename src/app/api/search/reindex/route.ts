@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { runVectorIndex, getCurrentIndexState } from "@/lib/vector/index-posts";
-import { getQdrantConfig, isQdrantConfigured } from "@/lib/vector/qdrant-client";
+import {
+  getQdrantConfig,
+  isQdrantConfigured,
+  checkQdrantLiveness,
+} from "@/lib/vector/qdrant-client";
+import { getProfileVectorStats } from "@/lib/vector/stats";
 import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 
 export async function POST() {
@@ -16,7 +21,7 @@ export async function POST() {
   try {
     // Fire and forget — index run happens in background
     runVectorIndex(profile.id).catch(() => {
-      // Error is captured in the profile's index state
+      // Error is captured in the profile's index state and persisted stats
     });
     return NextResponse.json({ status: "started" });
   } catch (error) {
@@ -31,5 +36,15 @@ export async function GET() {
 
   const current = getCurrentIndexState(profile.id);
   const configured = isQdrantConfigured(getQdrantConfig());
-  return NextResponse.json({ current, configured });
+  const [stats, liveness] = await Promise.all([
+    getProfileVectorStats(profile.id),
+    checkQdrantLiveness(profile.id),
+  ]);
+
+  return NextResponse.json({
+    current,
+    configured,
+    stats,
+    liveness,
+  });
 }
