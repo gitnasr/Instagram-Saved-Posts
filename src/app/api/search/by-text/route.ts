@@ -13,6 +13,27 @@ import type { VectorSearchHit } from "@/types";
 
 const RESULT_LIMIT = 60;
 
+// Reciprocal Rank Fusion tuning
+const RRF_K = 60;
+const WEIGHT_VECTOR = 1.0;
+const WEIGHT_TEXT = 1.3;
+
+// Below this raw cosine score, a vector hit is treated as noise and dropped.
+const VECTOR_NOISE_FLOOR = 0.2;
+// A visual-only (no text match) candidate is dropped unless it clears both:
+// an absolute floor, and a fraction of the top visual hit's score for this query.
+const VISUAL_ELBOW_FLOOR = 0.22;
+const VISUAL_ELBOW_RATIO = 0.65;
+// Display-score calibration: raw cosine/rank -> a confidence percentage shown in the UI.
+const HYBRID_SCORE_BASE = 0.88;
+const HYBRID_SCORE_MAX = 0.99;
+const HYBRID_SCORE_BOOST_SCALE = 0.5;
+const TEXT_TOP_RANK_SCORE = 0.92;
+const TEXT_SCORE = 0.85;
+const TEXT_TOP_RANK_CUTOFF = 3;
+const VISUAL_SCORE_MIN = 0.45;
+const VISUAL_SCORE_MAX = 0.95;
+
 export async function POST(request: NextRequest) {
   const profile = await getActiveProfile();
   if (!profile) return noActiveProfileResponse();
@@ -95,7 +116,7 @@ export async function POST(request: NextRequest) {
       }
     })();
 
-    // Lexical / Full-Text Search across captions, hashtags, and creator accounts
+    // Lexical / Full-Text Search across captions and creator accounts
     const textSearchPromise = (async () => {
       const cleanTerms = rawQuery
         .split(/\s+/)
@@ -180,8 +201,8 @@ export async function POST(request: NextRequest) {
     for (const hit of vectorHits) {
       const pk = hit.payload?.postPk;
       if (typeof pk !== "string") continue;
-      // Filter out pure noise (unrelated cosine similarities < 0.20)
-      if (hit.score < 0.20) continue;
+      // Filter out pure noise (unrelated cosine similarities below the floor)
+      if (hit.score < VECTOR_NOISE_FLOOR) continue;
       const prev = bestVisualByPk.get(pk);
       if (prev === undefined || hit.score > prev.score) {
         bestVisualByPk.set(pk, {
@@ -210,9 +231,6 @@ export async function POST(request: NextRequest) {
 
     // Merge via Reciprocal Rank Fusion (RRF)
     const allPks = new Set([...visualRankByPk.keys(), ...textRankByPk.keys()]);
-    const RRF_K = 60;
-    const WEIGHT_VECTOR = 1.0;
-    const WEIGHT_TEXT = 1.3;
 
     interface MergedCandidate {
       pk: string;
@@ -232,9 +250,13 @@ export async function POST(request: NextRequest) {
       const vMatch = bestVisualByPk.get(pk);
 
       // Apply elbow filter for pure visual matches:
-      // If post only matched visually and its score is below 65% of the top visual score, skip noise
+      // If post only matched visually and its score is below the floor or a
+      // fraction of the top visual score for this query, skip it as noise.
       if (!tInfo && vMatch) {
-        if (vMatch.score < 0.22 || (topVisualScore > 0 && vMatch.score < topVisualScore * 0.65)) {
+        if (
+          vMatch.score < VISUAL_ELBOW_FLOOR ||
+          (topVisualScore > 0 && vMatch.score < topVisualScore * VISUAL_ELBOW_RATIO)
+        ) {
           continue;
         }
       }
@@ -248,18 +270,26 @@ export async function POST(request: NextRequest) {
 
       if (vRank !== undefined && tInfo !== undefined) {
         matchType = "hybrid";
-        // Hybrid matches get highest confidence (88% - 99%)
-        const base = 0.88;
-        const boost = Math.min(0.11, ((vMatch?.score ?? 0.25) - 0.20) * 0.5);
-        calibratedScore = Math.min(0.99, base + boost);
+        // Hybrid matches get the highest confidence band.
+        const boost = Math.min(
+          HYBRID_SCORE_MAX - HYBRID_SCORE_BASE,
+          ((vMatch?.score ?? 0.25) - VECTOR_NOISE_FLOOR) * HYBRID_SCORE_BOOST_SCALE
+        );
+        calibratedScore = Math.min(HYBRID_SCORE_MAX, HYBRID_SCORE_BASE + boost);
       } else if (tInfo !== undefined) {
         matchType = tInfo.matchType;
-        calibratedScore = tInfo.rank <= 3 ? 0.92 : 0.85;
+        calibratedScore = tInfo.rank <= TEXT_TOP_RANK_CUTOFF ? TEXT_TOP_RANK_SCORE : TEXT_SCORE;
       } else if (vMatch !== undefined) {
         matchType = "visual";
-        // Calibrate raw cosine score [0.20, 0.40] -> [0.45, 0.95]
-        const normScore = Math.max(0, Math.min(1, (vMatch.score - 0.20) / 0.20));
-        calibratedScore = Math.min(0.95, Math.max(0.45, 0.45 + normScore * 0.5));
+        // Calibrate raw cosine score [floor, floor*2] -> [min, max] for display.
+        const normScore = Math.max(
+          0,
+          Math.min(1, (vMatch.score - VECTOR_NOISE_FLOOR) / VECTOR_NOISE_FLOOR)
+        );
+        calibratedScore = Math.min(
+          VISUAL_SCORE_MAX,
+          Math.max(VISUAL_SCORE_MIN, VISUAL_SCORE_MIN + normScore * (VISUAL_SCORE_MAX - VISUAL_SCORE_MIN))
+        );
       }
 
       candidates.push({

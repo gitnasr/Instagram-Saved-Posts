@@ -1,38 +1,37 @@
 ---
-title: "In-Browser & Qdrant AI Vector Search (Coming Soon)"
-description: "Roadmap for in-browser Transformer.js, self-hosted Qdrant vector indexing, and facial recognition."
+title: "AI Vector Search"
+description: "CLIP-based semantic image search, facial recognition, and Qdrant vector indexing."
 ---
 
-# In-Browser & Qdrant AI Vector Search
+# AI Vector Search
 
-> **Status: Coming Soon / In-Browser Active Development**
->
-> We are actively developing client-side in-browser inference using Transformer.js (WebGPU) and optional self-hosted Qdrant vector backend integration.
+Saved Posts Tracker indexes every saved post's image (and detected faces) into
+[Qdrant](https://qdrant.tech) for semantic search — no third-party AI APIs, self-hosted.
 
-Saved Posts Tracker is designing privacy-first deep learning models for visual understanding and facial identification without requiring expensive third-party AI APIs.
+## 1. Multimodal CLIP Embeddings
 
-## 1. Multimodal CLIP Embeddings (In-Browser & Qdrant)
+- **Model**: HuggingFace CLIP (`Xenova/clip-vit-base-patch16`), run server-side via `@huggingface/transformers` at full precision.
+- **Dimensionality**: 512-d vectors, cosine distance.
+- **Query mechanism**: post images and text queries are both projected into the same latent space, so a plain-language query retrieves visually matching posts (`/search`, "text prompt" tab). Captions and creator usernames are also matched lexically and merged in via Reciprocal Rank Fusion.
+- **Storage**: `post_images` Qdrant collection, one point per post thumbnail / carousel slide.
 
-- **Model**: HuggingFace CLIP (`Xenova/clip-vit-base-patch32`) executed locally in-browser via `@huggingface/transformers` or on backend.
-- **Dimensionality**: 512 floating-point vectors.
-- **Query Mechanism**: Both image pixels and text descriptions are projected into the same latent embedding space.
-- **Vector Storage**: Client-side vector index with optional [Qdrant](https://qdrant.tech) backend for large-scale self-hosted instances.
-
-### Example Natural Language Queries:
+### Example natural language queries:
 - `"Moody neon cyberpunk street"`
 - `"Warm wooden Scandinavian interior"`
 - `"Minimalist typography posters with Swiss grid"`
 
-## 2. In-Browser Face Detection & Facial Descriptors
+## 2. Face Detection & Facial Descriptors
 
-- **Model**: `@vladmandic/face-api` running on `@tensorflow/tfjs` in-browser backend.
-- **Dimensionality**: 128-dimensional facial descriptor vectors.
-- **Clustering**: Automatically detects faces in saved images, extracts biometric embeddings, and allows filtering all posts containing matching individuals with zero biometric data leakage.
+- **Model**: `@vladmandic/face-api` on `@tensorflow/tfjs`, run server-side during indexing.
+- **Dimensionality**: 128-d facial descriptor vectors, Euclidean distance.
+- **Storage**: `post_faces` Qdrant collection — lets you filter all posts containing a matching face.
 
-## Reindexing Vectors CLI
+## Reindexing Vectors
 
-When vector indexing is activated, you will be able to run:
+After changing the embedding model, or to index newly saved posts, run:
 
 ```bash
-npm run reindex:vectors
+npm run reindex:vectors -- --all
 ```
+
+or trigger it per-profile from the UI, or via `POST /api/search/reindex`.
