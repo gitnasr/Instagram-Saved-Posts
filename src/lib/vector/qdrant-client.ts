@@ -66,7 +66,7 @@ export const COLLECTIONS = {
   POST_FACES: "post_faces",
 } as const;
 
-export const IMAGE_VECTOR_SIZE = 512; // Xenova/clip-vit-base-patch32
+export const IMAGE_VECTOR_SIZE = 512; // Xenova/clip-vit-base-patch16
 export const FACE_VECTOR_SIZE = 128; // face-api face recognition descriptor
 
 let client: QdrantClient | null = null;

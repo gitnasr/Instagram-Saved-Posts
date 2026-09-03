@@ -12,15 +12,15 @@ import {
 
 async function main() {
   console.log("[warm-models] Warming CLIP vision processor & projection model...");
-  await AutoProcessor.from_pretrained("Xenova/clip-vit-base-patch32");
-  await CLIPVisionModelWithProjection.from_pretrained("Xenova/clip-vit-base-patch32", {
-    dtype: "q8",
+  await AutoProcessor.from_pretrained("Xenova/clip-vit-base-patch16");
+  await CLIPVisionModelWithProjection.from_pretrained("Xenova/clip-vit-base-patch16", {
+    dtype: "fp32",
   });
 
   console.log("[warm-models] Warming CLIP text tokenizer & projection model...");
-  await AutoTokenizer.from_pretrained("Xenova/clip-vit-base-patch32");
-  await CLIPTextModelWithProjection.from_pretrained("Xenova/clip-vit-base-patch32", {
-    dtype: "q8",
+  await AutoTokenizer.from_pretrained("Xenova/clip-vit-base-patch16");
+  await CLIPTextModelWithProjection.from_pretrained("Xenova/clip-vit-base-patch16", {
+    dtype: "fp32",
   });
 
   console.log("[warm-models] All CLIP weights cached successfully.");
