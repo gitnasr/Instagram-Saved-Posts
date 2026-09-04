@@ -404,18 +404,19 @@ export default function SearchPage() {
           value={mode}
           onValueChange={(v) => handleModeChange(v as SearchMode)}
         >
-          <TabsList className="mb-2">
-            <TabsTrigger value="text" className="gap-1.5">
-              <Sparkles className="size-3.5 text-amber-500" />
-              Prompt Search
+          {/* Full labels overflow a phone viewport, so the qualifier drops below sm. */}
+          <TabsList className="mb-2 w-full sm:w-fit">
+            <TabsTrigger value="text" className="min-w-0 flex-1 gap-1.5 sm:flex-none">
+              <Sparkles className="size-3.5 shrink-0 text-amber-500" />
+              <span className="hidden sm:inline">Prompt&nbsp;</span>Search
             </TabsTrigger>
-            <TabsTrigger value="image" className="gap-1.5">
-              <ImageIcon className="size-3.5 text-blue-400" />
-              Visual Similarity
+            <TabsTrigger value="image" className="min-w-0 flex-1 gap-1.5 sm:flex-none">
+              <ImageIcon className="size-3.5 shrink-0 text-blue-400" />
+              Visual<span className="hidden sm:inline">&nbsp;Similarity</span>
             </TabsTrigger>
-            <TabsTrigger value="face" className="gap-1.5">
-              <ScanFace className="size-3.5 text-purple-400" />
-              Face Recognition
+            <TabsTrigger value="face" className="min-w-0 flex-1 gap-1.5 sm:flex-none">
+              <ScanFace className="size-3.5 shrink-0 text-purple-400" />
+              Face<span className="hidden sm:inline">&nbsp;Recognition</span>
             </TabsTrigger>
           </TabsList>
 
