@@ -4,6 +4,7 @@ import sharp from "sharp";
 import path from "path";
 
 const MODEL_PATH = path.join(process.cwd(), "node_modules/@vladmandic/face-api/model");
+const MAX_FACE_IMAGE_PIXELS = 16_000_000; // 16 MP decode bomb guard
 
 let modelsReady: Promise<void> | null = null;
 
@@ -20,14 +21,8 @@ function loadModels(): Promise<void> {
   return modelsReady;
 }
 
-export interface DetectedFace {
-  bbox: { x: number; y: number; width: number; height: number };
-  descriptor: number[];
-}
-
-export const MAX_FACE_IMAGE_PIXELS = 16_000_000; // 16 Megapixels
-
-async function detectFacesInBuffer(buffer: Buffer): Promise<DetectedFace[]> {
+/** 128-d face-recognition descriptors for every face found in an in-memory image buffer. */
+export async function detectFacesFromBuffer(buffer: Buffer): Promise<number[][]> {
   await loadModels();
 
   const { data, info } = await sharp(buffer, { limitInputPixels: MAX_FACE_IMAGE_PIXELS })
@@ -47,40 +42,8 @@ async function detectFacesInBuffer(buffer: Buffer): Promise<DetectedFace[]> {
       .withFaceLandmarks()
       .withFaceDescriptors();
 
-    return results.map((r) => ({
-      bbox: {
-        x: r.detection.box.x,
-        y: r.detection.box.y,
-        width: r.detection.box.width,
-        height: r.detection.box.height,
-      },
-      descriptor: Array.from(r.descriptor as Float32Array),
-    }));
+    return results.map((r) => Array.from(r.descriptor as Float32Array));
   } finally {
     tensor.dispose();
   }
-}
-
-/** All faces (128-d descriptor + bbox each) found in an image at a stable HTTPS URL. */
-export async function detectFacesFromUrl(url: string): Promise<DetectedFace[]> {
-  const resp = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Referer: "https://www.instagram.com/",
-    },
-    signal: AbortSignal.timeout(15_000),
-  });
-
-  if (!resp.ok) {
-    throw new Error(`Failed to fetch image for face detection from URL: ${url} (${resp.status})`);
-  }
-
-  const buffer = Buffer.from(await resp.arrayBuffer());
-  return detectFacesInBuffer(buffer);
-}
-
-/** All faces (128-d descriptor + bbox each) found in an in-memory image buffer (search-query uploads). */
-export async function detectFacesFromBuffer(buffer: Buffer): Promise<DetectedFace[]> {
-  return detectFacesInBuffer(buffer);
 }

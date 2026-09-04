@@ -3,5 +3,5 @@
   "entry": ["src/app/**/*.{ts,tsx}", "src/instrumentation*.ts"],
   "project": ["src/**/*.{ts,tsx}"],
   "ignore": ["src/components/ui/**"],
-  "ignoreDependencies": ["tw-animate-css", "shadcn", "tailwindcss", "postcss"]
+  "ignoreDependencies": ["tw-animate-css", "shadcn", "tailwindcss", "postcss", "@tensorflow/tfjs-backend-wasm"]
 }

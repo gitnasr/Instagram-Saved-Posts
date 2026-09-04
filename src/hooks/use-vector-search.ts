@@ -28,60 +28,42 @@ export interface ReindexStatusResponse {
   error?: string;
 }
 
-export interface VectorStatsResponse {
-  activeProfile: VectorIndexStats | null;
-  allProfiles: VectorIndexStats[];
-  totalProfilesIndexed: number;
-  qdrant: {
-    configured: boolean;
-    dashboardUrl: string;
-    profilePoints: {
-      images: number;
-      faces: number;
-      total: number;
-    };
+async function search(url: string, init: RequestInit): Promise<VectorSearchHit[]> {
+  const res = await fetch(url, { method: "POST", ...init });
+  const body: SearchResponse = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new VectorSearchError(body.error ?? `Search failed (${res.status})`, !!body.needsIndexing);
+  }
+  return body.results ?? [];
+}
+
+function searchByUpload(url: string) {
+  return (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return search(url, { body: formData });
   };
-}
-
-async function postImage(url: string, file: File): Promise<VectorSearchHit[]> {
-  const formData = new FormData();
-  formData.append("image", file);
-  const res = await fetch(url, { method: "POST", body: formData });
-  const body: SearchResponse = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new VectorSearchError(body.error ?? `Search failed (${res.status})`, !!body.needsIndexing);
-  }
-  return body.results ?? [];
-}
-
-async function postText(query: string): Promise<VectorSearchHit[]> {
-  const res = await fetch("/api/search/by-text", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
-  });
-  const body: SearchResponse = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new VectorSearchError(body.error ?? `Search failed (${res.status})`, !!body.needsIndexing);
-  }
-  return body.results ?? [];
 }
 
 export function useSearchByText() {
   return useMutation<VectorSearchHit[], VectorSearchError, string>({
-    mutationFn: (query: string) => postText(query),
+    mutationFn: (query) =>
+      search("/api/search/by-text", {
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      }),
   });
 }
 
 export function useSearchByImage() {
   return useMutation<VectorSearchHit[], VectorSearchError, File>({
-    mutationFn: (file: File) => postImage("/api/search/by-image", file),
+    mutationFn: searchByUpload("/api/search/by-image"),
   });
 }
 
 export function useSearchByFace() {
   return useMutation<VectorSearchHit[], VectorSearchError, File>({
-    mutationFn: (file: File) => postImage("/api/search/by-face", file),
+    mutationFn: searchByUpload("/api/search/by-face"),
   });
 }
 
@@ -93,21 +75,8 @@ export function useVectorIndexStatus() {
       if (!res.ok) throw new Error("Failed to fetch vector index status");
       return res.json();
     },
-    refetchInterval: (query) => {
-      const status = query.state.data?.current?.status;
-      return status === "running" ? 2000 : 15000;
-    },
-  });
-}
-
-export function useVectorStats() {
-  return useQuery<VectorStatsResponse>({
-    queryKey: ["vector-stats"],
-    queryFn: async () => {
-      const res = await fetch("/api/search/stats");
-      if (!res.ok) throw new Error("Failed to fetch vector stats");
-      return res.json();
-    },
+    refetchInterval: (query) =>
+      query.state.data?.current?.status === "running" ? 2000 : 15000,
   });
 }
 
@@ -120,9 +89,6 @@ export function useReindexVectors() {
       if (!res.ok) throw new Error(body.error ?? "Failed to start indexing");
       return body;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vector-index-status"] });
-      queryClient.invalidateQueries({ queryKey: ["vector-stats"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vector-index-status"] }),
   });
 }

@@ -2,12 +2,11 @@ import { prisma } from "@/lib/prisma";
 
 export interface VectorIndexStats {
   profileId: string;
-  profileName?: string;
-  status: "idle" | "running" | "completed" | "failed";
+  status: "running" | "completed" | "failed";
   lastRunAt: string | null;
   lastCompletedAt: string | null;
   durationMs: number | null;
-  cutoffPostTakenAt: number | null;
+  /** Newest post included in this run, for "index is current up to…" display. */
   cutoffPostDate: string | null;
   totalItems: number;
   indexedItems: number;
@@ -17,15 +16,12 @@ export interface VectorIndexStats {
   updatedAt: string;
 }
 
-const STATS_KEY_PREFIX = "vector_index_stats_";
+const statsKey = (profileId: string) => `vector_index_stats_${profileId}`;
 
 export async function getProfileVectorStats(profileId: string): Promise<VectorIndexStats | null> {
   try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: `${STATS_KEY_PREFIX}${profileId}` },
-    });
-    if (!setting?.value) return null;
-    return JSON.parse(setting.value) as VectorIndexStats;
+    const setting = await prisma.setting.findUnique({ where: { key: statsKey(profileId) } });
+    return setting?.value ? (JSON.parse(setting.value) as VectorIndexStats) : null;
   } catch {
     return null;
   }
@@ -34,41 +30,16 @@ export async function getProfileVectorStats(profileId: string): Promise<VectorIn
 export async function saveProfileVectorStats(stats: VectorIndexStats): Promise<void> {
   const now = new Date().toISOString();
   stats.updatedAt = now;
+  const key = statsKey(stats.profileId);
+  const value = JSON.stringify(stats);
 
   try {
     await prisma.setting.upsert({
-      where: { key: `${STATS_KEY_PREFIX}${stats.profileId}` },
-      update: {
-        value: JSON.stringify(stats),
-        updatedAt: now,
-      },
-      create: {
-        key: `${STATS_KEY_PREFIX}${stats.profileId}`,
-        value: JSON.stringify(stats),
-        updatedAt: now,
-      },
+      where: { key },
+      update: { value, updatedAt: now },
+      create: { key, value, updatedAt: now },
     });
   } catch (err) {
     console.error("[vector-stats] Failed to persist vector stats:", err);
-  }
-}
-
-export async function getAllProfilesVectorStats(): Promise<VectorIndexStats[]> {
-  try {
-    const settings = await prisma.setting.findMany({
-      where: { key: { startsWith: STATS_KEY_PREFIX } },
-    });
-
-    const list: VectorIndexStats[] = [];
-    for (const s of settings) {
-      try {
-        list.push(JSON.parse(s.value));
-      } catch {
-        // Ignore corrupt record
-      }
-    }
-    return list;
-  } catch {
-    return [];
   }
 }

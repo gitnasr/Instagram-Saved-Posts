@@ -24,7 +24,6 @@ import {
   useSearchByImage,
   useSearchByFace,
   useVectorIndexStatus,
-  useVectorStats,
   useReindexVectors,
   type VectorSearchError,
 } from "@/hooks/use-vector-search";
@@ -91,7 +90,6 @@ export default function SearchPage() {
   const searchByImage = useSearchByImage();
   const searchByFace = useSearchByFace();
   const { data: indexStatusData, isLoading: isLoadingStatus } = useVectorIndexStatus();
-  const { data: vectorStatsData, isLoading: isLoadingStats } = useVectorStats();
   const reindexMutation = useReindexVectors();
 
   const isPending =
@@ -163,29 +161,17 @@ export default function SearchPage() {
     setSearchErrorMessage(null);
     setActiveQueryLabel(file.name);
 
-    if (requestMode === "image") {
-      searchByImage.mutate(file, {
-        onSuccess: (hits) => {
-          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
-          setResults(hits);
-        },
-        onError: (err) => {
-          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
-          handleSearchError(err);
-        },
-      });
-    } else {
-      searchByFace.mutate(file, {
-        onSuccess: (hits) => {
-          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
-          setResults(hits);
-        },
-        onError: (err) => {
-          if (token !== searchTokenRef.current || modeRef.current !== requestMode) return;
-          handleSearchError(err);
-        },
-      });
-    }
+    // Ignore a response whose search was superseded by a newer one or a mode switch.
+    const isStale = () => token !== searchTokenRef.current || modeRef.current !== requestMode;
+    const mutation = requestMode === "image" ? searchByImage : searchByFace;
+    mutation.mutate(file, {
+      onSuccess: (hits) => {
+        if (!isStale()) setResults(hits);
+      },
+      onError: (err) => {
+        if (!isStale()) handleSearchError(err);
+      },
+    });
   };
 
   const handleReindex = () => {
@@ -613,7 +599,7 @@ export default function SearchPage() {
             </DialogDescription>
           </DialogHeader>
 
-          {isLoadingStats ? (
+          {isLoadingStatus ? (
             <div className="space-y-2 py-4">
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
@@ -696,7 +682,7 @@ export default function SearchPage() {
                     Qdrant Database & Cluster
                   </span>
                   <span className="text-[11px] text-ink-subtle">
-                    {vectorStatsData?.totalProfilesIndexed ?? 0} Profiles Indexed
+                    {liveness?.status ?? "unknown"}
                   </span>
                 </div>
 
@@ -704,22 +690,18 @@ export default function SearchPage() {
                   <div>
                     <span className="text-ink-subtle">Image Vectors:</span>
                     <p className="text-foreground text-sm font-semibold">
-                      {vectorStatsData?.qdrant?.profilePoints?.images?.toLocaleString() ?? 0}
+                      {(liveness?.collections.post_images.pointsCount ?? 0).toLocaleString()}
                     </p>
                   </div>
                   <div>
                     <span className="text-ink-subtle">Face Vectors:</span>
                     <p className="text-foreground text-sm font-semibold">
-                      {vectorStatsData?.qdrant?.profilePoints?.faces?.toLocaleString() ?? 0}
+                      {(liveness?.collections.post_faces.pointsCount ?? 0).toLocaleString()}
                     </p>
                   </div>
                   <div>
                     <span className="text-ink-subtle">Cluster Latency:</span>
                     <p className="text-emerald-400">{liveness?.latencyMs ?? 0} ms</p>
-                  </div>
-                  <div>
-                    <span className="text-ink-subtle">Storage Backend:</span>
-                    <p className="text-foreground">Qdrant RocksDB</p>
                   </div>
                 </div>
               </div>
