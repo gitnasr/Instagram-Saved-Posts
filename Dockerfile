@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ── Builder ───────────────────────────────────────────────────
-FROM node:20-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 WORKDIR /app
 
 # OpenSSL is required by the Prisma query engine
@@ -34,7 +34,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # ── Runner ────────────────────────────────────────────────────
-FROM node:20-bookworm-slim AS runner
+FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl \

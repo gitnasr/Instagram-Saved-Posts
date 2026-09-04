@@ -37,6 +37,9 @@
     "reindex:vectors": "tsx --env-file-if-exists=.env scripts/reindex-vectors.ts",
     "test:vectors": "tsx scripts/test-vector-search.ts"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
     "@prisma/client": "^6.19.3",
