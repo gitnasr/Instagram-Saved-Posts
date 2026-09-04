@@ -7,7 +7,11 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-surface-1 text-card-foreground flex flex-col gap-6 rounded-[8px] border border-hairline py-6 transition-all",
+        // min-w-0: as a grid/flex item a card defaults to min-width:auto, so it
+        // refuses to shrink below its content and overflows the viewport on
+        // narrow screens. Harmless everywhere else (block boxes already
+        // resolve min-width:auto to 0).
+        "bg-surface-1 text-card-foreground flex min-w-0 flex-col gap-6 rounded-[8px] border border-hairline py-6 transition-all",
         className
       )}
       {...props}
