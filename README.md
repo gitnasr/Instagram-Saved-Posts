@@ -11,7 +11,7 @@
 [![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?style=flat-square&logo=mongodb)](https://www.mongodb.com/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-CSS_v4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 
-[⚡ Quick Start](#-quick-start-1-command) • [🚀 Deploy on PaaS](#-1-click-paas-deployment) • [✨ Key Features](#-key-features) • [📖 Documentation](#-documentation--wiki) • [🛠️ Configuration](#%EF%B8%8F-configuration)
+[⚡ Quick Start](#-quick-start-1-command) • [🚀 Deploy on PaaS](#-1-click-paas-deployment) • [✨ Key Features](#-key-features) • [📖 Documentation](#-documentation) • [🛠️ Configuration](#%EF%B8%8F-configuration)
 
 </div>
 
@@ -163,10 +163,11 @@ This project follows an automated semantic CI/CD versioning lifecycle directly c
 
 ---
 
-## 📖 Documentation & Wiki
+## 📖 Documentation
 
-Detailed guides are available in the [`/docs`](docs/) directory:
+Comprehensive guides and interactive documentation are hosted on the **[Documentation Website](https://instagram-saved-posts.app/docs)** and maintained in the [`/docs`](docs/) directory as the single source of truth:
 
+- 🌐 **[Interactive Documentation Website](https://instagram-saved-posts.app/docs)**
 - 🔑 [How to Get Your Instagram Cookie](docs/getting-started/how-to-get-instagram-cookie.md)
 - 🐳 [Docker Compose Deployment Guide](docs/deployment/docker-compose.md)
 - 🟣 [Dokploy Self-Hosting Guide](docs/deployment/dokploy.md)
