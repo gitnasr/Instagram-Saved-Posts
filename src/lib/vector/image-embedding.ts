@@ -33,44 +33,15 @@ function getVisionModel(): Promise<CLIPVisionModelWithProjection> {
   return visionModelPromise;
 }
 
-async function embed(image: RawImage): Promise<number[]> {
-  const [processor, visionModel] = await Promise.all([
-    getProcessor(),
-    getVisionModel(),
-  ]);
+/** 512-d L2-normalized CLIP embedding for an in-memory image buffer. */
+export async function embedImageFromBuffer(buffer: Buffer): Promise<number[]> {
+  const [processor, visionModel] = await Promise.all([getProcessor(), getVisionModel()]);
 
-  const imageInputs = await processor(image);
-  const { image_embeds } = await visionModel(imageInputs);
+  const image = await RawImage.fromBlob(new Blob([new Uint8Array(buffer)]));
+  const { image_embeds } = await visionModel(await processor(image));
 
+  // L2 normalize so cosine distance in Qdrant aligns with the normalized text embeddings
   const raw = Array.from(image_embeds.data as Float32Array);
-  // L2 normalize so cosine distance in Qdrant aligns perfectly with normalized text embeddings
   const norm = Math.sqrt(raw.reduce((sum, v) => sum + v * v, 0)) || 1;
   return raw.map((v) => v / norm);
-}
-
-/** 512-d CLIP embedding for an image at a stable HTTPS URL (Cloudinary or Instagram CDN). */
-export async function embedImageFromUrl(url: string): Promise<number[]> {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Referer: "https://www.instagram.com/",
-    },
-    signal: AbortSignal.timeout(15_000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image from URL: ${url} (${response.status})`);
-  }
-
-  const blob = await response.blob();
-  const image = await RawImage.fromBlob(blob);
-  return embed(image);
-}
-
-/** 512-d CLIP embedding for an in-memory image buffer (search-query uploads). */
-export async function embedImageFromBuffer(buffer: Buffer): Promise<number[]> {
-  const blob = new Blob([new Uint8Array(buffer)]);
-  const image = await RawImage.fromBlob(blob);
-  return embed(image);
 }

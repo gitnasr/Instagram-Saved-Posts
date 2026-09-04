@@ -34,7 +34,8 @@
     "prisma:generate": "prisma generate",
     "postinstall": "prisma generate",
     "sync:docs": "node scripts/sync-docs.mjs",
-    "reindex:vectors": "tsx scripts/reindex-vectors.ts"
+    "reindex:vectors": "tsx --env-file-if-exists=.env scripts/reindex-vectors.ts",
+    "test:vectors": "tsx scripts/test-vector-search.ts"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
@@ -60,15 +61,13 @@
     "recharts": "^2.15.4",
     "sharp": "^0.35.4",
     "sonner": "^2.0.8",
-    "tailwind-merge": "^3.6.0",
-    "uuid": "^14.0.2"
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "knip": "^6.33.0",
