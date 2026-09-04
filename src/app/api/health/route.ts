@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkQdrantLiveness } from "@/lib/vector/qdrant-client";
+import {
+  checkQdrantLiveness,
+  getQdrantConfig,
+  isQdrantConfigured,
+} from "@/lib/vector/qdrant-client";
 
 export const dynamic = "force-dynamic";
 
@@ -13,22 +17,28 @@ export async function GET() {
     mongoConnected = false;
   }
 
-  const qdrantLiveness = await checkQdrantLiveness().catch(() => ({
-    status: "disconnected" as const,
-    latencyMs: 0,
-  }));
+  // Vector search is opt-in. With QDRANT_URL unset the feature is simply off,
+  // which is a valid deployment — not a degraded one. Reporting it as degraded
+  // would fail the container HEALTHCHECK for every install that skipped search.
+  const searchEnabled = isQdrantConfigured(getQdrantConfig());
+  const qdrantLiveness = searchEnabled
+    ? await checkQdrantLiveness().catch(() => ({
+        status: "disconnected" as const,
+        latencyMs: 0,
+      }))
+    : null;
 
-  const isHealthy = mongoConnected && qdrantLiveness.status === "healthy";
+  const isHealthy =
+    mongoConnected && (!searchEnabled || qdrantLiveness?.status === "healthy");
   const status = isHealthy ? "healthy" : mongoConnected ? "degraded" : "unhealthy";
 
   return NextResponse.json(
     {
       status,
       mongo: mongoConnected ? "connected" : "disconnected",
-      vectorService: {
-        status: qdrantLiveness.status,
-        latencyMs: qdrantLiveness.latencyMs,
-      },
+      vectorService: qdrantLiveness
+        ? { status: qdrantLiveness.status, latencyMs: qdrantLiveness.latencyMs }
+        : { status: "disabled" },
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
     },

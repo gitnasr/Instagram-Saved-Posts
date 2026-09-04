@@ -45,6 +45,7 @@ import {
   Activity,
   CheckCircle2,
 } from "lucide-react";
+import { VECTOR_SEARCH_DOCS_URL } from "@/lib/constants";
 import type { Post, VectorSearchHit } from "@/types";
 
 type SearchMode = "text" | "image" | "face";
@@ -192,17 +193,25 @@ export default function SearchPage() {
   const liveness = indexStatusData?.liveness;
   const stats = indexStatusData?.stats;
   const dashboardUrl = liveness?.dashboardUrl || null;
-  const lastRunFailed = !isLoadingStatus && !isIndexRunning && stats?.status === "failed";
+  // Search is opt-in: no QDRANT_URL means the feature was never switched on,
+  // which is a normal deployment rather than a fault.
+  const searchEnabled = indexStatusData?.configured ?? false;
+  const lastRunFailed =
+    searchEnabled && !isLoadingStatus && !isIndexRunning && stats?.status === "failed";
   const hasNeverIndexed =
-    !isLoadingStatus && !isIndexRunning && !lastRunFailed && (!stats || stats.indexedItems === 0);
+    searchEnabled &&
+    !isLoadingStatus &&
+    !isIndexRunning &&
+    !lastRunFailed &&
+    (!stats || stats.indexedItems === 0);
 
   return (
     <div className="flex flex-col gap-6">
       <Header
-        title="Vector Search"
-        description="Semantic natural-language prompts, visual similarity, and facial recognition search across your archive."
+        title="Vector Search (Beta)"
+        description="Optional: semantic natural-language prompts, visual similarity, and facial recognition search across your archive."
       >
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={`flex flex-wrap items-center gap-2 ${searchEnabled ? "" : "hidden"}`}>
           {/* Qdrant Liveness Badge */}
           {liveness && (
             <div
@@ -275,15 +284,29 @@ export default function SearchPage() {
         </div>
       </Header>
 
-      {/* Database connection warning */}
-      {indexStatusData && !indexStatusData.configured && (
-        <div className="flex items-center gap-3 rounded-[8px] border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200">
-          <AlertCircle className="size-4 shrink-0 text-amber-500" />
-          <div className="flex-1">
-            <span className="font-semibold">Qdrant is not connected.</span> Ensure
-            Qdrant is running in Docker Compose and <code className="font-mono bg-black/30 px-1 py-0.5 rounded">QDRANT_URL</code> is set.
+      {/* Feature switched off — nothing below this point can do anything useful. */}
+      {!isLoadingStatus && !searchEnabled && (
+        <Card className="flex flex-col items-center gap-4 rounded-[8px] border border-hairline bg-surface-1 p-8 text-center">
+          <div className="rounded-full bg-surface-3/80 p-3 text-ink-muted">
+            <Database className="size-6" />
           </div>
-        </div>
+          <div className="flex max-w-lg flex-col gap-1.5">
+            <p className="text-sm font-medium text-foreground">Vector Search is not enabled</p>
+            <p className="text-xs leading-relaxed text-ink-muted">
+              Search is an optional beta feature. It needs a Qdrant service and the{" "}
+              <code className="rounded bg-black/30 px-1 py-0.5 font-mono">QDRANT_URL</code>{" "}
+              environment variable — neither ships in the default deployment, because
+              the embedding models it downloads are a heavy addition most archives
+              do not need.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline" className="gap-1.5 font-mono text-xs">
+            <a href={VECTOR_SEARCH_DOCS_URL} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="size-3.5" />
+              How to enable it
+            </a>
+          </Button>
+        </Card>
       )}
 
       {/* Failed Index Run Callout */}
@@ -375,6 +398,7 @@ export default function SearchPage() {
       )}
 
       {/* Search Input Controls */}
+      {searchEnabled && (
       <Card className="flex flex-col gap-4 rounded-[8px] border border-hairline bg-surface-1 p-4 sm:p-6 shadow-xs">
         <Tabs
           value={mode}
@@ -501,6 +525,7 @@ export default function SearchPage() {
           )}
         </Tabs>
       </Card>
+      )}
 
       {/* Loading Skeleton */}
       {isPending && (

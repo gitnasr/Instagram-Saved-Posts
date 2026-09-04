@@ -38,3 +38,7 @@ export const GITHUB_REPO_URL =
 export const GITHUB_RELEASES_URL =
   `${GITHUB_REPO_URL}/releases`;
 
+/** Vector search is opt-in; the search page links here when it is switched off. */
+export const VECTOR_SEARCH_DOCS_URL =
+  `${GITHUB_REPO_URL}/blob/master/docs/features/ai-vector-search.md`;
+
