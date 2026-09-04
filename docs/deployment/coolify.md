@@ -29,11 +29,15 @@ services:
     restart: unless-stopped
     expose:
       - "3000"
+    ports:
+      - "${PORT:-5050}:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      # AI Vector Search is an optional beta add-on, off by default.
+      # To enable it, see ../features/ai-vector-search.md
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
@@ -73,4 +77,8 @@ volumes:
 2. Set the destination port to `3000`.
 
 ### Step 4: Deploy
+> Want semantic image and face search? It is an optional beta add-on that is off
+> by default — see [AI Vector Search](../features/ai-vector-search.md) for the
+> extra service and environment variable to add here.
+
 Click **Deploy**. Coolify will orchestrate the containers, provision Traefik routing, issue Let's Encrypt certificates, and make your app accessible securely over HTTPS!

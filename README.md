@@ -52,7 +52,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "5050:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
     depends_on:
@@ -90,7 +90,18 @@ volumes:
 docker compose up -d
 ```
 
-🎉 Open **`http://localhost:3000`** in your browser and complete the 60-second onboarding wizard!
+🎉 Open **`http://localhost:5050`** in your browser and complete the 60-second onboarding wizard!
+
+> **Optional: AI Vector Search (Beta).** Semantic prompt, image and face search is
+> **not enabled by default** — it adds a Qdrant service and downloads ~600 MB of
+> model weights on first index. Everything else works fine without it. To opt in,
+> grab [`docker-compose.search.yml`](docker-compose.search.yml) and run:
+>
+> ```bash
+> docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
+> ```
+>
+> Full setup and trade-offs: [AI Vector Search](docs/features/ai-vector-search.md).
 
 ---
 
@@ -129,6 +140,7 @@ This project follows an automated semantic CI/CD versioning lifecycle directly c
 
 | Feature | Description |
 | :--- | :--- |
+| 🔍 **Multimodal Vector Search** *(Beta, optional)* | Natural-language prompt search (CLIP), visual similarity image search, and facial recognition search with Qdrant. **Off by default** — [how to enable](docs/features/ai-vector-search.md). |
 | 🧙‍♂️ **Interactive Onboarding** | Built-in setup wizard with real-time Instagram cookie testing and avatar preview. |
 | 👥 **Multi-Profile Support** | Manage multiple Instagram accounts with separate sessions and isolated bookmarks. |
 | 📈 **Account Timelines** | Automatically records username changes, bio updates, verification changes, and lost accounts. |
@@ -161,7 +173,9 @@ When running via Docker Compose, **zero environment variables are required**. Op
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
-| `PORT` | `3000` | Port exposed on host |
+| `PORT` | `5050` | Port exposed on host for web app |
+| `QDRANT_URL` | _(unset)_ | **Optional.** Setting this switches on the beta vector search. Unset = disabled |
+| `QDRANT_PORT` | `6335` | Host port for the Qdrant API & Dashboard, only used with search enabled |
 | `DATABASE_URL` | `mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` | MongoDB connection string (replica set enabled) |
 | `CLOUDINARY_CLOUD_NAME` | `""` | Optional Cloudinary cloud name for permanent media |
 | `CLOUDINARY_API_KEY` | `""` | Optional Cloudinary API key |

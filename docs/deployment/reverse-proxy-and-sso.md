@@ -53,7 +53,7 @@ server {
     ssl_certificate_key /path/to/privkey.pem;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:5050;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -72,5 +72,5 @@ server {
 
 If using Cloudflare Tunnels:
 1. In Cloudflare Zero Trust -> **Access** -> **Tunnels**, create a tunnel.
-2. Add a Public Hostname pointing to `http://localhost:3000` (or `http://app:3000` if on docker network).
+2. Add a Public Hostname pointing to `http://localhost:5050` (or `http://app:3000` if on docker network).
 3. Optional: Add Cloudflare Access Applications for email PIN or Google authentication.

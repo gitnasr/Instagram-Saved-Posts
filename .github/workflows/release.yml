@@ -49,11 +49,12 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 24
         uses: actions/setup-node@v7
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
+          # No npm install in this workflow — only the version scripts run here,
+          # and they use node builtins.
 
       - name: Calculate Release Version
         id: semver
@@ -65,19 +66,9 @@ jobs:
           IS_TAG_PUSH: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: node .github/scripts/calculate-version.mjs --mode=release
 
-      - name: Install dependencies
-        if: steps.semver.outputs.should_release == 'true'
-        run: npm ci --ignore-scripts
-
-      - name: Generate Prisma Client
-        if: steps.semver.outputs.should_release == 'true'
-        run: npx prisma generate
-
-      - name: Verify Lint & TypeScript
-        if: steps.semver.outputs.should_release == 'true'
-        run: |
-          npm run lint
-          npx tsc --noEmit
+      # Lint and typecheck already ran in ci.yml for this commit, and the Docker
+      # build below runs `npm run build` — a broken tree cannot publish an image.
+      # Installing here just to re-run them cost a full ~1.7 GB npm ci.
 
       - name: Update package.json Version
         if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.is_tag_push == 'false'
@@ -122,8 +113,8 @@ jobs:
             ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ github.sha }}
           build-args: |
             APP_VERSION=${{ steps.semver.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=release
+          cache-to: type=gha,mode=max,scope=release
 
       - name: Create GitHub Release with Auto-Changelog
         if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'

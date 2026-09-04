@@ -38,7 +38,7 @@ Saved Posts Tracker addresses every one of these problems with a unified, self-h
 - **Resumable Checkpoint Scraper**: Uses `checkpointMaxId` to safely pause and resume scraping across rate limits and network interruptions without duplicates.
 - **Append-Only Event Timelines**: Detects and logs username renames (`from @old to @new`), account deletions (`lost`), recoveries, and privacy flips.
 - **Cloudinary CDN Mirroring**: Automatically syncs photos, multi-slide carousels, and video clips to permanent cloud storage.
-- **In-Browser & Qdrant Vector AI (Coming Soon)**: 512-dimensional CLIP multimodal search and TensorFlow.js in-browser biometric face detection.
+- **Qdrant Vector AI (Beta, optional)**: 512-dimensional CLIP multimodal search and face-descriptor matching. Off by default — see [AI Vector Search](features/ai-vector-search.md) to enable it.
 
 ## Next Steps
 
@@ -59,7 +59,7 @@ Saved Posts Tracker addresses every one of these problems with a unified, self-h
 
 ### ✨ Features & Integrations
 - [Cloudinary Permanent CDN](features/cloudinary-cdn.md): Permanent media hosting to protect against expiring Instagram CDN links.
-- [AI Vector Search & Face Recognition](features/ai-vector-search.md): Multimodal CLIP search and biometric face clustering.
+- [AI Vector Search & Face Recognition](features/ai-vector-search.md) *(Beta, optional — off by default)*: Multimodal CLIP search and biometric face clustering.
 
 ### 🚢 Deployment Guides
 - [Docker Compose](deployment/docker-compose.md): Standalone server, home lab, and VPS deployment.

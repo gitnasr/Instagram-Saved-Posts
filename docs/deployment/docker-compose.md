@@ -39,13 +39,26 @@ curl -fsSL https://raw.githubusercontent.com/gitnasr/Instagram-Saved-Posts/maste
 docker compose up -d
 ```
 
+> **Optional: AI Vector Search (Beta).** Semantic image and face search is not
+> part of the default stack — it needs an extra Qdrant service and downloads
+> ~600 MB of model weights on first index. To include it, layer the add-on file:
+>
+> ```bash
+> docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
+> ```
+>
+> See [AI Vector Search](../features/ai-vector-search.md).
+
 ### 4. Verify Running Containers
 ```bash
 docker compose ps
 ```
 You should see:
-- `instagram_saved_posts_app`: Next.js frontend and scraper engine (port 3000).
+- `instagram_saved_posts_app`: Next.js frontend and scraper engine (port 5050, accessible at `http://localhost:5050`).
 - `instagram_saved_posts_mongo`: MongoDB database instance (healthy).
+
+Plus, only if you launched with the search add-on:
+- `instagram_saved_posts_qdrant`: Qdrant vector database (port 6335, Dashboard at `http://localhost:6335/dashboard`).
 
 > [!NOTE]
 > The compose configuration uses `pull_policy: always` for the `app` service. This ensures `docker compose up -d` always pulls the latest image update from GitHub Container Registry (GHCR) when tracking `:latest` or `:beta`.
@@ -60,6 +73,10 @@ To check volume details:
 ```bash
 docker volume inspect instagram_saved_posts_mongo_data
 ```
+
+With the search add-on enabled there are two more: `instagram_saved_posts_qdrant_data`
+holds the vectors and `instagram_saved_posts_model_cache` holds the downloaded model
+weights. Both are derived data — deleting them costs a reindex, not your archive.
 
 ---
 

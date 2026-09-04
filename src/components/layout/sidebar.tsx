@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   Play,
+  Search,
   Settings,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/accounts", label: "Accounts", icon: Users },
   { href: "/scrape", label: "Scrape", icon: Play },
+  { href: "/search", label: "Search", icon: Search },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -75,7 +77,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-1 border-t border-hairline bg-surface-1/90 p-2 backdrop-blur-xl md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-hairline bg-surface-1/90 p-2 backdrop-blur-xl md:hidden">
         {navItems.map(({ href, label, icon: Icon }) => (
           <NavLink
             key={href}
