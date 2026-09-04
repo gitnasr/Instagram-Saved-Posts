@@ -5,7 +5,7 @@
  * and the higher-is-better normalisation shared by all three search modes.
  */
 import assert from "assert";
-import { pointId } from "../src/lib/vector/qdrant-client";
+import { describeVectorParamsMismatch, pointId } from "../src/lib/vector/qdrant-client";
 import { bestHitPerPost, calibrate } from "../src/lib/vector/search-api";
 
 // pointId must be a stable UUIDv5 — these vectors were verified against the
@@ -50,5 +50,22 @@ assert.equal(Number(faces.get("a")!.quality.toFixed(2)), 0.42); // from distance
 
 // Hits without a usable postPk payload are ignored rather than crashing.
 assert.equal(bestHitPerPost([{ score: 0.9, payload: null }], (s) => s).size, 0);
+
+// A collection left over from a different embedding model must be reported, not
+// silently written to — 768 is SigLIP2-base, 512 is the CLIP ViT-B/16 we use.
+const imageSpec = { name: "post_images", size: 512, distance: "Cosine" as const };
+assert.equal(describeVectorParamsMismatch(imageSpec, { size: 512, distance: "Cosine" }), null);
+assert.match(
+  describeVectorParamsMismatch(imageSpec, { size: 768, distance: "Cosine" }) ?? "",
+  /size 768 .*writes size 512/
+);
+// Right dimension, wrong metric still scores everything wrong.
+assert.match(
+  describeVectorParamsMismatch(imageSpec, { size: 512, distance: "Euclid" }) ?? "",
+  /delete the collection/
+);
+// Named-vector or unreadable configs are a mismatch, not a pass.
+assert.ok(describeVectorParamsMismatch(imageSpec, undefined));
+assert.ok(describeVectorParamsMismatch(imageSpec, {}));
 
 console.log("vector search self-check: all assertions passed");
