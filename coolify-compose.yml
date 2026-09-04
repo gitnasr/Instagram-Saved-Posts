@@ -10,11 +10,15 @@ services:
     restart: unless-stopped
     expose:
       - "3000"
+    ports:
+      - "${PORT:-5050}:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      # AI Vector Search is an optional beta add-on, off by default.
+      # To enable it, see docs/features/ai-vector-search.md
       # Optional Cloudinary CDN Configuration
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}

@@ -23,11 +23,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 24
         uses: actions/setup-node@v7
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
+          # No npm install in this workflow — only the version scripts run here,
+          # and they use node builtins.
 
       - name: Calculate Beta Version
         id: semver
@@ -36,16 +37,9 @@ jobs:
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: node .github/scripts/calculate-version.mjs --mode=beta
 
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Verify Lint & TypeScript
-        run: |
-          npm run lint
-          npx tsc --noEmit
+      # Lint, typecheck and build verification run in ci.yml on this same
+      # pull_request trigger — repeating them here meant a third full npm ci
+      # (~1.7 GB) per PR for no extra signal.
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -71,8 +65,13 @@ jobs:
             ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}
           build-args: |
             APP_VERSION=${{ steps.semver.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Separate scopes: sharing the default one meant beta and release
+          # exports kept overwriting each other's manifest. Beta also reads the
+          # release scope so a PR starts warm from the last master build.
+          cache-from: |
+            type=gha,scope=beta
+            type=gha,scope=release
+          cache-to: type=gha,mode=max,scope=beta
 
       - name: Beta Release Summary
         run: |
@@ -84,7 +83,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "# Pull and run this beta container locally:" >> $GITHUB_STEP_SUMMARY
-          echo "docker run -d -p 3000:3000 --name test-beta \\" >> $GITHUB_STEP_SUMMARY
+          echo "docker run -d -p 5050:3000 --name test-beta \\" >> $GITHUB_STEP_SUMMARY
           echo "  -e DATABASE_URL=\"mongodb://...\" \\" >> $GITHUB_STEP_SUMMARY
           echo "  ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta-pr-${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

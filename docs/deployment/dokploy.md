@@ -28,13 +28,14 @@ services:
     pull_policy: always
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "5050:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
-      # Optional: Cloudinary credentials
+      # AI Vector Search is an optional beta add-on, off by default.
+      # To enable it, see ../features/ai-vector-search.md
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -72,11 +73,15 @@ volumes:
 ### Step 3: Configure Domain & SSL
 1. In Dokploy, open the **Domains** tab for the `app` service.
 2. Add your custom domain (e.g. `instagram.yourdomain.com`).
-3. Select Port `3000`.
+3. Select Port `5050`.
 4. Enable **HTTPS (Let's Encrypt)**.
 
 ### Step 4: Deploy
 Click **Deploy** at the top right. Dokploy will pull the container images, verify MongoDB health, and start the application automatically!
+
+> Want semantic image and face search? It is an optional beta add-on that is off
+> by default — see [AI Vector Search](../features/ai-vector-search.md) for the
+> extra service and environment variable to add here.
 
 ---
 

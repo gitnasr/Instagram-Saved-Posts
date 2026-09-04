@@ -111,6 +111,24 @@ export interface CloudinarySyncProgress {
   errorMessage?: string;
 }
 
+export interface VectorSearchHit {
+  post: Post;
+  /** Display confidence 0-1, calibrated per search mode. */
+  score: number;
+  matchType?: "hybrid" | "visual" | "caption" | "account" | "face";
+  matchedSlideIndex?: number;
+  matchedImageUrl?: string;
+}
+
+export interface VectorIndexProgress {
+  status: "running" | "completed" | "failed";
+  totalItems: number;
+  indexedItems: number;
+  facesIndexed: number;
+  failedItems: number;
+  errorMessage?: string;
+}
+
 export interface ScrapeStatusResponse {
   current: {
     runId: number;

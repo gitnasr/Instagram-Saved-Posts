@@ -10,12 +10,14 @@ services:
     container_name: instagram_saved_posts_app
     restart: unless-stopped
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-5050}:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      # AI Vector Search is an optional beta add-on and is off by default.
+      # To enable: docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
       # Optional: Cloudinary for permanent media CDN
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}

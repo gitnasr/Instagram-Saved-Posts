@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
     "@prisma/client",
     ".prisma/client",
     "pino",
+    "onnxruntime-node",
+    "@huggingface/transformers",
+    "sharp",
+    "@vladmandic/face-api",
+    "@tensorflow/tfjs",
+    "@tensorflow/tfjs-backend-wasm",
   ],
 };
 

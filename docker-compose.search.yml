@@ -1,0 +1,55 @@
+# Optional add-on: AI Vector Search (Beta)
+#
+# Search is NOT part of the default deployment. It adds a Qdrant service and
+# makes the app download ~600 MB of CLIP and face-recognition model weights on
+# the first index run, which most archives do not need.
+#
+# Enable it by layering this file over the base compose:
+#   docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
+#
+# Disable it again by dropping the second -f and recreating:
+#   docker compose -f docker-compose.yml up -d --remove-orphans
+#
+# See docs/features/ai-vector-search.md
+
+services:
+  app:
+    environment:
+      # Presence of QDRANT_URL is what switches the feature on.
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      - QDRANT_PORT=${QDRANT_PORT:-6335}
+    volumes:
+      # Model weights are downloaded once and cached here, so restarts and
+      # image upgrades do not re-fetch them.
+      - model_cache:/app/node_modules/@huggingface/transformers/.cache
+    depends_on:
+      qdrant:
+        condition: service_healthy
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.4
+    container_name: instagram_saved_posts_qdrant
+    restart: unless-stopped
+    ports:
+      # Bound to loopback: the API has no authentication unless you set
+      # QDRANT__SERVICE__API_KEY, so it must never be published on 0.0.0.0.
+      - "127.0.0.1:${QDRANT_PORT:-6335}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ': >/dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 2s
+
+volumes:
+  qdrant_data:
+    name: instagram_saved_posts_qdrant_data
+  model_cache:
+    name: instagram_saved_posts_model_cache
