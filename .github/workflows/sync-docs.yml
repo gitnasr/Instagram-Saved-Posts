@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - main
     paths:
       - "docs/**"
       - ".github/workflows/sync-docs.yml"
@@ -23,6 +24,11 @@ jobs:
         env:
           DOCS_TOKEN: ${{ secrets.DOCS_SYNC_PAT || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
+          if [ -z "$DOCS_TOKEN" ]; then
+            echo "::error::DOCS_SYNC_PAT or GITHUB_TOKEN is not configured."
+            exit 1
+          fi
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
