@@ -17,7 +17,7 @@ description: "Deploy as a multi-service stack with automated Traefik SSL on Dokp
 3. Click **Add Service** -> Select **Compose**.
 
 ### Step 2: Configure Compose Stack
-1. In the Compose Configuration editor, paste the contents of [`dokploy-compose.yml`](../../dokploy-compose.yml):
+1. In the Compose Configuration editor, paste the contents of [`dokploy-compose.yml`](https://github.com/gitnasr/Instagram-Saved-Posts/blob/master/dokploy-compose.yml):
 
 ```yaml
 version: "3.8"

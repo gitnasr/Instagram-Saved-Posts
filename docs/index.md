@@ -42,8 +42,8 @@ Saved Posts Tracker addresses every one of these problems with a unified, self-h
 
 ## Next Steps
 
-- Check out the [Quickstart Guide](/docs/quickstart) to deploy in 5 minutes.
-- Learn about the [System Architecture](/docs/architecture).
+- Check out the [Quickstart Guide](/docs/getting-started/quickstart) to deploy in 5 minutes.
+- Learn about the [System Architecture](/docs/architecture/system-overview).
 ---
 
 ## 🗺️ Documentation Index
