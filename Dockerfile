@@ -12,6 +12,11 @@ COPY package.json package-lock.json ./
 # --ignore-scripts skips native builds and the postinstall prisma generate (run explicitly below).
 RUN npm ci --ignore-scripts
 
+# onnxruntime-node ships prebuilt binaries for win32/darwin/linux in one tarball.
+# Only linux is reachable from this image, and the other two (~159 MB) otherwise
+# ride through npm prune, the runner COPY, and the registry layer cache.
+RUN rm -rf node_modules/onnxruntime-node/bin/napi-v*/win32 node_modules/onnxruntime-node/bin/napi-v*/darwin
+
 COPY prisma ./prisma
 RUN npx prisma generate
 
