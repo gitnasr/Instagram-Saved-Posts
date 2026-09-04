@@ -20,9 +20,10 @@ RUN rm -rf node_modules/onnxruntime-node/bin/napi-v*/win32 node_modules/onnxrunt
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# Bake CLIP weights into the image (cached layer) instead of downloading at runtime
-COPY scripts/warm-models.ts ./scripts/warm-models.ts
-RUN npx tsx scripts/warm-models.ts
+# CLIP and face-recognition weights are deliberately NOT baked in. Vector search
+# is an optional beta add-on, so shipping ~600 MB of weights to every install
+# would tax the majority that never enables it. They are downloaded on the first
+# index run instead, into the model_cache volume from docker-compose.search.yml.
 
 COPY . .
 
@@ -59,6 +60,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # redundant: the engine/client are already inside this full tree).
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Transformers.js writes downloaded weights here. The path must exist and be
+# owned by nextjs in the image: Docker seeds a fresh named volume from the image
+# directory, so without this the search add-on's model_cache volume would come
+# up root-owned and the non-root app could not write to it.
+RUN mkdir -p /app/node_modules/@huggingface/transformers/.cache \
+  && chown -R nextjs:nodejs /app/node_modules/@huggingface/transformers/.cache
 
 USER nextjs
 EXPOSE 3000

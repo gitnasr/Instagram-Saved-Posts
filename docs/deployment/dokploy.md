@@ -34,16 +34,13 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0
-      - QDRANT_URL=http://qdrant:6333
-      - QDRANT_API_KEY=${QDRANT_API_KEY}
-      - QDRANT_PORT=6335
+      # AI Vector Search is an optional beta add-on, off by default.
+      # To enable it, see ../features/ai-vector-search.md
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
       mongo:
-        condition: service_healthy
-      qdrant:
         condition: service_healthy
 
   mongo:
@@ -69,27 +66,8 @@ services:
       retries: 10
       start_period: 2s
 
-  qdrant:
-    image: qdrant/qdrant:v1.13.4
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:6335:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    ulimits:
-      nofile:
-        soft: 65535
-        hard: 65535
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c ': >/dev/tcp/127.0.0.1/6333' || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 2s
-
 volumes:
   mongo_data:
-  qdrant_data:
 ```
 
 ### Step 3: Configure Domain & SSL
@@ -97,17 +75,19 @@ volumes:
 2. Add your custom domain (e.g. `instagram.yourdomain.com`).
 3. Select Port `5050`.
 4. Enable **HTTPS (Let's Encrypt)**.
-5. (Optional) The Qdrant Dashboard UI is bound to `127.0.0.1:6335` for security. To access it, use an SSH tunnel (`ssh -L 6335:localhost:6335 user@server`) or route through an authenticated reverse proxy pointing to internal container network `http://qdrant:6333/dashboard`.
 
 ### Step 4: Deploy
-Click **Deploy** at the top right. Dokploy will pull the container images, verify MongoDB and Qdrant health, and start the application automatically!
+Click **Deploy** at the top right. Dokploy will pull the container images, verify MongoDB health, and start the application automatically!
+
+> Want semantic image and face search? It is an optional beta add-on that is off
+> by default — see [AI Vector Search](../features/ai-vector-search.md) for the
+> extra service and environment variable to add here.
 
 ---
 
 ## 🔒 Optional: Dokploy Environment Variables
 
-If you wish to configure permanent Cloudinary media sync or custom Qdrant keys, go to the **Environment** tab in Dokploy and add:
+If you wish to configure permanent Cloudinary media sync, go to the **Environment** tab in Dokploy and add:
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
-- `QDRANT_API_KEY`

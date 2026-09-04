@@ -55,11 +55,8 @@ services:
       - "5050:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true
-      - QDRANT_URL=http://qdrant:6333
     depends_on:
       mongo:
-        condition: service_healthy
-      qdrant:
         condition: service_healthy
 
   mongo:
@@ -85,35 +82,26 @@ services:
       retries: 10
       start_period: 2s
 
-  qdrant:
-    image: qdrant/qdrant:v1.13.4
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:6335:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    ulimits:
-      nofile:
-        soft: 65535
-        hard: 65535
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c ': >/dev/tcp/127.0.0.1/6333' || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 2s
-
 volumes:
   mongo_data:
-  qdrant_data:
 ```
 
 ```bash
 docker compose up -d
 ```
 
-🎉 Open **`http://localhost:5050`** in your browser and complete the 60-second onboarding wizard!  
-🔍 Explore your vector database & embeddings via the built-in **Qdrant Dashboard** at **`http://localhost:6335/dashboard`** (bound to localhost for security).
+🎉 Open **`http://localhost:5050`** in your browser and complete the 60-second onboarding wizard!
+
+> **Optional: AI Vector Search (Beta).** Semantic prompt, image and face search is
+> **not enabled by default** — it adds a Qdrant service and downloads ~600 MB of
+> model weights on first index. Everything else works fine without it. To opt in,
+> grab [`docker-compose.search.yml`](docker-compose.search.yml) and run:
+>
+> ```bash
+> docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
+> ```
+>
+> Full setup and trade-offs: [AI Vector Search](docs/features/ai-vector-search.md).
 
 ---
 
@@ -152,7 +140,7 @@ This project follows an automated semantic CI/CD versioning lifecycle directly c
 
 | Feature | Description |
 | :--- | :--- |
-| 🔍 **Multimodal Vector Search** | Natural-language prompt search (CLIP), visual similarity image search, and facial recognition search with Qdrant. |
+| 🔍 **Multimodal Vector Search** *(Beta, optional)* | Natural-language prompt search (CLIP), visual similarity image search, and facial recognition search with Qdrant. **Off by default** — [how to enable](docs/features/ai-vector-search.md). |
 | 🧙‍♂️ **Interactive Onboarding** | Built-in setup wizard with real-time Instagram cookie testing and avatar preview. |
 | 👥 **Multi-Profile Support** | Manage multiple Instagram accounts with separate sessions and isolated bookmarks. |
 | 📈 **Account Timelines** | Automatically records username changes, bio updates, verification changes, and lost accounts. |
@@ -186,8 +174,8 @@ When running via Docker Compose, **zero environment variables are required**. Op
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `PORT` | `5050` | Port exposed on host for web app |
-| `QDRANT_PORT` | `6335` | Port exposed on host for Qdrant API & Dashboard UI |
-| `QDRANT_URL` | `http://qdrant:6333` | Qdrant endpoint connection URL |
+| `QDRANT_URL` | _(unset)_ | **Optional.** Setting this switches on the beta vector search. Unset = disabled |
+| `QDRANT_PORT` | `6335` | Host port for the Qdrant API & Dashboard, only used with search enabled |
 | `DATABASE_URL` | `mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` | MongoDB connection string (replica set enabled) |
 | `CLOUDINARY_CLOUD_NAME` | `""` | Optional Cloudinary cloud name for permanent media |
 | `CLOUDINARY_API_KEY` | `""` | Optional Cloudinary API key |
