@@ -17,7 +17,7 @@ description: "Deploy Instagram Saved Posts Tracker on Coolify PaaS with 1-click 
 3. Select **Docker Compose**.
 
 ### Step 2: Paste Configuration
-Paste the contents of [`coolify-compose.yml`](../../coolify-compose.yml):
+Paste the contents of [`coolify-compose.yml`](https://github.com/gitnasr/Instagram-Saved-Posts/blob/master/coolify-compose.yml):
 
 ```yaml
 version: "3.8"
