@@ -192,7 +192,9 @@ export default function SearchPage() {
   const liveness = indexStatusData?.liveness;
   const stats = indexStatusData?.stats;
   const dashboardUrl = liveness?.dashboardUrl || null;
-  const hasNeverIndexed = !isLoadingStatus && !isIndexRunning && (!stats || stats.indexedItems === 0);
+  const lastRunFailed = !isLoadingStatus && !isIndexRunning && stats?.status === "failed";
+  const hasNeverIndexed =
+    !isLoadingStatus && !isIndexRunning && !lastRunFailed && (!stats || stats.indexedItems === 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -282,6 +284,31 @@ export default function SearchPage() {
             Qdrant is running in Docker Compose and <code className="font-mono bg-black/30 px-1 py-0.5 rounded">QDRANT_URL</code> is set.
           </div>
         </div>
+      )}
+
+      {/* Failed Index Run Callout */}
+      {lastRunFailed && (
+        <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[8px] border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-100">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="size-5 shrink-0 text-red-400" />
+            <div>
+              <p className="font-semibold text-sm text-foreground">Last index run failed</p>
+              <p className="text-ink-muted font-mono break-all">
+                {stats?.lastError || "Unknown error"}
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleReindex}
+            disabled={reindexMutation.isPending || isIndexRunning}
+            className="gap-1.5 shrink-0"
+          >
+            <RefreshCw className="size-3.5" />
+            Retry
+          </Button>
+        </Card>
       )}
 
       {/* Unindexed Archive Warning Callout */}
@@ -615,7 +642,9 @@ export default function SearchPage() {
                     Active Profile Index
                   </span>
                   <span className="text-[11px] text-ink-subtle">
-                    {stats?.status === "completed" ? (
+                    {stats?.status === "failed" ? (
+                      <span className="text-red-400">Failed</span>
+                    ) : stats?.status === "completed" ? (
                       <span className="text-emerald-400 flex items-center gap-1">
                         <CheckCircle2 className="size-3" /> Completed
                       </span>
@@ -667,9 +696,10 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {stats?.failedItems && stats.failedItems > 0 ? (
-                  <div className="rounded bg-red-500/10 border border-red-500/20 p-2 text-red-300 font-mono text-[11px]">
-                    Failed Items: {stats.failedItems} ({stats.lastError || "Unknown error"})
+                {stats?.lastError || (stats?.failedItems ?? 0) > 0 ? (
+                  <div className="rounded bg-red-500/10 border border-red-500/20 p-2 text-red-300 font-mono text-[11px] break-all">
+                    {(stats?.failedItems ?? 0) > 0 && `Failed Items: ${stats?.failedItems} — `}
+                    {stats?.lastError || "Unknown error"}
                   </div>
                 ) : null}
               </div>

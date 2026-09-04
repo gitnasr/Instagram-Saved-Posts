@@ -209,14 +209,41 @@ function isAlreadyExistsError(err: unknown): boolean {
 
 let ensureCollectionsPromise: Promise<void> | null = null;
 
+export interface VectorSpec {
+  name: string;
+  size: number;
+  distance: "Cosine" | "Euclid";
+}
+
+/**
+ * Describes how an existing collection's vector params differ from what this
+ * build writes, or null when they match. Switching embedding models changes the
+ * dimension (CLIP ViT-B/16 is 512, SigLIP2-base is 768), and Qdrant will not
+ * migrate a collection in place — every upsert just 400s with
+ * "Vector dimension error". Without this check that surfaces as thousands of
+ * silently-counted failed items instead of one actionable error.
+ */
+export function describeVectorParamsMismatch(
+  spec: VectorSpec,
+  actual: { size?: number; distance?: string } | undefined
+): string | null {
+  if (!actual || typeof actual.size !== "number") {
+    return `Collection '${spec.name}' exists but has no single unnamed vector config; expected size ${spec.size} (${spec.distance}).`;
+  }
+  if (actual.size !== spec.size || actual.distance !== spec.distance) {
+    return `Collection '${spec.name}' has vectors of size ${actual.size} (${actual.distance}), but this build writes size ${spec.size} (${spec.distance}). Qdrant cannot change this in place — delete the collection and re-run the indexer.`;
+  }
+  return null;
+}
+
 async function doEnsureCollections(): Promise<void> {
   const qdrant = getQdrantClient();
   const existing = await qdrant.getCollections().catch(() => ({ collections: [] }));
   const existingNames = new Set(existing.collections.map((c) => c.name));
 
-  const specs = [
-    { name: COLLECTIONS.POST_IMAGES, size: IMAGE_VECTOR_SIZE, distance: "Cosine" as const },
-    { name: COLLECTIONS.POST_FACES, size: FACE_VECTOR_SIZE, distance: "Euclid" as const },
+  const specs: VectorSpec[] = [
+    { name: COLLECTIONS.POST_IMAGES, size: IMAGE_VECTOR_SIZE, distance: "Cosine" },
+    { name: COLLECTIONS.POST_FACES, size: FACE_VECTOR_SIZE, distance: "Euclid" },
   ];
 
   for (const spec of specs) {
@@ -229,7 +256,16 @@ async function doEnsureCollections(): Promise<void> {
         // A concurrent caller won the race — that's the outcome we wanted anyway.
         if (!isAlreadyExistsError(err)) throw err;
       }
+    } else {
+      // Left over from an earlier embedding model? Fail now, not once per item.
+      const info = await qdrant.getCollection(spec.name);
+      const mismatch = describeVectorParamsMismatch(
+        spec,
+        info?.config?.params?.vectors as { size?: number; distance?: string } | undefined
+      );
+      if (mismatch) throw new Error(mismatch);
     }
+
     try {
       await qdrant.createPayloadIndex(spec.name, {
         field_name: "profileId",

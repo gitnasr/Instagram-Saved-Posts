@@ -113,8 +113,8 @@ jobs:
             ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ github.sha }}
           build-args: |
             APP_VERSION=${{ steps.semver.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=release
+          cache-to: type=gha,mode=max,scope=release
 
       - name: Create GitHub Release with Auto-Changelog
         if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'
