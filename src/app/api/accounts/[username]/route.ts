@@ -3,10 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { getActiveProfile, noActiveProfileResponse } from "@/lib/active-profile";
 import type { Prisma } from "@prisma/client";
 import {
+  ACCOUNT_STATUS_OPTIONS,
+  ACCOUNT_STATUS_OPTIONS_SETTING_KEY,
   EXISTS_ALSO_OPTIONS_SETTING_KEY,
+  findMatchingTextOption,
+  mergeStatusOptions,
   normalizeDateInput,
   normalizeOptionalText,
   parseReusableExistsAlsoOptions,
+  parseReusableStatusOptions,
 } from "@/lib/account-metadata";
 import {
   accountEventsQuery,
@@ -72,6 +77,16 @@ export async function PATCH(
     }
   }
 
+  const statusOptionsSetting =
+    "accountStatus" in body
+      ? await prisma.setting.findUnique({
+          where: { key: ACCOUNT_STATUS_OPTIONS_SETTING_KEY },
+        })
+      : null;
+  let reusableStatusOptions = parseReusableStatusOptions(
+    statusOptionsSetting?.value
+  );
+
   if ("accountStatus" in body) {
     if (body.accountStatus !== null && typeof body.accountStatus !== "string") {
       return NextResponse.json(
@@ -80,8 +95,28 @@ export async function PATCH(
       );
     }
 
-    const nextStatus = normalizeOptionalText(body.accountStatus);
+    const rawNextStatus = normalizeOptionalText(body.accountStatus);
+    const knownStatusOptions = mergeStatusOptions(
+      ACCOUNT_STATUS_OPTIONS,
+      reusableStatusOptions
+    );
+    const nextStatus = rawNextStatus
+      ? (findMatchingTextOption(knownStatusOptions, rawNextStatus) ??
+        rawNextStatus)
+      : null;
+
     updates.accountStatus = nextStatus;
+
+    if (
+      nextStatus &&
+      !findMatchingTextOption(ACCOUNT_STATUS_OPTIONS, nextStatus) &&
+      !findMatchingTextOption(reusableStatusOptions, nextStatus)
+    ) {
+      reusableStatusOptions = parseReusableStatusOptions(
+        JSON.stringify([...reusableStatusOptions, nextStatus])
+      );
+    }
+
     if (account.accountStatus !== nextStatus) {
       updates.statusChangedAt = nextStatus ? now : null;
 
@@ -189,6 +224,15 @@ export async function PATCH(
 
   await recordAccountEvents(profile.id, account.pk, events);
 
+  if ("accountStatus" in body) {
+    const value = JSON.stringify(reusableStatusOptions);
+    await prisma.setting.upsert({
+      where: { key: ACCOUNT_STATUS_OPTIONS_SETTING_KEY },
+      create: { key: ACCOUNT_STATUS_OPTIONS_SETTING_KEY, value, updatedAt: now },
+      update: { value, updatedAt: now },
+    });
+  }
+
   if ("existsAlso" in body || "newExistsAlsoOption" in body) {
     const value = JSON.stringify(reusableExistsAlsoOptions);
     await prisma.setting.upsert({
@@ -225,6 +269,9 @@ export async function GET(
   const [
     accountPosts,
     total,
+    statusOptionsSetting,
+    distinctAccountStatuses,
+    distinctHistoryStatuses,
     existsAlsoSetting,
     statusHistory,
     usernameHistory,
@@ -239,6 +286,17 @@ export async function GET(
     }),
     prisma.post.count({
       where: { profileId: profile.id, accountPk: account.pk },
+    }),
+    prisma.setting.findUnique({
+      where: { key: ACCOUNT_STATUS_OPTIONS_SETTING_KEY },
+    }),
+    prisma.account.groupBy({
+      by: ["accountStatus"],
+      where: { profileId: profile.id, accountStatus: { not: null } },
+    }),
+    prisma.accountStatusHistory.groupBy({
+      by: ["status"],
+      where: { profileId: profile.id },
     }),
     prisma.setting.findUnique({
       where: { key: EXISTS_ALSO_OPTIONS_SETTING_KEY },
@@ -260,12 +318,24 @@ export async function GET(
     }),
   ]);
 
+  const statusOptions = mergeStatusOptions(
+    ACCOUNT_STATUS_OPTIONS,
+    parseReusableStatusOptions(statusOptionsSetting?.value),
+    distinctAccountStatuses
+      .map((row) => row.accountStatus)
+      .filter((value): value is string => typeof value === "string"),
+    distinctHistoryStatuses
+      .map((row) => row.status)
+      .filter((value): value is string => typeof value === "string")
+  );
+
   const existsAlsoOptions = parseReusableExistsAlsoOptions(
     existsAlsoSetting?.value
   );
 
   return NextResponse.json({
     account,
+    statusOptions,
     existsAlsoOptions,
     statusHistory,
     usernameHistory,

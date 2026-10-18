@@ -132,9 +132,11 @@ export default function AccountDetailPage({
           account.lostAt ?? "",
           account.recoveredAt ?? "",
           account.ignoredAt ?? "",
+          data.statusOptions.join("|"),
           data.existsAlsoOptions.join("|"),
         ].join("::")}
         account={account}
+        statusOptions={data.statusOptions}
         existsAlsoOptions={data.existsAlsoOptions}
       />
 

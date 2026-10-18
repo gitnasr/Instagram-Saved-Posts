@@ -10,6 +10,7 @@ export const ACCOUNT_STATUS_OPTIONS = [
   "Blocked",
 ] as const;
 
+export const ACCOUNT_STATUS_OPTIONS_SETTING_KEY = "account_status_options";
 export const EXISTS_ALSO_OPTIONS_SETTING_KEY = "account_exists_also_options";
 
 export function getTodayDateInputValue() {
@@ -43,7 +44,7 @@ export function normalizeOptionalText(value: unknown) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function parseReusableExistsAlsoOptions(value: string | null | undefined) {
+function parseReusableTextOptions(value: string | null | undefined) {
   if (!value) return [] as string[];
 
   try {
@@ -58,7 +59,15 @@ export function parseReusableExistsAlsoOptions(value: string | null | undefined)
   }
 }
 
-export function dedupeAndSortTextOptions(options: string[]) {
+export function parseReusableStatusOptions(value: string | null | undefined) {
+  return parseReusableTextOptions(value);
+}
+
+export function parseReusableExistsAlsoOptions(value: string | null | undefined) {
+  return parseReusableTextOptions(value);
+}
+
+export function dedupeAndSortTextOptions(options: readonly string[]) {
   const normalizedByKey = new Map<string, string>();
 
   for (const option of options) {
@@ -74,4 +83,43 @@ export function dedupeAndSortTextOptions(options: string[]) {
   return [...normalizedByKey.values()].sort((left, right) =>
     left.localeCompare(right, undefined, { sensitivity: "base" })
   );
+}
+
+export function findMatchingTextOption(
+  options: readonly string[],
+  candidate: string | null | undefined
+) {
+  const trimmed = candidate?.trim();
+  if (!trimmed) return null;
+
+  const targetKey = trimmed.toLocaleLowerCase();
+  return (
+    options.find((option) => option.trim().toLocaleLowerCase() === targetKey) ??
+    null
+  );
+}
+
+/**
+ * Keeps built-in `ACCOUNT_STATUS_OPTIONS` in their fixed order first, followed
+ * by deduplicated and case-insensitively sorted custom status options.
+ */
+export function mergeStatusOptions(...sources: (readonly string[])[]) {
+  const builtInKeys = new Set(
+    ACCOUNT_STATUS_OPTIONS.map((option) => option.toLocaleLowerCase())
+  );
+
+  const customCandidates: string[] = [];
+  for (const source of sources) {
+    for (const item of source) {
+      const trimmed = item.trim();
+      if (!trimmed) continue;
+      if (builtInKeys.has(trimmed.toLocaleLowerCase())) continue;
+      customCandidates.push(trimmed);
+    }
+  }
+
+  return [
+    ...ACCOUNT_STATUS_OPTIONS,
+    ...dedupeAndSortTextOptions(customCandidates),
+  ];
 }

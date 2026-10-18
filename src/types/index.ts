@@ -45,6 +45,7 @@ export interface PaginatedResponse<T> {
 
 export interface AccountDetailResponse {
   account: Account;
+  statusOptions: string[];
   existsAlsoOptions: string[];
   statusHistory: AccountStatusHistory[];
   usernameHistory: AccountUsernameHistory[];
