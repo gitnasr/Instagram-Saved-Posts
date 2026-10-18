@@ -136,10 +136,18 @@ The first run downloads the model weights, so it is slower than later ones.
 
 ## Reindexing Vectors
 
-After changing the embedding model, or to index newly saved posts, run:
+To index newly saved posts, run:
 
 ```bash
 npm run reindex:vectors -- --all
 ```
 
 or trigger it per-profile from the UI, or via `POST /api/search/reindex`.
+Reindexing is incremental: media already in Qdrant is skipped (only its stored
+image URL is refreshed), so only new posts and previously failed items are
+embedded.
+
+After switching to an embedding model with the same vector size, add `--full`
+to re-embed everything. A model with a different size is rejected until you
+delete the `post_images` / `post_faces` collections, after which any reindex
+rebuilds them from scratch.

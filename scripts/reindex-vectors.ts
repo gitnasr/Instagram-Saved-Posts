@@ -11,9 +11,11 @@ async function main() {
   const prisma = new PrismaClient();
   const profileArg = getArg("profile");
   const all = process.argv.includes("--all");
+  // Re-embed everything, not just new media — needed after swapping to a same-size embedding model
+  const full = process.argv.includes("--full");
 
   if (!profileArg && !all) {
-    console.error("Usage: npm run reindex:vectors -- --profile <profileId>  OR  --all");
+    console.error("Usage: npm run reindex:vectors -- --profile <profileId>  OR  --all  [--full]");
     process.exit(1);
   }
 
@@ -23,7 +25,7 @@ async function main() {
 
   for (const profile of profiles) {
     console.log(`\n[reindex-vectors] Indexing profile ${profile.name} (${profile.id})...`);
-    await runVectorIndex(profile.id);
+    await runVectorIndex(profile.id, { full });
     const state = getCurrentIndexState(profile.id);
     console.log("[reindex-vectors] Done:", state);
     if (state?.status === "failed" || (state?.failedItems ?? 0) > 0) process.exitCode = 1;

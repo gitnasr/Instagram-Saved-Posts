@@ -95,7 +95,7 @@ function getQdrantClient(): QdrantClient {
 }
 
 /** Counts points in a collection, optionally filtered by profileId. Returns 0 if the collection is missing. */
-async function countCollectionPoints(name: string, profileId?: string): Promise<number> {
+export async function countCollectionPoints(name: string, profileId?: string): Promise<number> {
   try {
     const filter = profileId
       ? { must: [{ key: "profileId", match: { value: profileId } }] }
@@ -266,18 +266,18 @@ async function doEnsureCollections(): Promise<void> {
       if (mismatch) throw new Error(mismatch);
     }
 
-    try {
-      await qdrant.createPayloadIndex(spec.name, {
-        field_name: "profileId",
-        field_schema: "keyword",
-      });
-    } catch (err) {
-      if (!isAlreadyExistsError(err)) throw err;
+    // postPk keeps setImageUrls' per-slot filters off a full profile scan
+    for (const field_name of ["profileId", "postPk"]) {
+      try {
+        await qdrant.createPayloadIndex(spec.name, { field_name, field_schema: "keyword" });
+      } catch (err) {
+        if (!isAlreadyExistsError(err)) throw err;
+      }
     }
   }
 }
 
-/** Creates the post_images/post_faces collections (+ profileId payload index) if missing. Safe to call repeatedly and concurrently. */
+/** Creates the post_images/post_faces collections (+ profileId/postPk payload indexes) if missing. Safe to call repeatedly and concurrently. */
 export function ensureCollections(): Promise<void> {
   if (!ensureCollectionsPromise) {
     ensureCollectionsPromise = doEnsureCollections().finally(() => {
@@ -322,6 +322,75 @@ export function pointId(
   b[8] = (b[8] & 0x3f) | 0x80; // RFC 4122 variant
   const h = b.toString("hex");
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+export interface MediaSlot {
+  postPk: string;
+  source: VectorSource;
+  position: number;
+  imageUrl: string;
+}
+
+/**
+ * Splits media into slots with no image point yet (need embedding) and slots
+ * already embedded whose stored imageUrl is outdated (need only a payload update).
+ */
+export function splitByIndexed<T extends MediaSlot>(
+  profileId: string,
+  slots: T[],
+  storedUrls: Map<string, unknown>
+): { toEmbed: T[]; urlChanged: T[] } {
+  const toEmbed: T[] = [];
+  const urlChanged: T[] = [];
+  for (const s of slots) {
+    const id = pointId(profileId, s.postPk, s.source, s.position);
+    if (!storedUrls.has(id)) toEmbed.push(s);
+    else if (storedUrls.get(id) !== s.imageUrl) urlChanged.push(s);
+  }
+  return { toEmbed, urlChanged };
+}
+
+/** imageUrl payload of every point a profile has in a collection, by point id (call after ensureCollections). */
+export async function listImageUrls(collection: string, profileId: string): Promise<Map<string, unknown>> {
+  const urls = new Map<string, unknown>();
+  let offset: string | number | null | undefined;
+  do {
+    const page = await getQdrantClient().scroll(collection, {
+      filter: { must: [{ key: "profileId", match: { value: profileId } }] },
+      limit: 1000,
+      offset,
+      with_payload: ["imageUrl"],
+      with_vector: false,
+    });
+    for (const p of page.points) urls.set(String(p.id), p.payload?.imageUrl);
+    offset = page.next_page_offset as string | number | null | undefined;
+  } while (offset != null);
+  return urls;
+}
+
+/**
+ * Rewrites imageUrl on a media slot's image + face points without re-embedding —
+ * Instagram CDN URLs expire and get refreshed by sync, and search displays this URL.
+ */
+export async function setImageUrls(profileId: string, slots: MediaSlot[]): Promise<void> {
+  const operations = slots.map((s) => ({
+    set_payload: {
+      payload: { imageUrl: s.imageUrl },
+      filter: {
+        must: [
+          { key: "profileId", match: { value: profileId } },
+          { key: "postPk", match: { value: s.postPk } },
+          { key: "source", match: { value: s.source } },
+          { key: "carouselPosition", match: { value: s.position } },
+        ],
+      },
+    },
+  }));
+  for (const name of [COLLECTIONS.POST_IMAGES, COLLECTIONS.POST_FACES]) {
+    for (let i = 0; i < operations.length; i += 100) {
+      await getQdrantClient().batchUpdate(name, { wait: true, operations: operations.slice(i, i + 100) });
+    }
+  }
 }
 
 export async function upsertPoints(

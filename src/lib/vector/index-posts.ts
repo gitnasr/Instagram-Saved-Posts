@@ -5,10 +5,14 @@ import { embedImageFromBuffer } from "./image-embedding";
 import { detectFacesFromBuffer } from "./face-embedding";
 import {
   COLLECTIONS,
+  countCollectionPoints,
   ensureCollections,
   getQdrantConfig,
   isQdrantConfigured,
+  listImageUrls,
   pointId,
+  setImageUrls,
+  splitByIndexed,
   upsertPoints,
   type PostVectorPayload,
 } from "./qdrant-client";
@@ -96,7 +100,8 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
 
 const UPSERT_BATCH_SIZE = 25;
 
-export async function runVectorIndex(profileId: string): Promise<void> {
+/** Embeds only media not yet in Qdrant; `full` re-embeds everything (e.g. same-size model swap). */
+export async function runVectorIndex(profileId: string, { full = false } = {}): Promise<void> {
   if (indexStates.get(profileId)?.status === "running") {
     throw new Error("A vector index run is already in progress for this profile");
   }
@@ -150,24 +155,29 @@ export async function runVectorIndex(profileId: string): Promise<void> {
       ? new Date(newestPost.takenAt * 1000).toISOString()
       : null;
 
-    const targets = await collectTargets(profileId);
-    state.totalItems = targets.length;
-    stats.totalItems = targets.length;
+    const allTargets = await collectTargets(profileId);
+    state.totalItems = allTargets.length;
+    stats.totalItems = allTargets.length;
     await syncStats();
 
     await ensureCollections();
+
+    // Point ids are deterministic, so an existing image point means that media slot is already embedded
+    const stored = full ? new Map<string, unknown>() : await listImageUrls(COLLECTIONS.POST_IMAGES, profileId);
+    const { toEmbed: targets, urlChanged } = splitByIndexed(profileId, allTargets, stored);
+    await setImageUrls(profileId, urlChanged);
+    state.indexedItems = allTargets.length - targets.length;
+    if (!full) state.facesIndexed = await countCollectionPoints(COLLECTIONS.POST_FACES, profileId);
 
     // Batched upserts avoid RocksDB open-file limits and connection saturation
     const imageBatch: { id: string; vector: number[]; payload: Record<string, unknown> }[] = [];
     const faceBatch: typeof imageBatch = [];
 
+    // Faces before images: an image point marks its media as done, so its faces must already be stored
     const flushBatches = async (force = false) => {
-      if (imageBatch.length >= UPSERT_BATCH_SIZE || (force && imageBatch.length > 0)) {
-        await upsertPoints(COLLECTIONS.POST_IMAGES, imageBatch.splice(0));
-      }
-      if (faceBatch.length >= UPSERT_BATCH_SIZE || (force && faceBatch.length > 0)) {
-        await upsertPoints(COLLECTIONS.POST_FACES, faceBatch.splice(0));
-      }
+      if (imageBatch.length < UPSERT_BATCH_SIZE && !force) return;
+      await upsertPoints(COLLECTIONS.POST_FACES, faceBatch.splice(0));
+      await upsertPoints(COLLECTIONS.POST_IMAGES, imageBatch.splice(0));
     };
 
     for (let i = 0; i < targets.length; i++) {
