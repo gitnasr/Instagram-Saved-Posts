@@ -6,6 +6,7 @@
  */
 
 import { prisma } from "../prisma";
+import { RECOVERED_ACCOUNT_STATUS } from "../account-metadata";
 import { recordBulkAccountEvents } from "../account-events";
 import type { LostState } from "./types";
 
@@ -66,11 +67,15 @@ export async function calculateAndUpdateLostState(
 
   const accounts = await prisma.account.findMany({
     where: { profileId },
-    select: { pk: true, lastSeenAt: true, lostAt: true },
+    select: { pk: true, lastSeenAt: true, lostAt: true, accountStatus: true },
   });
 
   const newlyLostPks: string[] = [];
   const newlyRecoveredPks: string[] = [];
+  const newlyRecoveredWithStatusChange: {
+    pk: string;
+    fromStatus: string | null;
+  }[] = [];
   const allLostPks: string[] = [];
 
   for (const a of accounts) {
@@ -84,6 +89,12 @@ export async function calculateAndUpdateLostState(
       allLostPks.push(a.pk);
     } else if (!unseenThisRun && wasLost) {
       newlyRecoveredPks.push(a.pk);
+      if (a.accountStatus !== RECOVERED_ACCOUNT_STATUS) {
+        newlyRecoveredWithStatusChange.push({
+          pk: a.pk,
+          fromStatus: a.accountStatus,
+        });
+      }
     }
   }
 
@@ -97,7 +108,12 @@ export async function calculateAndUpdateLostState(
   if (newlyRecoveredPks.length > 0) {
     await prisma.account.updateMany({
       where: { profileId, pk: { in: newlyRecoveredPks } },
-      data: { lostAt: null, recoveredAt: runCompletedAt },
+      data: {
+        lostAt: null,
+        recoveredAt: runCompletedAt,
+        accountStatus: RECOVERED_ACCOUNT_STATUS,
+        statusChangedAt: runCompletedAt,
+      },
     });
     await recordBulkAccountEvents(
       profileId,
@@ -105,6 +121,27 @@ export async function calculateAndUpdateLostState(
       "recovered",
       runCompletedAt
     );
+
+    if (newlyRecoveredWithStatusChange.length > 0) {
+      await prisma.accountStatusHistory.createMany({
+        data: newlyRecoveredWithStatusChange.map(({ pk }) => ({
+          profileId,
+          accountPk: pk,
+          status: RECOVERED_ACCOUNT_STATUS,
+          changedAt: runCompletedAt,
+        })),
+      });
+      await prisma.accountEvent.createMany({
+        data: newlyRecoveredWithStatusChange.map(({ pk, fromStatus }) => ({
+          profileId,
+          accountPk: pk,
+          type: "status_changed",
+          occurredAt: runCompletedAt,
+          fromValue: fromStatus ?? null,
+          toValue: RECOVERED_ACCOUNT_STATUS,
+        })),
+      });
+    }
   }
 
   return { allLostPks, newlyLostPks, newlyRecoveredPks };
