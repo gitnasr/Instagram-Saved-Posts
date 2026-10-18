@@ -1,9 +1,11 @@
 import { format, formatDistanceToNow } from "date-fns";
 
 export const PRIVATE_ACCOUNT_STATUS = "Private Account";
+export const RECOVERED_ACCOUNT_STATUS = "Recovered";
 
 export const ACCOUNT_STATUS_OPTIONS = [
   PRIVATE_ACCOUNT_STATUS,
+  RECOVERED_ACCOUNT_STATUS,
   "Posts Removed",
   "Post Removed",
   "Account Closed",

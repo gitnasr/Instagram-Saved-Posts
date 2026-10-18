@@ -8,7 +8,10 @@
  */
 
 import { prisma } from "../prisma";
-import { PRIVATE_ACCOUNT_STATUS } from "../account-metadata";
+import {
+  PRIVATE_ACCOUNT_STATUS,
+  RECOVERED_ACCOUNT_STATUS,
+} from "../account-metadata";
 import { diffAccountForEvents, type AccountEventDraft } from "../account-events";
 import { logger } from "../logger";
 import type { InstagramMedia } from "@/types/instagram";
@@ -18,8 +21,18 @@ import type { MediaItemContext } from "./types";
 function getPrivacyStatusUpdate(
   currentStatus: string | null | undefined,
   isPrivate: boolean,
-  changedAt: string
+  changedAt: string,
+  wasLost = false
 ) {
+  // Don't overwrite "Recovered" (or a lost account about to flip to "Recovered"
+  // when the run completes) with "Private Account".
+  if (wasLost || currentStatus === RECOVERED_ACCOUNT_STATUS) {
+    return {
+      updates: {},
+      recordHistory: false,
+    };
+  }
+
   if (isPrivate && currentStatus !== PRIVATE_ACCOUNT_STATUS) {
     return {
       updates: {
@@ -143,7 +156,8 @@ export async function syncAccountFromMedia(
   const privacyStatusUpdate = getPrivacyStatusUpdate(
     existingAccount?.accountStatus,
     media.user.is_private,
-    now
+    now,
+    existingAccount?.lostAt != null
   );
 
   const events: AccountEventDraft[] = [];
