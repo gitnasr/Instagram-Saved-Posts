@@ -5,7 +5,7 @@
  * and the higher-is-better normalisation shared by all three search modes.
  */
 import assert from "assert";
-import { describeVectorParamsMismatch, pointId } from "../src/lib/vector/qdrant-client";
+import { describeVectorParamsMismatch, pointId, splitByIndexed } from "../src/lib/vector/qdrant-client";
 import { bestHitPerPost, calibrate } from "../src/lib/vector/search-api";
 
 // pointId must be a stable UUIDv5 — these vectors were verified against the
@@ -67,5 +67,17 @@ assert.match(
 // Named-vector or unreadable configs are a mismatch, not a pass.
 assert.ok(describeVectorParamsMismatch(imageSpec, undefined));
 assert.ok(describeVectorParamsMismatch(imageSpec, {}));
+
+// splitByIndexed: only unseen slots get embedded; seen slots with a new URL only get a payload update.
+const slot = (postPk: string, position: number, imageUrl: string) =>
+  ({ postPk, source: (position ? "carousel" : "thumbnail") as "carousel" | "thumbnail", position, imageUrl });
+const stored = new Map<string, unknown>([
+  [pointId("p", "1", "thumbnail", 0), "old.jpg"],
+  [pointId("p", "2", "carousel", 1), "same.jpg"],
+]);
+const split = splitByIndexed("p", [slot("1", 0, "new.jpg"), slot("2", 1, "same.jpg"), slot("3", 0, "x.jpg")], stored);
+assert.deepEqual(split.toEmbed.map((s) => s.postPk), ["3"]);
+assert.deepEqual(split.urlChanged.map((s) => s.postPk), ["1"]);
+assert.equal(splitByIndexed("other", [slot("1", 0, "old.jpg")], stored).toEmbed.length, 1);
 
 console.log("vector search self-check: all assertions passed");
