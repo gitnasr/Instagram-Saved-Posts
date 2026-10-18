@@ -9,6 +9,7 @@ import {
 } from "@/lib/account-filters";
 import { ACCOUNT_FACET_KEYS } from "@/lib/account-filter-defs";
 import { dedupeAndSortTextOptions } from "@/lib/account-metadata";
+import { backfillRecoveredAccountStatusIfNeeded } from "@/lib/scraper/lost-state";
 
 /**
  * Distinct values with counts for the free-form account columns, so the filter
@@ -24,6 +25,8 @@ import { dedupeAndSortTextOptions } from "@/lib/account-metadata";
 export async function GET(request: Request) {
   const profile = await getActiveProfile();
   if (!profile) return noActiveProfileResponse();
+
+  await backfillRecoveredAccountStatusIfNeeded(profile.id);
 
   const { searchParams } = new URL(request.url);
   const filters = parseAccountFilters(searchParams);
