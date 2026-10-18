@@ -7,13 +7,10 @@ import {
   buildAccountOrderBy,
   resolveNoteFilterContext,
 } from "@/lib/account-filters";
-import { backfillRecoveredAccountStatusIfNeeded } from "@/lib/scraper/lost-state";
 
 export async function GET(request: Request) {
   const profile = await getActiveProfile();
   if (!profile) return noActiveProfileResponse();
-
-  await backfillRecoveredAccountStatusIfNeeded(profile.id);
 
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") ?? "1");
