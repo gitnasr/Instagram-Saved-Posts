@@ -19,40 +19,52 @@ import { useUpdateAccount } from "@/hooks/use-update-account";
 import {
   ACCOUNT_STATUS_OPTIONS,
   dedupeAndSortTextOptions,
+  findMatchingTextOption,
   formatTimelineTimestamp,
   getTodayDateInputValue,
+  mergeStatusOptions,
 } from "@/lib/account-metadata";
 import type { Account } from "@/types";
 
 interface AccountMetadataProps {
   account: Account;
+  statusOptions: string[];
   existsAlsoOptions: string[];
 }
 
 const CUSTOM_STATUS_VALUE = "__custom__";
 const NO_STATUS_VALUE = "__none__";
 
-function getInitialStatusSelection(status: string | null) {
+function getInitialStatusSelection(
+  status: string | null,
+  availableOptions: readonly string[]
+) {
   if (!status) return NO_STATUS_VALUE;
-  return ACCOUNT_STATUS_OPTIONS.includes(
-    status as (typeof ACCOUNT_STATUS_OPTIONS)[number]
-  )
-    ? status
-    : CUSTOM_STATUS_VALUE;
+  const matchedOption = findMatchingTextOption(availableOptions, status);
+  return matchedOption ?? CUSTOM_STATUS_VALUE;
 }
 
 export function AccountMetadata({
   account,
+  statusOptions,
   existsAlsoOptions,
 }: AccountMetadataProps) {
   const today = useMemo(() => getTodayDateInputValue(), []);
   const savedStatus = account.accountStatus ?? "";
-  const [lastScrapeOn, setLastScrapeOn] = useState(account.lastScrapeOn ?? "");
-  const [statusSelection, setStatusSelection] = useState(
-    getInitialStatusSelection(account.accountStatus)
+  const [localStatusOptions, setLocalStatusOptions] = useState(() =>
+    mergeStatusOptions(
+      ACCOUNT_STATUS_OPTIONS,
+      statusOptions,
+      account.accountStatus ? [account.accountStatus] : []
+    )
   );
-  const [customStatus, setCustomStatus] = useState(
-    getInitialStatusSelection(account.accountStatus) === CUSTOM_STATUS_VALUE
+  const [lastScrapeOn, setLastScrapeOn] = useState(account.lastScrapeOn ?? "");
+  const [statusSelection, setStatusSelection] = useState(() =>
+    getInitialStatusSelection(account.accountStatus, localStatusOptions)
+  );
+  const [customStatus, setCustomStatus] = useState(() =>
+    getInitialStatusSelection(account.accountStatus, localStatusOptions) ===
+    CUSTOM_STATUS_VALUE
       ? savedStatus
       : ""
   );
@@ -67,12 +79,17 @@ export function AccountMetadata({
 
   const { mutate: updateAccount, isPending } = useUpdateAccount(account.username);
 
-  const effectiveStatus =
+  const rawEffectiveStatus =
     statusSelection === CUSTOM_STATUS_VALUE
       ? customStatus.trim()
       : statusSelection === NO_STATUS_VALUE
         ? ""
         : statusSelection;
+
+  const effectiveStatus = rawEffectiveStatus
+    ? (findMatchingTextOption(localStatusOptions, rawEffectiveStatus) ??
+      rawEffectiveStatus)
+    : "";
 
   const pendingExistsAlsoOption = newExistsAlsoOption.trim();
   const effectiveExistsAlso = pendingExistsAlsoOption || existsAlso || "";
@@ -131,6 +148,17 @@ export function AccountMetadata({
       {
         onSuccess: () => {
           toast.success("Account details saved");
+          if (effectiveStatus) {
+            const nextStatusOptions = mergeStatusOptions(localStatusOptions, [
+              effectiveStatus,
+            ]);
+            const resolvedOption =
+              findMatchingTextOption(nextStatusOptions, effectiveStatus) ??
+              effectiveStatus;
+            setLocalStatusOptions(nextStatusOptions);
+            setStatusSelection(resolvedOption);
+            setCustomStatus("");
+          }
           setNewExistsAlsoOption("");
         },
         onError: (error) => {
@@ -187,7 +215,7 @@ export function AccountMetadata({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_STATUS_VALUE}>No status</SelectItem>
-                {ACCOUNT_STATUS_OPTIONS.map((option) => (
+                {localStatusOptions.map((option) => (
                   <SelectItem key={option} value={option}>
                     {option}
                   </SelectItem>
