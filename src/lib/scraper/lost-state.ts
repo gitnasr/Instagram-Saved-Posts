@@ -10,94 +10,6 @@ import { RECOVERED_ACCOUNT_STATUS } from "../account-metadata";
 import { recordBulkAccountEvents } from "../account-events";
 import type { LostState } from "./types";
 
-const recoveredStatusBackfilledProfiles = new Set<string>();
-
-function getRecoveredStatusBackfillKey(profileId: string) {
-  return `recovered_status_backfilled:${profileId}`;
-}
-
-/**
- * One-time per-profile backfill: any account that already recovered in a prior
- * run (`recoveredAt != null` and not currently lost) gets its `accountStatus`
- * flipped to `"Recovered"` (stamped at `recoveredAt`), matching the new
- * recovery behavior without waiting for another scrape.
- */
-export async function backfillRecoveredAccountStatusIfNeeded(
-  profileId: string
-): Promise<void> {
-  if (recoveredStatusBackfilledProfiles.has(profileId)) return;
-
-  const settingKey = getRecoveredStatusBackfillKey(profileId);
-  const existingSetting = await prisma.setting.findUnique({
-    where: { key: settingKey },
-  });
-  if (existingSetting?.value === "true") {
-    recoveredStatusBackfilledProfiles.add(profileId);
-    return;
-  }
-
-  const recoveredAccounts = await prisma.account.findMany({
-    where: {
-      profileId,
-      recoveredAt: { not: null },
-      OR: [{ lostAt: null }, { lostAt: { isSet: false } }],
-    },
-    select: {
-      id: true,
-      pk: true,
-      accountStatus: true,
-      recoveredAt: true,
-    },
-  });
-
-  const toBackfill = recoveredAccounts.filter(
-    (a) => a.recoveredAt && a.accountStatus !== RECOVERED_ACCOUNT_STATUS
-  );
-
-  if (toBackfill.length > 0) {
-    await Promise.all(
-      toBackfill.map((a) =>
-        prisma.account.update({
-          where: { id: a.id },
-          data: {
-            accountStatus: RECOVERED_ACCOUNT_STATUS,
-            statusChangedAt: a.recoveredAt!,
-          },
-        })
-      )
-    );
-
-    await prisma.accountStatusHistory.createMany({
-      data: toBackfill.map((a) => ({
-        profileId,
-        accountPk: a.pk,
-        status: RECOVERED_ACCOUNT_STATUS,
-        changedAt: a.recoveredAt!,
-      })),
-    });
-
-    await prisma.accountEvent.createMany({
-      data: toBackfill.map((a) => ({
-        profileId,
-        accountPk: a.pk,
-        type: "status_changed",
-        occurredAt: a.recoveredAt!,
-        fromValue: a.accountStatus ?? null,
-        toValue: RECOVERED_ACCOUNT_STATUS,
-      })),
-    });
-  }
-
-  const now = new Date().toISOString();
-  await prisma.setting.upsert({
-    where: { key: settingKey },
-    create: { key: settingKey, value: "true", updatedAt: now },
-    update: { value: "true", updatedAt: now },
-  });
-
-  recoveredStatusBackfilledProfiles.add(profileId);
-}
-
 /**
  * One-time per-profile backfill: stamp `lostAt` on accounts that were already
  * missing before this feature shipped, using the most recent prior completed
@@ -152,7 +64,6 @@ export async function calculateAndUpdateLostState(
   runCompletedAt: string
 ): Promise<LostState> {
   await backfillLostStateIfNeeded(profileId, runStartedAt);
-  await backfillRecoveredAccountStatusIfNeeded(profileId);
 
   const accounts = await prisma.account.findMany({
     where: { profileId },
