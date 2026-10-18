@@ -18,6 +18,7 @@ import {
   recordAccountEvents,
   type AccountEventDraft,
 } from "@/lib/account-events";
+import { backfillRecoveredAccountStatusIfNeeded } from "@/lib/scraper/lost-state";
 
 const ACCOUNT_EVENTS_LIMIT = 200;
 
@@ -251,6 +252,8 @@ export async function GET(
 ) {
   const profile = await getActiveProfile();
   if (!profile) return noActiveProfileResponse();
+
+  await backfillRecoveredAccountStatusIfNeeded(profile.id);
 
   const { username } = await params;
   const { searchParams } = new URL(request.url);
