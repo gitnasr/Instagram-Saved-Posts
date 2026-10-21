@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { proxyImageUrl } from "@/lib/proxy-image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { ProfileLink } from "@/components/accounts/profile-link";
 import type { Account } from "@/types";
 
 interface TopAccountsProps {
@@ -31,9 +32,9 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
       <CardContent>
         <div className="space-y-2">
           {accounts.map((account) => (
-            <Link
+            <ProfileLink
               key={account.pk}
-              href={`/accounts/${account.username}`}
+              username={account.username}
               className="flex items-center gap-3 rounded-[6px] p-2 transition-all bg-surface-1/40 hover:bg-surface-2 border border-hairline/40 hover:border-hairline group"
             >
               <Avatar className="size-9 rounded-[4px] border border-hairline">
@@ -68,7 +69,7 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
                 </span>
                 <span className="text-[10px] text-ink-muted uppercase">posts</span>
               </div>
-            </Link>
+            </ProfileLink>
           ))}
         </div>
       </CardContent>

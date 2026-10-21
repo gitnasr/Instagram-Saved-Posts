@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { proxyImageUrl } from "@/lib/proxy-image";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff } from "lucide-react";
+import { ProfileLink } from "./profile-link";
+import { useLastVisitedAccount } from "@/hooks/use-last-visited-account";
 import type { Account } from "@/types";
 
 interface AccountCardProps {
@@ -25,18 +26,21 @@ export function AccountCard({
   onToggleIgnore,
 }: AccountCardProps) {
   const isIgnored = account.ignoredAt != null;
+  const lastVisited = useLastVisitedAccount();
+  const isLastVisited = !selected && lastVisited === account.username;
 
   return (
     <Card
       className={cn(
         "relative rounded-[8px] py-0 transition-all border border-hairline bg-surface-1 hover:bg-surface-2 hover:border-hairline-strong",
         isIgnored && "opacity-50",
-        selected && "border-primary ring-1 ring-primary/40 bg-surface-2"
+        selected && "border-primary ring-1 ring-primary/40 bg-surface-2",
+        isLastVisited && "border-primary/60 ring-1 ring-primary/25"
       )}
     >
-      <Link
-        href={`/accounts/${account.username}`}
-        aria-label={`Open @${account.username}`}
+      <ProfileLink
+        username={account.username}
+        ariaLabel={`Open @${account.username}`}
         className="absolute inset-0 z-0 rounded-[8px]"
       />
 

@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { RunDetailStats } from "@/components/scrape/run-detail-stats";
 import { AccountsGrid } from "@/components/accounts/accounts-grid";
+import { ProfileLink } from "@/components/accounts/profile-link";
 import { PostCard } from "@/components/posts/post-card";
 import { PostDetailDialog } from "@/components/posts/post-detail-dialog";
 import { useRunDetail } from "@/hooks/use-run-detail";
@@ -240,9 +241,9 @@ export default function RunDetailPage({
         {usernameChanges.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {usernameChanges.map((change) => (
-              <Link
+              <ProfileLink
                 key={change.id}
-                href={`/accounts/${change.account.username}`}
+                username={change.account.username}
                 className="rounded-[8px] border border-hairline bg-surface-1 p-4 transition-all hover:border-hairline-strong hover:bg-surface-2 group"
               >
                 <div className="flex items-center justify-between gap-3">
@@ -258,7 +259,7 @@ export default function RunDetailPage({
                 <p className="mt-2 text-[10px] font-mono text-ink-subtle">
                   Detected {format(new Date(change.changedAt), "MMM d, yyyy · HH:mm")}
                 </p>
-              </Link>
+              </ProfileLink>
             ))}
           </div>
         ) : (
