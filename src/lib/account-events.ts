@@ -68,7 +68,8 @@ export async function recordBulkAccountEvents(
  *
  * Privacy is derived from the `isPrivate` boolean rather than the free-text
  * `accountStatus` column: that column is shared with user-chosen statuses like
- * "Blocked", and it only ever recorded the public→private direction.
+ * "Blocked", which the scraper's old "Private Account" stamp used to overwrite
+ * — especially recoveries, which would then be wiped on the next post.
  */
 export function diffAccountForEvents(
   existing: Account,
