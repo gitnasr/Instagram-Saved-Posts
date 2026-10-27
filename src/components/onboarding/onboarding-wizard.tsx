@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   AlertCircle,
@@ -55,7 +56,14 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-export function OnboardingWizard() {
+export type OnboardingVariant = "A" | "B" | "C";
+
+export function OnboardingWizard({
+  prototypeVariant = null,
+}: {
+  prototypeVariant?: OnboardingVariant | null;
+} = {}) {
+  const router = useRouter();
   const createProfile = useCreateProfile();
   const selectProfile = useSelectProfile();
 
@@ -250,50 +258,8 @@ export function OnboardingWizard() {
         )
       : 0;
 
-  return (
-    <div className="flex min-h-screen w-full items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-2xl">
-        {/* Progress Stepper */}
-        <div className="mb-8 flex items-center justify-between">
-          {[
-            { num: 1, label: "System Check" },
-            { num: 2, label: "Connect IG" },
-            { num: 3, label: "Cloudinary" },
-            { num: 4, label: "Launch" },
-          ].map((item, idx) => (
-            <div key={item.num} className="flex flex-1 items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`flex size-9 items-center justify-center rounded-full text-sm font-semibold transition-all ${
-                    step === item.num
-                      ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20"
-                      : step > item.num
-                        ? "bg-emerald-600 text-white"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {step > item.num ? (
-                    <CheckCircle2 className="size-5" />
-                  ) : (
-                    item.num
-                  )}
-                </div>
-                <span className="mt-1 text-xs font-medium text-muted-foreground hidden sm:block">
-                  {item.label}
-                </span>
-              </div>
-              {idx < 3 && (
-                <div
-                  className={`mx-2 h-0.5 flex-1 transition-all ${
-                    step > item.num ? "bg-emerald-600" : "bg-muted"
-                  }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* STEP 1: WELCOME & SYSTEM CHECK */}
+  const stepContent = (
+    <>        {/* STEP 1: WELCOME & SYSTEM CHECK */}
         {step === 1 && (
           <Card className="border-border/60 shadow-lg">
             <CardHeader className="text-center">
@@ -861,6 +827,165 @@ export function OnboardingWizard() {
           </Card>
         )}
 
+    </>
+  );
+
+  const steps = prototypeVariant
+    ? [
+        { num: 1, label: "System check" },
+        { num: 2, label: "Instagram session" },
+        { num: 3, label: "Media storage", optional: true },
+        { num: 4, label: "Start archiving" },
+      ]
+    : [
+        { num: 1, label: "System Check" },
+        { num: 2, label: "Connect IG" },
+        { num: 3, label: "Cloudinary" },
+        { num: 4, label: "Launch" },
+      ];
+  const prototypeIntro = prototypeVariant ? (
+    <div className="mb-8">
+      <p className="text-sm font-medium uppercase tracking-[0.16em] text-primary">
+        Setup prototype - Variant {prototypeVariant}
+      </p>
+      <h1 className="mt-2 text-3xl font-bold tracking-tight">
+        Build your saved-post archive
+      </h1>
+      <p className="mt-2 max-w-2xl text-muted-foreground">
+        Connect an Instagram session, choose where media is stored, then start your first scrape.
+        Cloudinary is optional; built-in proxy caching works without it.
+      </p>
+    </div>
+  ) : null;
+
+  const setupChecklist = (
+    <aside className="rounded-2xl border bg-card p-5">
+      <h2 className="font-semibold">Setup checklist</h2>
+      <ol className="mt-4 space-y-2">
+        {steps.map((item) => (
+          <li key={item.num}>
+            <button
+              type="button"
+              onClick={() => setStep(item.num)}
+              aria-current={step === item.num ? "step" : undefined}
+              className={"flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition-colors " + (step === item.num ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted")}
+            >
+              <span className={"flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold " + (step > item.num ? "bg-emerald-600 text-white" : step === item.num ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                {step > item.num ? <CheckCircle2 className="size-4" /> : item.num}
+              </span>
+              <span className="min-w-0 flex-1">{item.label}</span>
+              {item.optional && <span className="text-xs">Optional</span>}
+            </button>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-4 rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
+        Cloudinary is optional. Skip it and your archive still works with built-in proxy caching.
+      </p>
+    </aside>
+  );
+
+  const setupSummary = (
+    <aside className="space-y-4 rounded-2xl border bg-card p-5">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your archive</p>
+        <p className="mt-1 font-semibold">{profileName || "Name your profile"}</p>
+      </div>
+      <div className="border-t pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Instagram</p>
+        <p className="mt-1 text-sm">
+          {validatedUser
+            ? "Connected as @" + validatedUser.username
+            : cookie.trim()
+              ? "Session details entered"
+              : "Session can be added later"}
+        </p>
+      </div>
+      <div className="border-t pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Media storage</p>
+        <p className="mt-1 text-sm">{cloudConnected ? "Cloudinary connected" : "Built-in proxy caching"}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Cloudinary is optional and can be configured later.</p>
+      </div>
+      <div className="rounded-lg bg-primary/10 p-3">
+        <p className="text-sm font-semibold">Next: start your first scrape</p>
+        <p className="mt-1 text-xs text-muted-foreground">Your saved posts will begin appearing in the archive.</p>
+      </div>
+    </aside>
+  );
+
+  const progressStepper = (
+    <div className="mb-8 flex items-center justify-between">
+      {steps.map((item, idx) => (
+        <div key={item.num} className="flex flex-1 items-center">
+          <div className="flex flex-col items-center">
+            <div className={"flex size-9 items-center justify-center rounded-full text-sm font-semibold transition-all " + (
+              step === item.num ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20" :
+              step > item.num ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"
+            )}>
+              {step > item.num ? <CheckCircle2 className="size-5" /> : item.num}
+            </div>
+            <span className="mt-1 hidden text-xs font-medium text-muted-foreground sm:block">{item.label}</span>
+          </div>
+          {idx < steps.length - 1 && <div className={"mx-2 h-0.5 flex-1 " + (step > item.num ? "bg-emerald-600" : "bg-muted")} />}
+        </div>
+      ))}
+    </div>
+  );
+
+  const cycleVariant = useCallback((direction: -1 | 1) => {
+    const variants: OnboardingVariant[] = ["A", "B", "C"];
+    const currentIndex = variants.indexOf(prototypeVariant ?? "A");
+    const next = variants[(currentIndex + direction + variants.length) % variants.length];
+    router.replace("/onboarding?variant=" + next, { scroll: false });
+  }, [prototypeVariant, router]);
+
+  useEffect(() => {
+    if (!prototypeVariant) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        cycleVariant(-1);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        cycleVariant(1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [prototypeVariant, cycleVariant]);
+  return (
+    <div className={"flex min-h-screen w-full justify-center p-4 sm:p-6 lg:p-8 " + (prototypeVariant === "C" ? "items-start" : "items-center")}>
+      <div className={"w-full " + (prototypeVariant === "A" || !prototypeVariant ? "max-w-2xl" : "max-w-6xl")}>
+        {prototypeIntro}
+        {(!prototypeVariant || prototypeVariant === "A") && progressStepper}
+        {prototypeVariant === "B" && (
+          <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+            {setupChecklist}
+            <div className="min-w-0">{stepContent}</div>
+          </div>
+        )}
+        {prototypeVariant === "C" && (
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(260px,0.8fr)]">
+            <div className="min-w-0">{stepContent}</div>
+            {setupSummary}
+          </div>
+        )}
+        {(!prototypeVariant || prototypeVariant === "A") && stepContent}
+        {prototypeVariant && (
+          <nav aria-label="Onboarding prototype variants" className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border bg-background/95 px-4 py-2 shadow-xl backdrop-blur">
+            <button type="button" onClick={() => cycleVariant(-1)} aria-label="Previous variant" className="rounded-full px-2 py-1 hover:bg-muted">
+              <ArrowLeft className="size-4" />
+            </button>
+            <span className="text-sm font-medium">
+              Prototype {prototypeVariant} - {prototypeVariant === "A" ? "Guided wizard" : prototypeVariant === "B" ? "Setup checklist" : "Split workspace"}
+            </span>
+            <button type="button" onClick={() => cycleVariant(1)} aria-label="Next variant" className="rounded-full px-2 py-1 hover:bg-muted">
+              <ArrowRight className="size-4" />
+            </button>
+          </nav>
+        )}
         {/* Attribution footer */}
         <div className="mt-6 text-center text-xs text-muted-foreground">
           by{" "}
