@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CloudinarySettings } from "@/components/settings/cloudinary-settings";
+import { NavigationSettings } from "@/components/settings/navigation-settings";
 import { UpdatesSettings } from "@/components/settings/updates-settings";
 import { ProfileAvatar } from "@/components/profiles/profile-avatar";
 import { useProfiles, useUpdateProfile } from "@/hooks/use-profiles";
@@ -157,6 +158,8 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          <NavigationSettings />
 
           <CloudinarySettings />
 
