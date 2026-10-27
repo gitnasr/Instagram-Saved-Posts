@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getActiveProfile } from "@/lib/active-profile";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/layout/sidebar";
+import { AccountPreviewDrawer } from "@/components/accounts/account-preview-drawer";
 
 export default async function DashboardLayout({
   children,
@@ -49,7 +50,7 @@ export default async function DashboardLayout({
           {children}
         </div>
       </main>
+      <AccountPreviewDrawer />
     </div>
   );
 }
-
