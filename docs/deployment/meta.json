@@ -1,9 +1,0 @@
-{
-  "title": "Deployment",
-  "pages": [
-    "docker-compose",
-    "coolify",
-    "dokploy",
-    "reverse-proxy-and-sso"
-  ]
-}

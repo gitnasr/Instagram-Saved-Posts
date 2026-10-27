@@ -101,7 +101,7 @@ docker compose up -d
 > docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
 > ```
 >
-> Full setup and trade-offs: [AI Vector Search](docs/features/ai-vector-search.md).
+> Full setup and trade-offs: [AI Vector Search](https://insta-saved.gitnasr.com/docs/features/ai-vector-search).
 
 ---
 
@@ -113,13 +113,13 @@ Deploy easily to your self-hosted cloud platform of choice:
 1. In Dokploy, click **Create Project** -> **Compose**.
 2. Copy and paste the contents of [`dokploy-compose.yml`](dokploy-compose.yml).
 3. Set your custom domain and click **Deploy**.
-4. Read the [Dokploy Deployment Guide](docs/deployment/dokploy.md) for full instructions.
+4. Read the [Dokploy Deployment Guide](https://insta-saved.gitnasr.com/docs/deployment/dokploy) for full instructions.
 
 ### Coolify
 1. In Coolify, create a **New Resource** -> **Docker Compose**.
 2. Paste the contents of [`coolify-compose.yml`](coolify-compose.yml).
 3. Configure your domain and click **Deploy**.
-4. Read the [Coolify Deployment Guide](docs/deployment/coolify.md) for detailed configuration.
+4. Read the [Coolify Deployment Guide](https://insta-saved.gitnasr.com/docs/deployment/coolify) for detailed configuration.
 
 ---
 
@@ -140,7 +140,7 @@ This project follows an automated semantic CI/CD versioning lifecycle directly c
 
 | Feature | Description |
 | :--- | :--- |
-| 🔍 **Multimodal Vector Search** *(Beta, optional)* | Natural-language prompt search (CLIP), visual similarity image search, and facial recognition search with Qdrant. **Off by default** — [how to enable](docs/features/ai-vector-search.md). |
+| 🔍 **Multimodal Vector Search** *(Beta, optional)* | Natural-language prompt search (CLIP), visual similarity image search, and facial recognition search with Qdrant. **Off by default** — [how to enable](https://insta-saved.gitnasr.com/docs/features/ai-vector-search). |
 | 🧙‍♂️ **Interactive Onboarding** | Built-in setup wizard with real-time Instagram cookie testing and avatar preview. |
 | 👥 **Multi-Profile Support** | Manage multiple Instagram accounts with separate sessions and isolated bookmarks. |
 | 📈 **Account Timelines** | Automatically records username changes, bio updates, verification changes, and lost accounts. |
@@ -153,18 +153,17 @@ This project follows an automated semantic CI/CD versioning lifecycle directly c
 
 ## 📖 Documentation
 
-Comprehensive guides and interactive documentation are hosted on the **[Documentation Website](https://instagram-saved-posts.app/docs)** and maintained in the [`/docs`](docs/) directory as the single source of truth:
+Guides for setup, features, deployment, and maintenance are maintained on the **[Documentation Website](https://insta-saved.gitnasr.com/docs)**:
 
-- 🌐 **[Interactive Documentation Website](https://instagram-saved-posts.app/docs)**
-- 🔑 [How to Get Your Instagram Cookie](docs/getting-started/how-to-get-instagram-cookie.md)
-- 🐳 [Docker Compose Deployment Guide](docs/deployment/docker-compose.md)
-- 🟣 [Dokploy Self-Hosting Guide](docs/deployment/dokploy.md)
-- 🔷 [Coolify Self-Hosting Guide](docs/deployment/coolify.md)
-- 🔒 [Reverse Proxy & Authentik SSO Guide](docs/deployment/reverse-proxy-and-sso.md)
-- ☁️ [Cloudinary Permanent CDN Setup](docs/features/cloudinary-cdn.md)
-- 💾 [Backup & Database Migration](docs/operations/backup-and-restore.md)
-- 🔄 [Updating & the Update Check](docs/operations/updating.md)
-- ❓ [Troubleshooting & FAQ](docs/operations/troubleshooting-faq.md)
+- [How to Get Your Instagram Cookie](https://insta-saved.gitnasr.com/docs/getting-started/how-to-get-instagram-cookie)
+- [Docker Compose Deployment Guide](https://insta-saved.gitnasr.com/docs/deployment/docker-compose)
+- [Dokploy Self-Hosting Guide](https://insta-saved.gitnasr.com/docs/deployment/dokploy)
+- [Coolify Self-Hosting Guide](https://insta-saved.gitnasr.com/docs/deployment/coolify)
+- [Reverse Proxy & Authentik SSO Guide](https://insta-saved.gitnasr.com/docs/deployment/reverse-proxy-and-sso)
+- [Cloudinary Media Sync](https://insta-saved.gitnasr.com/docs/features/cloudinary-cdn)
+- [Backup & Database Migration](https://insta-saved.gitnasr.com/docs/operations/backup-and-restore)
+- [Updating & the Update Check](https://insta-saved.gitnasr.com/docs/operations/updating)
+- [Troubleshooting & FAQ](https://insta-saved.gitnasr.com/docs/operations/troubleshooting-faq)
 
 ---
 
@@ -184,7 +183,7 @@ When running via Docker Compose, **zero environment variables are required**. Op
 | `LOG_LEVEL` | `info` | Logging verbosity (`info`, `debug`, `warn`, `error`) |
 | `DISABLE_UPDATE_CHECK` | _(unset)_ | Set to `true` to turn off the in-app update check (see below) |
 
-> **Update check & privacy:** Settings shows when a newer release exists. To do that, the app's server sends one `GET` to `api.github.com` (at most about once an hour, with a `User-Agent` of `instagram-saved-posts/<version>`) and nothing else: no telemetry, no identifiers, nothing from your data. Set `DISABLE_UPDATE_CHECK=true` to make no request at all. The app never updates itself; see [Updating](docs/operations/updating.md).
+> **Update check & privacy:** Settings shows when a newer release exists. To do that, the app's server sends one `GET` to `api.github.com` (at most about once an hour, with a `User-Agent` of `instagram-saved-posts/<version>`) and nothing else: no telemetry, no identifiers, nothing from your data. Set `DISABLE_UPDATE_CHECK=true` to make no request at all. The app never updates itself; see [Updating](https://insta-saved.gitnasr.com/docs/operations/updating).
 
 ---
 
