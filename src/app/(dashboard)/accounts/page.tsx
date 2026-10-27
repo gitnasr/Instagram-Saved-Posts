@@ -11,8 +11,17 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useBulkIgnore } from "@/hooks/use-bulk-ignore";
 import { useScrollUrlSync } from "@/hooks/use-scroll-url-sync";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { useAccountTabBehavior, openAccountTab } from "@/hooks/use-account-tab-behavior";
+import { rememberVisitedAccount } from "@/hooks/use-last-visited-account";
 import { serializeAccountFilters } from "@/lib/account-filter-params";
-import { ChevronLeft, ChevronRight, Eye, EyeOff, CheckSquare } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  CheckSquare,
+  ExternalLink,
+} from "lucide-react";
 import type { Account } from "@/types";
 
 function AccountsContent() {
@@ -29,6 +38,7 @@ function AccountsContent() {
     setFilters,
   } = useUrlFilters();
   useScrollUrlSync();
+  const [tabBehavior] = useAccountTabBehavior();
 
   const { data, isLoading } = useAccounts({
     page,
@@ -51,7 +61,7 @@ function AccountsContent() {
     window.open(`/api/accounts/export?${params}`, "_blank");
   }, [search, sort, order, filters]);
 
-  // ─── Bulk ignore selection ───────────────────────────────
+  // ─── Bulk selection ───────────────────────────────────────────────
   const [selectedPks, setSelectedPks] = useState<Set<string>>(new Set());
   const { mutate: bulkIgnore, isPending: isBulkPending } = useBulkIgnore();
 
@@ -77,6 +87,36 @@ function AccountsContent() {
       return next;
     });
   }, []);
+
+  const handleBulkOpen = useCallback(() => {
+    const selected = pageAccounts.filter((a) => selectedPks.has(a.pk));
+    if (selected.length === 0) return;
+
+    let blockedCount = 0;
+    for (const account of selected) {
+      rememberVisitedAccount(account.username);
+      const win = openAccountTab(account.username, tabBehavior);
+      if (!win) {
+        blockedCount++;
+      }
+    }
+
+    if (blockedCount > 0) {
+      toast.warning(
+        `Opened ${selected.length - blockedCount} account${
+          selected.length - blockedCount === 1 ? "" : "s"
+        }. ${blockedCount} tab${
+          blockedCount === 1 ? " was" : "s were"
+        } blocked by popup protection. Allow popups for this site to open all at once.`
+      );
+    } else {
+      toast.success(
+        `Opened ${selected.length} account${
+          selected.length === 1 ? "" : "s"
+        } in new tabs`
+      );
+    }
+  }, [pageAccounts, selectedPks, tabBehavior]);
 
   const handleBulkIgnore = useCallback(
     (ignored: boolean) => {
@@ -183,6 +223,16 @@ function AccountsContent() {
                 <Button
                   variant="secondary"
                   size="sm"
+                  onClick={handleBulkOpen}
+                  className="text-xs h-8 gap-1.5"
+                  title="Open selected accounts in new tabs"
+                >
+                  <ExternalLink className="size-3.5" />
+                  Open {selectedPks.size === 1 ? "Account" : `${selectedPks.size} Accounts`}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   disabled={isBulkPending}
                   onClick={() => handleBulkIgnore(true)}
                   className="text-xs h-8"
@@ -271,4 +321,3 @@ export default function AccountsPage() {
     </Suspense>
   );
 }
-
