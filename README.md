@@ -163,6 +163,7 @@ Comprehensive guides and interactive documentation are hosted on the **[Document
 - 🔒 [Reverse Proxy & Authentik SSO Guide](docs/deployment/reverse-proxy-and-sso.md)
 - ☁️ [Cloudinary Permanent CDN Setup](docs/features/cloudinary-cdn.md)
 - 💾 [Backup & Database Migration](docs/operations/backup-and-restore.md)
+- 🔄 [Updating & the Update Check](docs/operations/updating.md)
 - ❓ [Troubleshooting & FAQ](docs/operations/troubleshooting-faq.md)
 
 ---
@@ -181,6 +182,9 @@ When running via Docker Compose, **zero environment variables are required**. Op
 | `CLOUDINARY_API_KEY` | `""` | Optional Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | `""` | Optional Cloudinary API secret |
 | `LOG_LEVEL` | `info` | Logging verbosity (`info`, `debug`, `warn`, `error`) |
+| `DISABLE_UPDATE_CHECK` | _(unset)_ | Set to `true` to turn off the in-app update check (see below) |
+
+> **Update check & privacy:** Settings shows when a newer release exists. To do that, the app's server sends one `GET` to `api.github.com` (at most about once an hour, with a `User-Agent` of `instagram-saved-posts/<version>`) and nothing else: no telemetry, no identifiers, nothing from your data. Set `DISABLE_UPDATE_CHECK=true` to make no request at all. The app never updates itself; see [Updating](docs/operations/updating.md).
 
 ---
 

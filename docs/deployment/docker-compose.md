@@ -111,3 +111,5 @@ docker compose down
 # Update to latest version manually
 docker compose pull && docker compose up -d
 ```
+
+See [Updating & Releases](../operations/updating.md) for release notes, version pinning, and the in-app update check.

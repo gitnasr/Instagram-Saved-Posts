@@ -35,7 +35,9 @@
     "postinstall": "prisma generate",
     "sync:docs": "node scripts/sync-docs.mjs",
     "reindex:vectors": "tsx --env-file-if-exists=.env scripts/reindex-vectors.ts",
-    "test:vectors": "tsx scripts/test-vector-search.ts"
+    "test:vectors": "tsx scripts/test-vector-search.ts",
+    "test:updates": "tsx scripts/test-updates.ts",
+    "test:release": "node --test \".github/scripts/*.test.mjs\""
   },
   "engines": {
     "node": ">=22"

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { execSync } from "node:child_process";
+import { changedFiles, decideBump, readCommits } from "./release-lib.mjs";
 
 // Determine mode: 'release' (default) or 'beta' (for PRs)
 const args = process.argv.slice(2);
@@ -26,7 +27,8 @@ function runGit(cmd) {
 }
 
 // 1. Determine base version from latest tag and/or package.json
-let latestTag = runGit("git describe --tags --abbrev=0");
+// Stable vX.Y.Z tags only (betas are never git tags, but be explicit).
+let latestTag = runGit('git describe --tags --abbrev=0 --match "v[0-9]*.[0-9]*.[0-9]*" --exclude "*-*"');
 let latestTagVersion = latestTag.replace(/^v/, "");
 
 let pkgVersion = "1.0.0";
@@ -62,18 +64,17 @@ let basePatch =
     ? tagSemver.patch
     : pkgSemver.patch;
 
-// 2. Check conventional commits since last tag
-const logRange = latestTag ? `${latestTag}..HEAD` : "HEAD";
-let logs = runGit(`git log ${logRange} --pretty=format:"%s"`);
-if (!logs) {
-  logs = runGit('git log -n 50 --pretty=format:"%s"');
+// 2. Smart bump decision from commits + changed files since the last tag.
+// Rules live in release-lib.mjs (decideBump) and CONTRIBUTING.md.
+const range = latestTag ? `${latestTag}..HEAD` : "HEAD";
+let decision = { bump: "patch", reasons: ["could not read git history"] };
+try {
+  decision = decideBump(readCommits(range), latestTag ? changedFiles(latestTag, "HEAD") : null);
+} catch (err) {
+  console.warn(`Warning: smart bump unavailable (${err.message}); falling back to patch`);
 }
-
-const lines = logs.split("\n").map((l) => l.trim()).filter(Boolean);
-const hasBreaking = lines.some(
-  (l) => l.includes("BREAKING CHANGE") || /^[a-z]+(\([^\)]+\))?!:/.test(l)
-);
-const hasFeature = lines.some((l) => /^feat(\([^\)]+\))?:/i.test(l));
+// Nothing user-relevant to ship: auto mode skips the release (manual overrides still release).
+const autoSkip = decision.bump === "none";
 
 // Target release version calculation
 let targetReleaseVersion = "";
@@ -94,9 +95,10 @@ if (isTagPush) {
   targetReleaseVersion = `${baseMajor}.${baseMinor}.${basePatch + 1}`;
 } else {
   // auto mode
-  if (hasBreaking) {
+  console.log(`Smart bump: ${decision.bump} (${decision.reasons.join("; ")})`);
+  if (decision.bump === "major") {
     targetReleaseVersion = `${baseMajor + 1}.0.0`;
-  } else if (hasFeature) {
+  } else if (decision.bump === "minor") {
     targetReleaseVersion = `${baseMajor}.${baseMinor + 1}.0`;
   } else {
     targetReleaseVersion = `${baseMajor}.${baseMinor}.${basePatch + 1}`;
@@ -152,6 +154,10 @@ if (mode === "beta") {
     console.log(`ℹ️ Current HEAD is already tagged as ${exactHeadTag}. No new release needed.`);
     shouldRelease = false;
   }
+  if (autoSkip && !isTagPush && bumpType === "auto") {
+    console.log(`ℹ️ ${decision.reasons.join("; ")}. No release needed.`);
+    shouldRelease = false;
+  }
 
   const { major, minor } = parseSemver(finalVersion);
 
@@ -179,6 +185,7 @@ if (process.env.GITHUB_OUTPUT) {
   fs.appendFileSync(process.env.GITHUB_OUTPUT, `is_tag_push=${isTagPush}\n`);
   fs.appendFileSync(process.env.GITHUB_OUTPUT, `dry_run=${dryRun}\n`);
   fs.appendFileSync(process.env.GITHUB_OUTPUT, `mode=${mode}\n`);
+  fs.appendFileSync(process.env.GITHUB_OUTPUT, `bump=${decision.bump}\n`);
   if (prNumber) {
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `pr_number=${prNumber}\n`);
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `pr_tag=beta-pr-${prNumber}\n`);

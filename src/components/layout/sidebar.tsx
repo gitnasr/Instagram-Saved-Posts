@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { ProfileSwitcher } from "@/components/layout/profile-switcher";
+import { UpdateIndicator } from "@/components/layout/update-indicator";
 import { APP_VERSION, GITHUB_RELEASES_URL } from "@/lib/constants";
 
 const navItems = [
@@ -63,15 +64,18 @@ export function Sidebar() {
             >
               gitnasr.com
             </a>
-            <a
-              href={GITHUB_RELEASES_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="View Releases on GitHub"
-              className="rounded bg-surface-2/60 hover:bg-surface-3/80 px-1.5 py-0.5 text-[10px] text-ink-muted hover:text-foreground transition-colors border border-hairline"
-            >
-              {APP_VERSION.startsWith("v") ? APP_VERSION : `v${APP_VERSION}`}
-            </a>
+            <div className="flex items-center gap-1.5">
+              <UpdateIndicator />
+              <a
+                href={GITHUB_RELEASES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View Releases on GitHub"
+                className="rounded bg-surface-2/60 hover:bg-surface-3/80 px-1.5 py-0.5 text-[10px] text-ink-muted hover:text-foreground transition-colors border border-hairline"
+              >
+                {APP_VERSION.startsWith("v") ? APP_VERSION : `v${APP_VERSION}`}
+              </a>
+            </div>
           </div>
         </div>
       </aside>
