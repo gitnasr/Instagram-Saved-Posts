@@ -18,7 +18,7 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
       # AI Vector Search is an optional beta add-on, off by default.
-      # To enable it, see docs/features/ai-vector-search.md
+      # Guide: https://insta-saved.gitnasr.com/docs/features/ai-vector-search
       # Optional Cloudinary CDN Configuration
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}

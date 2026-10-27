@@ -11,7 +11,7 @@ export const DOCS_URL = "https://insta-saved.gitnasr.com/docs/operations/updatin
 // Files that never change what a user runs. Everything else (src/, prisma/,
 // Dockerfile, compose files, package*.json, scripts/, ...) counts as functional.
 const NON_FUNCTIONAL = [
-  /^(\.github|\.agents|\.claude|docs|wiki)\//,
+  /^(\.github|\.agents|\.claude|wiki)\//,
   /\.mdx?$/i,
   /^(LICENSE|\.gitignore|\.gitattributes|\.editorconfig|knip\.json)$/,
 ];

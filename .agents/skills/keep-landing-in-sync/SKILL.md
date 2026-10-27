@@ -5,15 +5,15 @@ description: Review and update the Instagram Saved Posts landing site and user-f
 
 # Keep the landing site in sync
 
-The app repository is the source of truth. The sibling instagram-saved-posts-landing repository presents its user-facing features, setup guidance, and documentation. Every change to the app triggers a landing sync review before handoff.
+The app repository is the source of truth for product behavior. The sibling instagram-saved-posts-landing repository owns the public site and user-facing documentation. Review it for every app change before handoff.
 
 ## Workflow
 
-1. Review the app changes and verify what users can actually do from the implementation and its current documentation.
+1. Review the app changes and verify what users can actually do from the implementation and the current landing documentation.
 2. Inspect the relevant landing sources in the sibling repository. Common locations include:
    - src/app/page.tsx and src/components/landing/ for the home page.
    - src/data/ for feature, FAQ, comparison, and architecture content.
-   - content/docs/ for setup, feature, and operations documentation. It is overwritten by the app repo's docs/ on sync, so edit docs/ in the app repo first, then mirror.
+   - content/docs/ for the canonical setup, feature, deployment, and operations documentation. Edit those files in the landing repository; do not copy them into the app repository.
    - src/lib/github-release.ts for the live version shown on the site; never write a literal version number in copy.
 3. Update all affected landing content in the same task. Check feature descriptions, onboarding and install steps, configuration names, deployment instructions, supported capabilities, limitations, screenshots, and security or privacy claims when those areas changed.
 4. Keep claims specific to verified app behavior. Preserve the landing site's own voice and design; avoid copying internal implementation details or duplicating the app README.

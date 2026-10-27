@@ -28,9 +28,9 @@ test("bump: feat is minor, fix is patch", () => {
   assert.equal(bump([c("feat: new thing (#4)"), c("fix: bug")]), "minor");
   assert.equal(bump([c("fix: bug")]), "patch");
 });
-test("bump: docs/CI/meta-only changes => no release", () => {
-  const files = ["README.md", "docs/a.md", ".github/workflows/ci.yml", "AGENTS.md"];
-  const r = decideBump([c("feat: add release workflow", files), c("docs: x", ["docs/a.md"])], files);
+test("bump: Markdown/CI/meta-only changes => no release", () => {
+  const files = ["README.md", "GUIDE.md", ".github/workflows/ci.yml", "AGENTS.md"];
+  const r = decideBump([c("feat: add release workflow", files), c("docs: x", ["GUIDE.md"])], files);
   assert.equal(r.bump, "none");
 });
 test("bump: docs-only feat commit does not trigger minor when src also changed", () => {
@@ -81,7 +81,7 @@ const notes = (commits, files, prev = "v1.0.0", tag = "v1.0.1") =>
 
 test("notes: routine verdict, groups, links, upgrade section, meta", () => {
   const md = notes(
-    [c("feat: add search (#3)"), c("fix(api): handle empty feed"), c("perf: make reindex incremental"), c("docs: update setup", ["docs/a.md"]), c("refactor: tidy", SRC), c("chore(release): v1.0.1 [skip ci]", ["package.json"])],
+    [c("feat: add search (#3)"), c("fix(api): handle empty feed"), c("perf: make reindex incremental"), c("docs: update setup", ["GUIDE.md"]), c("refactor: tidy", SRC), c("chore(release): v1.0.1 [skip ci]", ["package.json"])],
     SRC,
   );
   assert.match(md, /^## What to expect\n\n\*\*Safe to update/);

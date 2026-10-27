@@ -52,7 +52,7 @@ npm run build         # Test Next.js production build
 
 Every push to `master` is released automatically. `.github/scripts/calculate-version.mjs` picks the version and `.github/scripts/generate-release-notes.mjs` writes the GitHub Release notes (what users should expect, grouped changes, upgrade commands). Both read your commit messages and changed files, so you steer the result like this (rules live in `.github/scripts/release-lib.mjs`, tests in `release.test.mjs`).
 
-**Is there a release at all?** Only if a user-facing file changed. If everything since the last tag is docs (`*.md`, `docs/`, `wiki/`), `.github/`, `.agents/` or similar meta files, no release is made. Changes under `src/`, `prisma/`, `Dockerfile`, compose files, `package*.json`, `scripts/` etc. always release at least a patch.
+**Is there a release at all?** Only if a user-facing file changed. If everything since the last tag is Markdown (`*.md`), `wiki/`, `.github/`, `.agents/` or similar meta files, no release is made. Public user documentation is maintained in the [documentation site](https://insta-saved.gitnasr.com/docs). Changes under `src/`, `prisma/`, `Dockerfile`, compose files, `package*.json`, `scripts/` etc. always release at least a patch.
 
 **Which bump?** The highest signal among the releasable commits wins:
 

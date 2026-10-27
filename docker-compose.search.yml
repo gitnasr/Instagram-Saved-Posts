@@ -10,7 +10,7 @@
 # Disable it again by dropping the second -f and recreating:
 #   docker compose -f docker-compose.yml up -d --remove-orphans
 #
-# See docs/features/ai-vector-search.md
+# Guide: https://insta-saved.gitnasr.com/docs/features/ai-vector-search
 
 services:
   app:
