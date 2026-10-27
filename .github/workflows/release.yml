@@ -116,15 +116,32 @@ jobs:
           cache-from: type=gha,scope=release
           cache-to: type=gha,mode=max,scope=release
 
-      - name: Create GitHub Release with Auto-Changelog
+      # The tag exists by now (created above, or pushed by the user on tag runs).
+      # Notes follow wiki/release-contract.md; no npm install, node builtins only.
+      - name: Generate Release Notes
+        if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'
+        env:
+          TAG: ${{ steps.semver.outputs.tag }}
+        run: |
+          PREV=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' --exclude '*-*' "${TAG}^" 2>/dev/null || true)
+          node .github/scripts/generate-release-notes.mjs "$PREV" "$TAG" --out=release-notes.md
+          cat release-notes.md
+
+      - name: Create GitHub Release
         if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.dry_run == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.semver.outputs.tag }}
         run: |
-          gh release create "${{ steps.semver.outputs.tag }}" \
-            --title "Release ${{ steps.semver.outputs.tag }}" \
-            --generate-notes \
-            --verify-tag || echo "Release already exists"
+          # Only an already-existing release is tolerated (re-runs); any other failure fails the job.
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, leaving it untouched"
+          else
+            gh release create "$TAG" \
+              --title "Release $TAG" \
+              --notes-file release-notes.md \
+              --verify-tag
+          fi
 
       - name: Release Step Summary
         if: steps.semver.outputs.should_release == 'true'

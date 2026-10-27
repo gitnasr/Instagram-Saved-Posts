@@ -23,6 +23,9 @@ jobs:
       # (342 MB) and tfjs (277 MB). Caching the tree itself skips npm ci
       # outright; setup-node's `cache: npm` only skipped the download, leaving
       # the extraction — the actual cost — to run on every single job.
+      - name: Test release scripts
+        run: node --test ".github/scripts/*.test.mjs"
+
       - name: Restore node_modules
         id: node-modules
         uses: actions/cache@v6

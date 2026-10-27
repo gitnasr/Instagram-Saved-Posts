@@ -9,12 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CloudinarySettings } from "@/components/settings/cloudinary-settings";
+import { UpdatesSettings } from "@/components/settings/updates-settings";
 import { ProfileAvatar } from "@/components/profiles/profile-avatar";
 import { useProfiles, useUpdateProfile } from "@/hooks/use-profiles";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { User, Key, Globe, Save, Tag, ExternalLink } from "lucide-react";
-import { APP_VERSION, GITHUB_RELEASES_URL } from "@/lib/constants";
+import { User, Key, Globe, Save } from "lucide-react";
 
 export default function SettingsPage() {
   const { data: profiles, isLoading } = useProfiles();
@@ -160,38 +160,7 @@ export default function SettingsPage() {
 
           <CloudinarySettings />
 
-          <Card className="border border-hairline bg-surface-1 shadow-sm">
-            <CardHeader className="pb-3 border-b border-hairline">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Tag className="size-4 text-amber-500" />
-                    Application Version & Releases
-                  </CardTitle>
-                  <CardDescription className="text-xs text-ink-muted mt-0.5">
-                    Currently deployed version and release notes history
-                  </CardDescription>
-                </div>
-                <span className="font-mono text-xs px-2.5 py-1 rounded bg-surface-2 border border-hairline text-foreground font-medium">
-                  {APP_VERSION.startsWith("v") ? APP_VERSION : `v${APP_VERSION}`}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-4 flex items-center justify-between text-xs text-ink-muted">
-              <span>
-                To rollback or upgrade your deployment, specify an official version tag in your container configuration.
-              </span>
-              <a
-                href={GITHUB_RELEASES_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors shrink-0 ml-4"
-              >
-                Release Notes
-                <ExternalLink className="size-3" />
-              </a>
-            </CardContent>
-          </Card>
+          <UpdatesSettings />
         </div>
       )}
     </div>
