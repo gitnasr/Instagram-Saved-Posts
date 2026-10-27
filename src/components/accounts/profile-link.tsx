@@ -3,10 +3,8 @@
 import Link from "next/link";
 import type { MouseEvent, ReactNode } from "react";
 import { rememberVisitedAccount } from "@/hooks/use-last-visited-account";
-import {
-  useAccountTabBehavior,
-  openAccountTab,
-} from "@/hooks/use-account-tab-behavior";
+import { useAccountTabBehavior } from "@/hooks/use-account-tab-behavior";
+import { openAccountDrawer } from "@/hooks/use-account-drawer";
 
 interface ProfileLinkProps {
   username: string;
@@ -16,12 +14,9 @@ interface ProfileLinkProps {
 }
 
 /**
- * Link to an account profile. Always opens in a new tab so the page the user
- * navigated from keeps its place (scroll, filters, selections), and records
- * the click so the accounts grid can highlight where the user left off.
- *
- * Honors the user's tab behavior preference: switches to the new tab (default)
- * or attempts to keep focus on the current page for bulk browsing.
+ * Link to an account. Opens in a new tab by default, or in an in-page
+ * slide-over drawer when the user selects "Stay on current page" in Settings,
+ * and records the click so the accounts grid can highlight where the user left off.
  */
 export function ProfileLink({
   username,
@@ -33,8 +28,6 @@ export function ProfileLink({
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
     rememberVisitedAccount(username);
-    // If the user wants to stay on the page and it's a standard primary left-click without modifier keys,
-    // handle it via openAccountTab to attempt to keep the current window in focus.
     if (
       behavior === "stay-on-page" &&
       e.button === 0 &&
@@ -44,7 +37,7 @@ export function ProfileLink({
       !e.altKey
     ) {
       e.preventDefault();
-      openAccountTab(username, "stay-on-page");
+      openAccountDrawer(username);
     }
   };
 

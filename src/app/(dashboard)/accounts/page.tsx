@@ -11,8 +11,7 @@ import { useAccounts } from "@/hooks/use-accounts";
 import { useBulkIgnore } from "@/hooks/use-bulk-ignore";
 import { useScrollUrlSync } from "@/hooks/use-scroll-url-sync";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { useAccountTabBehavior, openAccountTab } from "@/hooks/use-account-tab-behavior";
-import { rememberVisitedAccount } from "@/hooks/use-last-visited-account";
+import { openAccountDrawer } from "@/hooks/use-account-drawer";
 import { serializeAccountFilters } from "@/lib/account-filter-params";
 import {
   ChevronLeft,
@@ -20,7 +19,7 @@ import {
   Eye,
   EyeOff,
   CheckSquare,
-  ExternalLink,
+  PanelRightOpen,
 } from "lucide-react";
 import type { Account } from "@/types";
 
@@ -38,7 +37,6 @@ function AccountsContent() {
     setFilters,
   } = useUrlFilters();
   useScrollUrlSync();
-  const [tabBehavior] = useAccountTabBehavior();
 
   const { data, isLoading } = useAccounts({
     page,
@@ -89,34 +87,12 @@ function AccountsContent() {
   }, []);
 
   const handleBulkOpen = useCallback(() => {
-    const selected = pageAccounts.filter((a) => selectedPks.has(a.pk));
-    if (selected.length === 0) return;
-
-    let blockedCount = 0;
-    for (const account of selected) {
-      rememberVisitedAccount(account.username);
-      const win = openAccountTab(account.username, tabBehavior);
-      if (!win) {
-        blockedCount++;
-      }
-    }
-
-    if (blockedCount > 0) {
-      toast.warning(
-        `Opened ${selected.length - blockedCount} account${
-          selected.length - blockedCount === 1 ? "" : "s"
-        }. ${blockedCount} tab${
-          blockedCount === 1 ? " was" : "s were"
-        } blocked by popup protection. Allow popups for this site to open all at once.`
-      );
-    } else {
-      toast.success(
-        `Opened ${selected.length} account${
-          selected.length === 1 ? "" : "s"
-        } in new tabs`
-      );
-    }
-  }, [pageAccounts, selectedPks, tabBehavior]);
+    const selectedUsernames = pageAccounts
+      .filter((a) => selectedPks.has(a.pk))
+      .map((a) => a.username);
+    if (selectedUsernames.length === 0) return;
+    openAccountDrawer(selectedUsernames, 0);
+  }, [pageAccounts, selectedPks]);
 
   const handleBulkIgnore = useCallback(
     (ignored: boolean) => {
@@ -225,10 +201,10 @@ function AccountsContent() {
                   size="sm"
                   onClick={handleBulkOpen}
                   className="text-xs h-8 gap-1.5"
-                  title="Open selected accounts in new tabs"
+                  title="Inspect selected accounts without leaving the page"
                 >
-                  <ExternalLink className="size-3.5" />
-                  Open {selectedPks.size === 1 ? "Account" : `${selectedPks.size} Accounts`}
+                  <PanelRightOpen className="size-3.5" />
+                  Inspect {selectedPks.size === 1 ? "Account" : `${selectedPks.size} Accounts`}
                 </Button>
                 <Button
                   variant="secondary"
