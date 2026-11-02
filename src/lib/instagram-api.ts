@@ -2,7 +2,11 @@ import type { InstagramSavedResponse } from "@/types/instagram";
 import {
   DEFAULT_USER_AGENT,
   INSTAGRAM_SAVED_POSTS_URL,
+  INSTAGRAM_WEB_APP_ID,
+  INSTAGRAM_WEB_ASBD_ID,
+  INSTAGRAM_WEB_ORIGIN,
   DEFAULT_PAGE_COUNT,
+  SCRAPE_ERROR_BODY_MAX_CHARS,
   SCRAPE_REQUEST_TIMEOUT_MS,
   SCRAPE_MAX_RETRIES,
   SCRAPE_RETRY_BASE_MS,
@@ -22,22 +26,44 @@ import axios, { type AxiosError } from "axios";
 export type ScrapeErrorKind = "rate_limited" | "transient" | "auth" | "fatal";
 
 /** Error carrying the verdict so the scraper can pick a run status from it. */
-class ScrapeRequestError extends Error {
+export class ScrapeRequestError extends Error {
   readonly kind: ScrapeErrorKind;
   readonly status?: number;
   readonly cause?: unknown;
+  /** Instagram's response body, for failures that arrive with a 2xx. */
+  readonly body?: string;
 
   constructor(
     message: string,
     kind: ScrapeErrorKind,
-    options: { status?: number; cause?: unknown } = {}
+    options: { status?: number; cause?: unknown; body?: string } = {}
   ) {
     super(message);
     this.name = "ScrapeRequestError";
     this.kind = kind;
     this.status = options.status;
     this.cause = options.cause;
+    this.body = options.body;
   }
+}
+
+/** Headers the instagram.com web client sends, so a web cookie looks at home. */
+function webHeaders(cookie: string, userAgent: string): Record<string, string> {
+  const csrfToken = cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)?.[1];
+  return {
+    Accept: "*/*",
+    "User-Agent": userAgent,
+    Cookie: cookie,
+    "X-IG-App-ID": INSTAGRAM_WEB_APP_ID,
+    "X-ASBD-ID": INSTAGRAM_WEB_ASBD_ID,
+    "X-IG-WWW-Claim": "0",
+    "X-Requested-With": "XMLHttpRequest",
+    Referer: `${INSTAGRAM_WEB_ORIGIN}/`,
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+  };
 }
 
 /** True when the error is an Axios HTTP error (and so may carry a response body). */
@@ -142,34 +168,46 @@ async function requestSavedPostsPage(
 
   const url = new URL(INSTAGRAM_SAVED_POSTS_URL);
   url.searchParams.set("count", String(count));
-  url.searchParams.set("include_feed_only", "false");
   if (maxId) {
     url.searchParams.set("max_id", maxId);
   }
 
-  const response = await axios.get(url.toString(), {
-    headers: {
-      "User-Agent": userAgent,
-      Cookie: cookie,
-    },
-    timeout: SCRAPE_REQUEST_TIMEOUT_MS,
-  });
+  const response = await axios.get<InstagramSavedResponse | string>(
+    url.toString(),
+    {
+      headers: webHeaders(cookie, userAgent),
+      timeout: SCRAPE_REQUEST_TIMEOUT_MS,
+    }
+  );
 
-  const data: InstagramSavedResponse = response.data;
+  const data = response.data;
+
+  // The web host answers a dead session by redirecting to its HTML login page.
+  if (typeof data === "string") {
+    throw new ScrapeRequestError(
+      "Instagram returned a web page instead of JSON; the session has likely expired",
+      "auth",
+      { body: data.slice(0, SCRAPE_ERROR_BODY_MAX_CHARS) }
+    );
+  }
 
   if (data.status !== "ok") {
     // A non-"ok" body with a 200 is how Instagram reports soft blocks.
-    const serialized = JSON.stringify(data).toLowerCase();
+    const body = JSON.stringify(data);
+    const serialized = body.toLowerCase();
     const kind: ScrapeErrorKind =
       serialized.includes("login_required") ||
-      serialized.includes("checkpoint_required")
+      serialized.includes("checkpoint_required") ||
+      serialized.includes("challenge_required")
         ? "auth"
         : serialized.includes("please wait") || serialized.includes("spam")
           ? "rate_limited"
           : "fatal";
+    const reason = data.message ? ` (${data.message})` : "";
     throw new ScrapeRequestError(
-      `Instagram API returned status: ${data.status}`,
-      kind
+      `Instagram API returned status: ${data.status}${reason}`,
+      kind,
+      { body: body.slice(0, SCRAPE_ERROR_BODY_MAX_CHARS) }
     );
   }
 
@@ -211,7 +249,9 @@ export async function fetchSavedPostsPage(
   const message =
     lastError instanceof Error ? lastError.message : "Unknown error";
 
-  throw new ScrapeRequestError(message, kind, { status, cause: lastError });
+  const body = lastError instanceof ScrapeRequestError ? lastError.body : undefined;
+
+  throw new ScrapeRequestError(message, kind, { status, cause: lastError, body });
 }
 
 export interface LoggedInUser {
@@ -235,9 +275,9 @@ export async function fetchLoggedInUser(
 
   try {
     const response = await axios.get(
-      `https://i.instagram.com/api/v1/users/${userId}/info/`,
+      `${INSTAGRAM_WEB_ORIGIN}/api/v1/users/${userId}/info/`,
       {
-        headers: { "User-Agent": userAgent, Cookie: cookie },
+        headers: webHeaders(cookie, userAgent),
         timeout: SCRAPE_REQUEST_TIMEOUT_MS,
       }
     );

@@ -504,7 +504,7 @@ export function OnboardingWizard({
                   </Label>
                   <Input
                     id="ua"
-                    placeholder="Defaults to Instagram Android UA"
+                    placeholder="Defaults to desktop Chrome UA"
                     value={userAgent}
                     onChange={(e) => setUserAgent(e.target.value)}
                     className="font-mono text-xs"
