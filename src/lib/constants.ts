@@ -1,8 +1,16 @@
 export const DEFAULT_USER_AGENT =
-  "Instagram 407.0.0.7.243 Android (28/9; 300dpi; 1600x900; google; G011A; G011A; intel; en_US; 825082503)";
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
 
-export const INSTAGRAM_SAVED_POSTS_URL =
-  "https://i.instagram.com/api/v1/feed/saved/posts/";
+export const INSTAGRAM_WEB_ORIGIN = "https://www.instagram.com";
+
+export const INSTAGRAM_SAVED_POSTS_URL = `${INSTAGRAM_WEB_ORIGIN}/api/v1/feed/saved/posts/`;
+
+/** App id and ASBD id the instagram.com web client sends with API calls. */
+export const INSTAGRAM_WEB_APP_ID = "936619743392459";
+export const INSTAGRAM_WEB_ASBD_ID = "129477";
+
+/** Longest Instagram error body kept on a run. Login pages can be huge. */
+export const SCRAPE_ERROR_BODY_MAX_CHARS = 2000;
 
 export const DEFAULT_PAGE_COUNT = 48;
 

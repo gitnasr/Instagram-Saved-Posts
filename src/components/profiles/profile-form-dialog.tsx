@@ -145,7 +145,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
               value={userAgent}
               onChange={(e) => setUserAgent(e.target.value)}
               className="font-mono text-xs bg-surface-2/40"
-              placeholder="Defaults to Instagram Android UA"
+              placeholder="Defaults to desktop Chrome UA"
             />
           </div>
         </div>
