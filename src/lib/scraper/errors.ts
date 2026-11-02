@@ -3,7 +3,7 @@
  * `ScrapeRun` row. Classification itself lives in `instagram-api`.
  */
 
-import { isAxiosError } from "../instagram-api";
+import { isAxiosError, ScrapeRequestError } from "../instagram-api";
 
 /** Extract error message + optional JSON-stringified API response body */
 export function extractErrorInfo(error: unknown): {
@@ -11,6 +11,11 @@ export function extractErrorInfo(error: unknown): {
   errorBody: string | null;
 } {
   const errorMsg = error instanceof Error ? error.message : "Unknown error";
+
+  // A failure reported with a 2xx has no axios error to read the body from.
+  if (error instanceof ScrapeRequestError && error.body) {
+    return { errorMsg, errorBody: error.body };
+  }
 
   // Page errors arrive wrapped by `fetchSavedPostsPage`, so the axios error
   // holding Instagram's response body is one level down.
