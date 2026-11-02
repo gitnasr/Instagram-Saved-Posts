@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { classifyScrapeError, fetchLoggedInUser, fetchSavedPostsPage } from "../src/lib/instagram-api";
 import { extractErrorInfo } from "../src/lib/scraper/errors";
+import { prisma } from "../src/lib/prisma";
+import { syncPostFromMedia } from "../src/lib/scraper/post-sync";
+import type { InstagramMedia } from "../src/types/instagram";
 
 let seen: InternalAxiosRequestConfig[] = [];
 const respondWith = (data: unknown) => {
@@ -60,6 +63,28 @@ async function main() {
   assert.deepEqual(await fetchLoggedInUser(cookie), { pk: "42", username: "me", profilePicUrl: "p" });
   assert.equal(seen[0].url, "https://www.instagram.com/api/v1/users/42/info/");
   assert.equal(seen[0].headers.get("X-IG-App-ID"), "936619743392459");
+
+  // A post stored with a rounded pk matches its exact web pk instead of duplicating
+  const rows = [{ id: "a", pk: "3489599198812897300", thumbnailUrl: null }];
+  let created = 0;
+  Object.defineProperty(prisma, "post", {
+    value: {
+      findFirst: async ({ where }: { where: { pk: { in: string[] } } }) =>
+        rows.find((r) => where.pk.in.includes(r.pk)) ?? null,
+      update: async () => rows[0],
+      create: async () => (created += 1),
+    },
+  });
+  const media = (pk: number | string) =>
+    ({ pk, id: `${pk}_1`, code: "c", user: { pk: "1" } }) as unknown as InstagramMedia;
+  const oldPost = await syncPostFromMedia("p", 1, media("3489599198812897070"), "t");
+  assert.equal(oldPost.isNewPost, false);
+  assert.equal(created, 0);
+  // A post we have never seen keeps its exact pk
+  const newPost = await syncPostFromMedia("p", 1, media("3700000000000000123"), "t");
+  assert.equal(newPost.isNewPost, true);
+  assert.equal(created, 1);
+  assert.match(newPost.events[0].metadata ?? "", /3700000000000000123/);
 
   console.log("instagram-api ok");
 }

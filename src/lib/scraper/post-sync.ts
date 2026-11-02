@@ -80,12 +80,16 @@ export async function syncPostFromMedia(
   media: InstagramMedia,
   now: string
 ): Promise<PostSyncResult> {
-  const mediaPk = String(media.pk);
+  const newPostPk = String(media.pk);
   const accountPkStr = String(media.user.pk);
 
+  // Rows from the mobile API hold a pk rounded by JSON.parse, while the web API
+  // sends the exact pk as a string, so one post has two possible keys.
+  // ponytail: two posts within the same rounding step (~512) would match; store exact pks everywhere if that ever shows up.
   const existingPost = await prisma.post.findFirst({
-    where: { profileId, pk: mediaPk },
+    where: { profileId, pk: { in: [newPostPk, String(Number(media.pk))] } },
   });
+  const mediaPk = existingPost?.pk ?? newPostPk;
 
   const thumbnail = media.image_versions2?.candidates?.[0];
   const thumbnailUrl = thumbnail?.url ?? null;

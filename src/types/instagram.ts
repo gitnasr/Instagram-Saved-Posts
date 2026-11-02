@@ -13,7 +13,8 @@ export interface InstagramSavedItem {
 }
 
 export interface InstagramMedia {
-  pk: number;
+  /** A string on the web API. As a number it has already lost precision. */
+  pk: number | string;
   id: string;
   code: string;
   media_type: number;
