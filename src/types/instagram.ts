@@ -4,6 +4,8 @@ export interface InstagramSavedResponse {
   items: InstagramSavedItem[];
   next_max_id?: string;
   status: string;
+  /** Instagram's reason when `status` isn't "ok". */
+  message?: string;
 }
 
 export interface InstagramSavedItem {

@@ -141,7 +141,7 @@ export default function SettingsPage() {
                   placeholder={
                     active.hasUserAgent
                       ? "A custom user-agent is configured. Type to replace."
-                      : "Defaults to Instagram Android App User-Agent"
+                      : "Defaults to a desktop Chrome User-Agent"
                   }
                   value={userAgent}
                   onChange={(e) => setUserAgent(e.target.value)}
