@@ -78,8 +78,8 @@ jobs:
       - name: Commit, Tag & Push Version Bump
         if: steps.semver.outputs.should_release == 'true' && steps.semver.outputs.is_tag_push == 'false' && steps.semver.outputs.dry_run == 'false'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "Mahmoud Nasr"
+          git config user.email "239.nasr@gmail.com"
           git add package.json package-lock.json
           git commit -m "chore(release): ${{ steps.semver.outputs.tag }} [skip ci]" || echo "No package changes to commit"
           git tag -a "${{ steps.semver.outputs.tag }}" -m "Release ${{ steps.semver.outputs.tag }}"
