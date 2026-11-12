@@ -146,7 +146,7 @@ jobs:
       - name: Release Step Summary
         if: steps.semver.outputs.should_release == 'true'
         run: |
-          echo "### 🚀 Release Successfully Published!" >> $GITHUB_STEP_SUMMARY
+          echo "### Release Successfully Published!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** \`${{ steps.semver.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Git Tag:** \`${{ steps.semver.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
@@ -163,7 +163,7 @@ jobs:
         if: steps.semver.outputs.dry_run == 'true'
         run: |
           echo "================================================================"
-          echo "🚀 [DRY RUN] Release Simulation Completed Successfully!"
+          echo "[DRY RUN] Release Simulation Completed Successfully!"
           echo "Target Version: ${{ steps.semver.outputs.version }}"
           echo "Target Tag:     ${{ steps.semver.outputs.tag }}"
           echo "Docker Image:   ${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:${{ steps.semver.outputs.tag }}"

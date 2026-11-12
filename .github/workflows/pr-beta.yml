@@ -75,7 +75,7 @@ jobs:
 
       - name: Beta Release Summary
         run: |
-          echo "### 🧪 Beta Preview Ready!" >> $GITHUB_STEP_SUMMARY
+          echo "### Beta Preview Ready!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Beta Version:** \`${{ steps.semver.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Release Tag:** \`${{ steps.semver.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
@@ -101,7 +101,7 @@ jobs:
             const image = "${{ env.REGISTRY }}/${{ steps.semver.outputs.image_name }}:beta-pr-" + prNumber;
 
             const marker = "<!-- pr-beta-preview-comment -->";
-            const body = `${marker}\n### 🧪 Beta Container Ready for Testing\n\n` +
+            const body = `${marker}\n### Beta Container Ready for Testing\n\n` +
               `A preview beta version has been built for this Pull Request:\n\n` +
               `- **Beta Version:** \`${version}\`\n` +
               `- **Docker Tag:** \`${image}\`\n` +

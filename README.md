@@ -1,50 +1,39 @@
-<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/banner-dark.svg">
+  <img alt="instagram-saved-posts by gitnasr" src=".github/banner-light.svg" width="100%">
+</picture>
 
-# 📸 Instagram Saved Posts Tracker
+Keep your Instagram saved posts. Search them, follow the accounts behind them, and still have them after a creator deletes a post or goes private. Self-hosted, one command to run.
 
-**A modern, self-hosted web app to archive, monitor, and explore your Instagram saved posts.**
+[Quick start](#quick-start) ·
+[Deploy on Dokploy or Coolify](#deploy-on-dokploy-or-coolify) ·
+[Features](#features) ·
+[Documentation](https://insta-saved.gitnasr.com/docs) ·
+[Releases](https://github.com/gitnasr/Instagram-Saved-Posts/releases)
 
-[![GitHub Release](https://img.shields.io/github/v/release/gitnasr/Instagram-Saved-Posts?style=flat-square&color=blue)](https://github.com/gitnasr/Instagram-Saved-Posts/releases)
-[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue?style=flat-square&logo=docker)](https://github.com/gitnasr/Instagram-Saved-Posts/pkgs/container/instagram-saved-posts)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?style=flat-square&logo=mongodb)](https://www.mongodb.com/)
-[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-CSS_v4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+## Why
 
-[⚡ Quick Start](#-quick-start-1-command) • [🚀 Deploy on PaaS](#-1-click-paas-deployment) • [✨ Key Features](#-key-features) • [📖 Documentation](#-documentation) • [🛠️ Configuration](#%EF%B8%8F-configuration)
+Instagram has no search and no archive for saved posts. When a creator deletes their account, changes handle, or makes a post private, the bookmark is gone with it.
 
-</div>
+This app syncs your saved posts into your own database: media, carousels, captions and account details. It also records what changes on those accounts, so you can see when a username changed or an account disappeared.
 
----
+## Quick start
 
-## 🌟 Overview
+No clone and no `.env` file needed.
 
-Instagram doesn't provide a native search or long-term archive for your saved posts. When creators delete their accounts, change handles, or make posts private, you lose access to bookmarked content. 
+Linux and macOS:
 
-**Instagram Saved Posts Tracker** solves this by giving you full ownership over your bookmarks:
-- 🔄 **Continuous Sync & Archival**: Scrapes and stores saved posts, carousel media, captions, and account metadata.
-- 👥 **Multi-Profile Switching**: Netflix-style profile selector supporting multiple Instagram accounts simultaneously.
-- 🕒 **Account Timeline & History**: Detects when accounts change usernames, lose verification, get deleted/banned, or go private.
-- 🚀 **1-Command Zero-Config Deploy**: Start with a single terminal command or deploy directly to **Dokploy** / **Coolify**.
-
----
-
-## ⚡ Quick Start (1 Command)
-
-No clone, build, or manual `.env` configuration needed. Run the one-liner for your operating system:
-
-### Linux / macOS
 ```bash
 curl -fsSL https://raw.githubusercontent.com/gitnasr/Instagram-Saved-Posts/master/install.sh | bash
 ```
 
-### Windows (PowerShell)
+Windows (PowerShell):
+
 ```powershell
 irm https://raw.githubusercontent.com/gitnasr/Instagram-Saved-Posts/master/install.ps1 | iex
 ```
 
-### Docker Compose
-Create a `docker-compose.yml` file and launch:
+Docker Compose. Create a `docker-compose.yml` and start it:
 ```yaml
 services:
   app:
@@ -90,131 +79,115 @@ volumes:
 docker compose up -d
 ```
 
-🎉 Open **`http://localhost:5050`** in your browser and complete the 60-second onboarding wizard!
+Open `http://localhost:5050` and follow the setup wizard. It takes about a minute and asks for your Instagram session cookie ([how to get it](https://insta-saved.gitnasr.com/docs/getting-started/how-to-get-instagram-cookie)).
 
-> **Optional: AI Vector Search (Beta).** Semantic prompt, image and face search is
-> **not enabled by default** — it adds a Qdrant service and downloads ~600 MB of
-> model weights on first index. Everything else works fine without it. To opt in,
-> grab [`docker-compose.search.yml`](docker-compose.search.yml) and run:
->
-> ```bash
-> docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
-> ```
->
-> Full setup and trade-offs: [AI Vector Search](https://insta-saved.gitnasr.com/docs/features/ai-vector-search).
+### Optional: vector search (beta)
 
----
+Search by text description, by similar image, or by face. It is off by default: it adds a Qdrant service and downloads about 600 MB of model weights the first time you index. Everything else works without it.
 
-## 🚀 1-Click PaaS Deployment
+```bash
+docker compose -f docker-compose.yml -f docker-compose.search.yml up -d
+```
 
-Deploy easily to your self-hosted cloud platform of choice:
+Setup and trade-offs: [Vector search](https://insta-saved.gitnasr.com/docs/features/ai-vector-search). The compose file is [`docker-compose.search.yml`](docker-compose.search.yml).
 
-### Dokploy
-1. In Dokploy, click **Create Project** -> **Compose**.
-2. Copy and paste the contents of [`dokploy-compose.yml`](dokploy-compose.yml).
-3. Set your custom domain and click **Deploy**.
-4. Read the [Dokploy Deployment Guide](https://insta-saved.gitnasr.com/docs/deployment/dokploy) for full instructions.
+## Deploy on Dokploy or Coolify
 
-### Coolify
-1. In Coolify, create a **New Resource** -> **Docker Compose**.
+**Dokploy**
+
+1. Create a project, then add a **Compose** service.
+2. Paste the contents of [`dokploy-compose.yml`](dokploy-compose.yml).
+3. Set your domain and deploy.
+
+Full guide: [Dokploy](https://insta-saved.gitnasr.com/docs/deployment/dokploy).
+
+**Coolify**
+
+1. Add a new resource, then **Docker Compose**.
 2. Paste the contents of [`coolify-compose.yml`](coolify-compose.yml).
-3. Configure your domain and click **Deploy**.
-4. Read the [Coolify Deployment Guide](https://insta-saved.gitnasr.com/docs/deployment/coolify) for detailed configuration.
+3. Set your domain and deploy.
 
----
+Full guide: [Coolify](https://insta-saved.gitnasr.com/docs/deployment/coolify).
 
-## 📦 Versioning, Releases & Rollbacks
+## Features
 
-This project follows an automated semantic CI/CD versioning lifecycle directly connected to GitHub Releases:
+| | |
+| --- | --- |
+| Continuous sync | Saved posts, carousel media, captions and account details, stored in your own MongoDB. |
+| Multiple profiles | Several Instagram accounts side by side, each with its own session and its own bookmarks. |
+| Account timelines | Username changes, bio edits, verification changes, and accounts that were deleted or went private. |
+| Resumable scraper | Detects rate limits, backs off exponentially, and resumes from a checkpoint. |
+| Permanent media | Optional Cloudinary sync, so media keeps loading after the Instagram CDN links expire. |
+| Reverse proxy and SSO | Reads Authentik and Authelia headers, with a read-only viewer mode. |
+| Setup wizard | Tests your session cookie live and previews the avatar before you save. |
+| Vector search (beta, optional) | Text, similar-image and face search with Qdrant. Off by default. |
 
-- **Production (`:latest`)**: Every release merged to `main`/`master` automatically calculates the semantic version bump, generates a signed Git tag (e.g., `v1.1.0`), publishes a [GitHub Release](https://github.com/gitnasr/Instagram-Saved-Posts/releases) with auto-generated changelogs, and pushes to GHCR.
-- **Rollbacks & Version Pinning**: Every release tag is permanently archived on GitHub Container Registry (GHCR). To rollback or pin a version, simply replace `:latest` with the desired release tag in your compose configuration:
-  ```yaml
-  # Pin or rollback to any version:
-  image: ghcr.io/gitnasr/instagram-saved-posts:v1.0.1
-  ```
-  Check the [GitHub Releases Page](https://github.com/gitnasr/Instagram-Saved-Posts/releases) for the full list of tags and version notes.
-- **PR Beta Versions**: Pull requests automatically build preview beta containers tagged as `ghcr.io/gitnasr/instagram-saved-posts:beta-pr-<number>` and `:beta` for preview testing before merging.
+The UI has light and dark themes (Tailwind CSS 4, Radix UI).
 
----
+## Versions and rollbacks
 
-| Feature | Description |
-| :--- | :--- |
-| 🔍 **Multimodal Vector Search** *(Beta, optional)* | Natural-language prompt search (CLIP), visual similarity image search, and facial recognition search with Qdrant. **Off by default** — [how to enable](https://insta-saved.gitnasr.com/docs/features/ai-vector-search). |
-| 🧙‍♂️ **Interactive Onboarding** | Built-in setup wizard with real-time Instagram cookie testing and avatar preview. |
-| 👥 **Multi-Profile Support** | Manage multiple Instagram accounts with separate sessions and isolated bookmarks. |
-| 📈 **Account Timelines** | Automatically records username changes, bio updates, verification changes, and lost accounts. |
-| 🛡️ **Resumable Scraper** | Automatic rate-limit detection, exponential backoff, and checkpointed resume support. |
-| ☁️ **Permanent Media CDN** | Optional Cloudinary sync to ensure media URLs never break when Instagram CDN links expire. |
-| 🔐 **Reverse Proxy & SSO** | Native support for Authentik / Authelia headers with read-only viewer mode. |
-| 🌙 **Dark & Light Mode** | Modern, responsive UI built with Tailwind CSS v4 and Radix UI. |
+Releases are automatic. A push to `master` works out the version bump from the commits, tags it, publishes a [GitHub release](https://github.com/gitnasr/Instagram-Saved-Posts/releases) with notes, and pushes the image to GHCR. Documentation and CI-only changes do not publish a release.
 
----
+Every tag stays on GHCR. To pin a version or roll back, replace `:latest` in your compose file:
 
-## 📖 Documentation
+```yaml
+image: ghcr.io/gitnasr/instagram-saved-posts:v1.0.1
+```
 
-Guides for setup, features, deployment, and maintenance are maintained on the **[Documentation Website](https://insta-saved.gitnasr.com/docs)**:
+Pull requests build preview images tagged `beta-pr-<number>` and `beta`.
 
-- [How to Get Your Instagram Cookie](https://insta-saved.gitnasr.com/docs/getting-started/how-to-get-instagram-cookie)
-- [Docker Compose Deployment Guide](https://insta-saved.gitnasr.com/docs/deployment/docker-compose)
-- [Dokploy Self-Hosting Guide](https://insta-saved.gitnasr.com/docs/deployment/dokploy)
-- [Coolify Self-Hosting Guide](https://insta-saved.gitnasr.com/docs/deployment/coolify)
-- [Reverse Proxy & Authentik SSO Guide](https://insta-saved.gitnasr.com/docs/deployment/reverse-proxy-and-sso)
-- [Cloudinary Media Sync](https://insta-saved.gitnasr.com/docs/features/cloudinary-cdn)
-- [Backup & Database Migration](https://insta-saved.gitnasr.com/docs/operations/backup-and-restore)
-- [Updating & the Update Check](https://insta-saved.gitnasr.com/docs/operations/updating)
-- [Troubleshooting & FAQ](https://insta-saved.gitnasr.com/docs/operations/troubleshooting-faq)
+## Configuration
 
----
-
-## 🛠️ Configuration
-
-When running via Docker Compose, **zero environment variables are required**. Optional settings can be configured via `.env`:
+With Docker Compose no environment variables are required. Optional settings go in `.env`:
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
-| `PORT` | `5050` | Port exposed on host for web app |
-| `QDRANT_URL` | _(unset)_ | **Optional.** Setting this switches on the beta vector search. Unset = disabled |
-| `QDRANT_PORT` | `6335` | Host port for the Qdrant API & Dashboard, only used with search enabled |
-| `DATABASE_URL` | `mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` | MongoDB connection string (replica set enabled) |
-| `CLOUDINARY_CLOUD_NAME` | `""` | Optional Cloudinary cloud name for permanent media |
-| `CLOUDINARY_API_KEY` | `""` | Optional Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | `""` | Optional Cloudinary API secret |
-| `LOG_LEVEL` | `info` | Logging verbosity (`info`, `debug`, `warn`, `error`) |
-| `DISABLE_UPDATE_CHECK` | _(unset)_ | Set to `true` to turn off the in-app update check (see below) |
+| `PORT` | `5050` | Host port for the web app |
+| `QDRANT_URL` | unset | Setting this enables the beta vector search |
+| `QDRANT_PORT` | `6335` | Host port for the Qdrant API and dashboard, used only with search enabled |
+| `DATABASE_URL` | `mongodb://mongo:27017/instagram?replicaSet=rs0&directConnection=true` | MongoDB connection string (replica set required) |
+| `CLOUDINARY_CLOUD_NAME` | `""` | Cloudinary cloud name, for permanent media |
+| `CLOUDINARY_API_KEY` | `""` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | `""` | Cloudinary API secret |
+| `LOG_LEVEL` | `info` | `info`, `debug`, `warn` or `error` |
+| `DISABLE_UPDATE_CHECK` | unset | Set to `true` to turn off the in-app update check |
 
-> **Update check & privacy:** Settings shows when a newer release exists. To do that, the app's server sends one `GET` to `api.github.com` (at most about once an hour, with a `User-Agent` of `instagram-saved-posts/<version>`) and nothing else: no telemetry, no identifiers, nothing from your data. Set `DISABLE_UPDATE_CHECK=true` to make no request at all. The app never updates itself; see [Updating](https://insta-saved.gitnasr.com/docs/operations/updating).
+**Update check and privacy.** Settings shows when a newer release exists. To do that, the server sends one `GET` to `api.github.com` at most about once an hour, with a `User-Agent` of `instagram-saved-posts/<version>`, and nothing else: no telemetry, no identifiers, nothing from your data. Set `DISABLE_UPDATE_CHECK=true` to make no request at all. The app never updates itself. See [Updating](https://insta-saved.gitnasr.com/docs/operations/updating).
 
----
+## Documentation
 
-## 🧑‍💻 Local Development
+Everything else lives at [insta-saved.gitnasr.com/docs](https://insta-saved.gitnasr.com/docs):
+
+[Instagram cookie](https://insta-saved.gitnasr.com/docs/getting-started/how-to-get-instagram-cookie) ·
+[Docker Compose](https://insta-saved.gitnasr.com/docs/deployment/docker-compose) ·
+[Dokploy](https://insta-saved.gitnasr.com/docs/deployment/dokploy) ·
+[Coolify](https://insta-saved.gitnasr.com/docs/deployment/coolify) ·
+[Reverse proxy and SSO](https://insta-saved.gitnasr.com/docs/deployment/reverse-proxy-and-sso) ·
+[Cloudinary](https://insta-saved.gitnasr.com/docs/features/cloudinary-cdn) ·
+[Backup and restore](https://insta-saved.gitnasr.com/docs/operations/backup-and-restore) ·
+[Updating](https://insta-saved.gitnasr.com/docs/operations/updating) ·
+[Troubleshooting](https://insta-saved.gitnasr.com/docs/operations/troubleshooting-faq)
+
+## Local development
 
 ```bash
-# 1. Clone repository
 git clone https://github.com/gitnasr/Instagram-Saved-Posts.git
 cd Instagram-Saved-Posts
-
-# 2. Install dependencies
 npm install
 
-# 3. Start local MongoDB with replica set (required for Prisma transactions)
+# MongoDB with a replica set (Prisma transactions need it)
 docker run -d -p 27017:27017 --name ig_mongo mongo:7.0 --replSet rs0
 docker exec ig_mongo mongosh --eval "rs.initiate()"
 
-# 4. Generate Prisma client & start dev server
 export DATABASE_URL="mongodb://localhost:27017/instagram?replicaSet=rs0&directConnection=true"
 npx prisma generate
 npm run dev
 ```
 
----
+## Contributing
 
-## 🤝 Contributing
+Pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
-Contributions are welcome! Please feel free to submit a Pull Request. Check out [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+## License
 
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE). Made by [gitnasr](https://gitnasr.com).

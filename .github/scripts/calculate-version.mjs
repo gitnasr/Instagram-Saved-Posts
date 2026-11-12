@@ -136,12 +136,12 @@ if (mode === "beta") {
   shouldRelease = true;
 
   console.log("==========================================");
-  console.log("🧪 CI/CD BETA VERSION CALCULATION");
-  console.log(`📦 Target Base Version:   ${targetReleaseVersion}`);
-  console.log(`🔢 PR Number:             ${prNumber}`);
-  console.log(`🚀 Calculated Beta Ver:   ${finalVersion}`);
-  console.log(`🏷️ Beta Tag:              ${finalTag}`);
-  console.log(`🐳 Image Name:            ${imageName}`);
+  console.log("CI/CD BETA VERSION CALCULATION");
+  console.log(`Target Base Version:   ${targetReleaseVersion}`);
+  console.log(`PR Number:             ${prNumber}`);
+  console.log(`Calculated Beta Ver:   ${finalVersion}`);
+  console.log(`Beta Tag:              ${finalTag}`);
+  console.log(`Image Name:            ${imageName}`);
   console.log("==========================================");
 } else {
   // Production Release mode
@@ -151,24 +151,24 @@ if (mode === "beta") {
   // Check if HEAD is already tagged with exact release tag
   const exactHeadTag = runGit("git describe --tags --exact-match HEAD");
   if (exactHeadTag && exactHeadTag === finalTag && !isTagPush && bumpType === "auto") {
-    console.log(`ℹ️ Current HEAD is already tagged as ${exactHeadTag}. No new release needed.`);
+    console.log(`ℹCurrent HEAD is already tagged as ${exactHeadTag}. No new release needed.`);
     shouldRelease = false;
   }
   if (autoSkip && !isTagPush && bumpType === "auto") {
-    console.log(`ℹ️ ${decision.reasons.join("; ")}. No release needed.`);
+    console.log(`ℹ${decision.reasons.join("; ")}. No release needed.`);
     shouldRelease = false;
   }
 
   const { major, minor } = parseSemver(finalVersion);
 
   console.log("==========================================");
-  console.log("🚀 CI/CD PRODUCTION RELEASE CALCULATION");
-  console.log(`📦 Calculated Version:    ${finalVersion}`);
-  console.log(`🏷️ Release Tag:           ${finalTag}`);
-  console.log(`🔖 Major/Minor:           v${major}.${minor}, v${major}`);
-  console.log(`🐳 Image Name:            ${imageName}`);
-  console.log(`✨ Should Release:        ${shouldRelease}`);
-  console.log(`🧪 Dry Run Mode:          ${dryRun}`);
+  console.log("CI/CD PRODUCTION RELEASE CALCULATION");
+  console.log(`Calculated Version:    ${finalVersion}`);
+  console.log(`Release Tag:           ${finalTag}`);
+  console.log(`Major/Minor:           v${major}.${minor}, v${major}`);
+  console.log(`Image Name:            ${imageName}`);
+  console.log(`Should Release:        ${shouldRelease}`);
+  console.log(`Dry Run Mode:          ${dryRun}`);
   console.log("==========================================");
 }
 

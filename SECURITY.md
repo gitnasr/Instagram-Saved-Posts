@@ -1,6 +1,6 @@
-# 🛡️ Security Policy
+# Security Policy
 
-## 🔒 Supported Versions
+## Supported Versions
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -8,7 +8,7 @@
 
 ---
 
-## 🚨 Reporting a Vulnerability
+## Reporting a Vulnerability
 
 Security issues are taken seriously. If you discover a vulnerability or security issue:
 
@@ -19,7 +19,7 @@ Security issues are taken seriously. If you discover a vulnerability or security
 
 ---
 
-## 🍪 Instagram Session & Cookie Safety
+## Instagram Session & Cookie Safety
 
 - Instagram session cookies grant full access to your Instagram account.
 - Cookies are stored securely in your MongoDB instance and are never transmitted to third parties (except direct API requests to `instagram.com`).

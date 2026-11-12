@@ -1,10 +1,10 @@
-# 🤝 Contributing to Instagram Saved Posts Tracker
+# Contributing to Instagram Saved Posts Tracker
 
 Thank you for your interest in contributing! We welcome bug reports, feature requests, documentation improvements, and pull requests.
 
 ---
 
-## 🛠️ Development Setup
+## Development Setup
 
 1. **Fork and Clone**:
    ```bash
@@ -37,7 +37,7 @@ Thank you for your interest in contributing! We welcome bug reports, feature req
 
 ---
 
-## 🧪 Testing & Code Quality
+## Testing & Code Quality
 
 Before opening a pull request, please verify:
 ```bash
@@ -48,7 +48,7 @@ npm run build         # Test Next.js production build
 
 ---
 
-## 🏷️ Commit messages & releases
+## Commit messages & releases
 
 Every push to `master` is released automatically. `.github/scripts/calculate-version.mjs` picks the version and `.github/scripts/generate-release-notes.mjs` writes the GitHub Release notes (what users should expect, grouped changes, upgrade commands). Both read your commit messages and changed files, so you steer the result like this (rules live in `.github/scripts/release-lib.mjs`, tests in `release.test.mjs`).
 
@@ -76,7 +76,7 @@ Check your changes locally with `node --test ".github/scripts/*.test.mjs"` and p
 
 ---
 
-## 📝 Pull Request Guidelines
+## Pull Request Guidelines
 
 - Create a feature branch (`git checkout -b feat/my-feature`).
 - Keep PRs focused and well-scoped.
