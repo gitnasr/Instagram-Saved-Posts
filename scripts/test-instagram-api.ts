@@ -5,6 +5,7 @@ import { classifyScrapeError, fetchLoggedInUser, fetchSavedPostsPage } from "../
 import { extractErrorInfo } from "../src/lib/scraper/errors";
 import { prisma } from "../src/lib/prisma";
 import { syncPostFromMedia } from "../src/lib/scraper/post-sync";
+import { findDuplicates } from "./purge-duplicate-posts";
 import type { InstagramMedia } from "../src/types/instagram";
 
 let seen: InternalAxiosRequestConfig[] = [];
@@ -85,6 +86,24 @@ async function main() {
   assert.equal(newPost.isNewPost, true);
   assert.equal(created, 1);
   assert.match(newPost.events[0].metadata ?? "", /3700000000000000123/);
+  // A post stored with its exact pk still matches when the API sends pk as a number again (run 136)
+  rows.push({ id: "b", pk: "4029452084071025569", thumbnailUrl: null });
+  const rounded = {
+    ...media("x"),
+    pk: Number("4029452084071025569"),
+    id: "4029452084071025569_5656659958",
+  } as InstagramMedia;
+  const exactPost = await syncPostFromMedia("p", 1, rounded, "t");
+  assert.equal(exactPost.isNewPost, false);
+  assert.equal(created, 1);
+
+  // The purge keeps the earliest row whichever pk form it holds
+  const row = (pk: string, scrapeRunId: number) => ({ pk, mediaId: "m", scrapeRunId });
+  const nov2 = findDuplicates([row("3489599198812897300", 120), row("3489599198812897070", 130)]);
+  assert.deepEqual(nov2.duplicates.map((r) => r.scrapeRunId), [130]);
+  const run136 = findDuplicates([row("4029452084071025569", 135), row("4029452084071025700", 136)]);
+  assert.deepEqual(run136.duplicates.map((r) => r.scrapeRunId), [136]);
+  assert.equal(findDuplicates([row("1", 1), row("2", 2)]).unresolved.length, 1);
 
   console.log("instagram-api ok");
 }
