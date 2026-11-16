@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { RotateCcw, Ban } from "lucide-react";
@@ -42,7 +43,14 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
 
   return (
     <div className="overflow-x-auto rounded-[6px] border border-hairline">
-      <Table>
+      <Table
+        containerProps={{
+          role: "region",
+          "aria-label": "Sync run history",
+          tabIndex: 0,
+          className: "focus-visible:outline-2 focus-visible:outline-primary/50",
+        }}
+      >
         <TableHeader className="bg-surface-2/60">
           <TableRow className="border-hairline hover:bg-transparent">
             <TableHead className="text-[11px] font-mono uppercase tracking-wider text-ink-subtle">Run</TableHead>
@@ -87,7 +95,16 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                 )}
                 onClick={() => router.push(`/scrape/${run.id}`)}
               >
-                <TableCell className="font-bold text-ink">#{run.id}</TableCell>
+                <TableCell className="font-bold text-ink">
+                  {/* Real link so keyboard/AT users can open a run; row click stays as a mouse shortcut */}
+                  <Link
+                    href={`/scrape/${run.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:underline focus-visible:underline"
+                  >
+                    #{run.id}
+                  </Link>
+                </TableCell>
                 <TableCell>
                   <div>
                     <span className="text-ink">{format(started, "MMM d, yyyy · HH:mm")}</span>

@@ -260,6 +260,8 @@ export function AccountMetadata({
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
+                    // Enter confirming an IME candidate must not submit (keyCode 229 covers Safari)
+                    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
                     handleAddExistsAlsoOption();
                   }
                 }}

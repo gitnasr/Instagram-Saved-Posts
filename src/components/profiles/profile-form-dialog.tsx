@@ -44,7 +44,8 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const trimmedName = name.trim();
     if (!trimmedName) {
       toast.error("Name is required");
@@ -100,6 +101,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
           </DialogDescription>
         </DialogHeader>
 
+        <form onSubmit={handleSubmit} className="space-y-4">
         <div className="min-w-0 space-y-4 pt-2">
           <div className="space-y-1.5">
             <Label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
@@ -109,6 +111,8 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
               id="profile-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
+              autoComplete="off"
               placeholder="e.g. My Account"
               className="text-xs"
             />
@@ -151,7 +155,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
         </div>
 
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={pending} size="sm" className="text-xs font-semibold">
+          <Button type="submit" disabled={pending} size="sm" className="text-xs font-semibold">
             {pending
               ? "Saving..."
               : isEdit
@@ -159,6 +163,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
                 : "Create Profile"}
           </Button>
         </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

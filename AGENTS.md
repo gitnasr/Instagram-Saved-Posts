@@ -30,3 +30,7 @@ Releases are automated; never hand-edit `package.json` version or create tags. T
 - `GET /api/updates` (`src/lib/updates.ts`, `src/components/settings/updates-settings.tsx`, sidebar `update-indicator.tsx`) reads GitHub Releases from the server and never updates the container itself.
 - `DISABLE_UPDATE_CHECK=true` must keep working: no outbound call, no error UI. Keep it documented in `.env.example`, README, and the [hosted updating guide](https://insta-saved.gitnasr.com/docs/operations/updating).
 - Any new outbound request from the server is a privacy claim: document it and make it opt-out.
+
+## Browser support
+
+**Browser Support:** Allow Newly Available web features if feature-detected with graceful degradation; no polyfill dependencies.

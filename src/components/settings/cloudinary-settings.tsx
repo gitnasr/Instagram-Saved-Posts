@@ -290,6 +290,7 @@ export function CloudinarySettings() {
                 placeholder="123456789012345"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
+                autoComplete="off"
                 className="font-mono text-xs bg-surface-1"
               />
             </div>
@@ -302,6 +303,7 @@ export function CloudinarySettings() {
                   placeholder="••••••••••••••••••••••••••"
                   value={apiSecret}
                   onChange={(e) => setApiSecret(e.target.value)}
+                  autoComplete="new-password"
                   className="font-mono text-xs bg-surface-1 pr-9"
                 />
                 <Button
@@ -310,6 +312,7 @@ export function CloudinarySettings() {
                   size="icon-xs"
                   className="absolute right-1 top-1/2 -translate-y-1/2 size-7 text-ink-muted hover:text-ink"
                   onClick={() => setShowSecret(!showSecret)}
+                  aria-label={showSecret ? "Hide API secret" : "Show API secret"}
                 >
                   {showSecret ? (
                     <EyeOff className="size-3.5" />

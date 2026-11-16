@@ -37,7 +37,6 @@ export function ThemeToggle({
         className
       )}
       aria-label={actionLabel}
-      aria-pressed={mounted ? isDark : undefined}
       title={actionLabel}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >

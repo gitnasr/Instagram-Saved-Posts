@@ -25,6 +25,8 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't hijack arrows while the user is typing (e.g. editing a note) or on a control
+      if ((e.target as HTMLElement | null)?.closest("input, textarea, select, [contenteditable]")) return;
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };
@@ -51,7 +53,12 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
   const current = items[currentIndex];
 
   return (
-    <div className="relative flex w-full items-center justify-center select-none">
+    <div
+      role="group"
+      aria-roledescription="carousel"
+      aria-label="Post media"
+      className="relative flex w-full items-center justify-center select-none"
+    >
       {/* Preload other images for instant transitions */}
       <div className="hidden" aria-hidden="true">
         {items.map((item) =>
@@ -61,13 +68,24 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
               key={item.id}
               src={item.cloudinaryUrl ?? proxyImageUrl(item.mediaUrl)}
               alt=""
+              fetchPriority="low"
             />
           ) : null
         )}
       </div>
 
       {/* Main Slide Media */}
-      <div className="relative flex max-h-[46vh] w-full items-center justify-center overflow-hidden rounded-[6px] bg-surface-2 border border-hairline md:max-h-[75vh]">
+      <div
+        role="group"
+        aria-roledescription="slide"
+        aria-label={`${currentIndex + 1} of ${items.length}`}
+        className="relative flex max-h-[46vh] w-full items-center justify-center overflow-hidden rounded-[6px] bg-surface-2 border border-hairline md:max-h-[75vh]"
+      >
+        {items.length > 1 && (
+          <p className="sr-only" role="status" aria-live="polite">
+            Slide {currentIndex + 1} of {items.length}
+          </p>
+        )}
         {current.mediaType === 2 && current.videoUrl ? (
           <video
             key={current.id}
@@ -129,6 +147,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
                 }`}
                 onClick={() => setCurrentIndex(idx)}
                 aria-label={`Go to slide ${idx + 1}`}
+                aria-current={idx === currentIndex ? "true" : undefined}
               />
             ))}
           </div>
