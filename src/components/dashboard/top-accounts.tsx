@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { proxyImageUrl } from "@/lib/proxy-image";
 import Link from "next/link";
-import { BadgeCheck, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { AccountFlags } from "@/components/accounts/account-flags";
 import { ProfileLink } from "@/components/accounts/profile-link";
 import type { Account } from "@/types";
 
@@ -50,9 +51,7 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1 truncate text-sm font-medium text-ink">
                   @{account.username}
-                  {account.isVerified && (
-                    <BadgeCheck aria-label="Verified" className="size-3.5 shrink-0 text-amber-500" />
-                  )}
+                  <AccountFlags account={account} />
                 </p>
                 <p className="truncate text-xs text-ink-muted">
                   {account.fullName || "No full name"}

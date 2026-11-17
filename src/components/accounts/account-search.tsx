@@ -5,14 +5,25 @@ import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Toolbar } from "@/components/ui/toolbar";
 import { AccountFiltersPanel } from "@/components/accounts/account-filters";
-import { ArrowUp, ArrowDown, ArrowUpDown, Search, Download, X } from "lucide-react";
+import {
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  CheckSquare,
+  Download,
+  MoreHorizontal,
+  Search,
+  X,
+} from "lucide-react";
 import type { AccountFilters } from "@/hooks/use-accounts";
 import {
   ACCOUNT_FILTERS,
@@ -31,6 +42,9 @@ interface AccountSearchProps {
   filters: AccountFilters;
   onFiltersChange: (filters: AccountFilters) => void;
   onExport: () => void;
+  onToggleSelectPage: () => void;
+  allOnPageSelected: boolean;
+  canSelectPage: boolean;
 }
 
 const SORT_LABELS: Record<string, string> = {
@@ -52,6 +66,9 @@ export function AccountSearch({
   filters,
   onFiltersChange,
   onExport,
+  onToggleSelectPage,
+  allOnPageSelected,
+  canSelectPage,
 }: AccountSearchProps) {
   const [draftSearch, setDraftSearch] = useState(search);
   const [lastSearch, setLastSearch] = useState(search);
@@ -81,95 +98,87 @@ export function AccountSearch({
     return () => window.clearTimeout(timeout);
   }, [draftSearch, onSearchChange, search]);
 
+  const exportBlocked = filters.ignoredStatus === "ignored";
+
   return (
-    <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 border-y border-hairline bg-surface-1 px-4 py-3 sm:mx-0 sm:rounded-lg sm:border md:top-0">
-      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+    <Toolbar>
+      <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-subtle" />
           <Input
-            placeholder="Search by username, full name, or tag..."
+            placeholder="Search username, name or tag"
+            aria-label="Search accounts"
             value={draftSearch}
             onChange={(e) => setDraftSearch(e.target.value)}
-            className="h-9 pl-9 bg-surface-1/90 border-hairline text-sm"
+            className="h-9 pl-9 text-sm"
             inputMode="search"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-          <AccountFiltersPanel
-            filters={filters}
-            onFiltersChange={onFiltersChange}
-          />
+        <AccountFiltersPanel filters={filters} onFiltersChange={onFiltersChange} />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 w-full sm:w-auto text-xs"
-              >
-                <ArrowUpDown className="size-3.5" />
-                {SORT_LABELS[sort] ?? "Sort"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-surface-1 border border-hairline">
-              <DropdownMenuRadioGroup value={sort} onValueChange={onSortChange}>
-                <DropdownMenuRadioItem value="post_count" className="text-xs">Post Count</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="username" className="text-xs">Username</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="last_seen" className="text-xs">Last Scraped</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="first_seen" className="text-xs">First Discovered</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="verified" className="text-xs">Verified</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="lost_at" className="text-xs">Went Missing</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-9 text-xs">
+              <ArrowUpDown className="size-3.5" />
+              <span className="hidden sm:inline">{SORT_LABELS[sort] ?? "Sort"}</span>
+              <span className="sr-only sm:hidden">Sort: {SORT_LABELS[sort] ?? "Sort"}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-surface-1 border border-hairline">
+            <DropdownMenuRadioGroup value={sort} onValueChange={onSortChange}>
+              {Object.entries(SORT_LABELS).map(([value, label]) => (
+                <DropdownMenuRadioItem key={value} value={value} className="text-xs">
+                  {label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 w-full sm:w-auto text-xs"
-            onClick={() => onOrderChange(order === "desc" ? "asc" : "desc")}
-            title={
-              order === "desc"
-                ? "Descending, click for ascending"
-                : "Ascending, click for descending"
-            }
-          >
-            {order === "desc" ? (
-              <ArrowDown className="size-3.5" />
-            ) : (
-              <ArrowUp className="size-3.5" />
-            )}
-            {order === "desc" ? "Desc" : "Asc"}
-          </Button>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          className="size-9"
+          onClick={() => onOrderChange(order === "desc" ? "asc" : "desc")}
+          aria-label={order === "desc" ? "Descending. Switch to ascending" : "Ascending. Switch to descending"}
+          title={order === "desc" ? "Descending" : "Ascending"}
+        >
+          {order === "desc" ? <ArrowDown className="size-3.5" /> : <ArrowUp className="size-3.5" />}
+        </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="col-span-2 h-9 w-full sm:col-span-1 sm:w-auto text-xs"
-            onClick={onExport}
-            disabled={filters.ignoredStatus === "ignored"}
-            title={
-              filters.ignoredStatus === "ignored"
-                ? "Ignored accounts are never exported — clear the Ignored filter"
-                : "Export the filtered accounts, excluding ignored ones"
-            }
-          >
-            <Download className="size-3.5" />
-            Export CSV
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon-sm" className="size-9" aria-label="More actions">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-surface-1 border border-hairline">
+            <DropdownMenuItem
+              className="text-xs"
+              disabled={!canSelectPage}
+              onSelect={onToggleSelectPage}
+            >
+              <CheckSquare className="size-3.5" />
+              {allOnPageSelected ? "Deselect page" : "Select page"}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-xs" disabled={exportBlocked} onSelect={onExport}>
+              <Download className="size-3.5" />
+              {exportBlocked ? "Export CSV (clear the Ignored filter)" : "Export CSV"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {activeFilters.length > 0 && (
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {activeFilters.map((chip) => (
-            <Badge key={chip.key} variant="secondary" className="shrink-0 gap-1 text-xs bg-surface-2 border-hairline py-0.5">
+            <Badge key={chip.key} variant="secondary" className="shrink-0 gap-1 border-hairline bg-surface-2 py-0.5 text-xs">
               {chip.label}
               <button
                 type="button"
                 aria-label={`Remove filter ${chip.label}`}
-                className="-mr-0.5 rounded-sm opacity-60 hover:opacity-100 hover:text-red-400 transition-colors"
+                className="-mr-0.5 rounded-sm opacity-60 transition-colors hover:text-red-400 hover:opacity-100"
                 onClick={() => removeFilter(chip.key as AccountFilterKey)}
               >
                 <X className="h-3 w-3" />
@@ -178,6 +187,6 @@ export function AccountSearch({
           ))}
         </div>
       )}
-    </div>
+    </Toolbar>
   );
 }

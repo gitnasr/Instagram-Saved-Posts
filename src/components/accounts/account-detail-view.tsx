@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { AccountFlags } from "@/components/accounts/account-flags";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccountMetadata } from "@/components/accounts/account-metadata";
@@ -106,38 +106,7 @@ export function AccountDetailView({
               <h1 className="text-xl font-bold tracking-tight text-ink">
                 @{account.username}
               </h1>
-              {account.isVerified && (
-                <Badge
-                  variant="default"
-                  className="text-xs px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono"
-                >
-                  Verified
-                </Badge>
-              )}
-              {account.isPrivate && (
-                <Badge
-                  variant="outline"
-                  className="text-xs px-1.5 py-0 h-4 border-hairline text-ink-muted"
-                >
-                  Private
-                </Badge>
-              )}
-              {account.lostAt && (
-                <Badge
-                  variant="destructive"
-                  className="text-xs px-1.5 py-0 h-4"
-                >
-                  Lost
-                </Badge>
-              )}
-              {account.ignoredAt && (
-                <Badge
-                  variant="outline"
-                  className="text-xs px-1.5 py-0 h-4 border-hairline text-ink-subtle"
-                >
-                  Ignored
-                </Badge>
-              )}
+              <AccountFlags account={account} className="gap-1.5 [&_svg]:size-4" />
             </div>
             <p className="text-xs text-ink-muted mt-0.5">
               {account.fullName || "No full display name"}

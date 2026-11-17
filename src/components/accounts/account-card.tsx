@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { AccountFlags } from "@/components/accounts/account-flags";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { proxyImageUrl } from "@/lib/proxy-image";
@@ -32,7 +32,7 @@ export function AccountCard({
   return (
     <Card
       className={cn(
-        "relative rounded-lg py-0 transition-all border border-hairline bg-surface-1 hover:bg-surface-2 hover:border-hairline-strong",
+        "relative rounded-lg py-0 [content-visibility:auto] [contain-intrinsic-size:auto_64px] transition-all border border-hairline bg-surface-1 hover:bg-surface-2 hover:border-hairline-strong",
         isIgnored && "opacity-50",
         selected && "border-primary ring-1 ring-primary/40 bg-surface-2",
         isLastVisited && "border-primary/60 ring-1 ring-primary/25"
@@ -69,36 +69,20 @@ export function AccountCard({
         <div className="flex-1 min-w-0">
           <div className="flex min-w-0 items-center gap-1.5 flex-wrap">
             <p className="font-semibold text-sm text-ink truncate">@{account.username}</p>
-            {account.isVerified && (
-              <Badge variant="default" className="text-xs px-1 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono">
-                Verified
-              </Badge>
-            )}
-            {account.isPrivate && (
-              <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-hairline text-ink-muted">
-                Private
-              </Badge>
-            )}
-            {account.lostAt && (
-              <Badge variant="destructive" className="text-xs px-1 py-0 h-4">
-                Lost
-              </Badge>
-            )}
-            {isIgnored && (
-              <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-hairline text-ink-subtle">
-                Ignored
-              </Badge>
-            )}
+            <AccountFlags account={account} />
           </div>
           <p className="text-xs text-ink-muted truncate mt-0.5">
             {account.fullName || "No full name"}
           </p>
         </div>
 
-        <div className="shrink-0 text-right pr-1">
-          <p className="text-base font-bold font-mono text-ink leading-tight">{account.savedPostCount}</p>
-          <p className="text-xs uppercase font-mono text-ink-subtle">posts</p>
-        </div>
+        <span
+          className="shrink-0 pr-1 font-mono text-sm font-semibold text-ink"
+          title="Saved posts"
+          aria-label={`${account.savedPostCount} saved posts`}
+        >
+          {account.savedPostCount}
+        </span>
 
         {onToggleIgnore && (
           <Button

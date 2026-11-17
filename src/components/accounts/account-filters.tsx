@@ -98,7 +98,7 @@ export function AccountFiltersPanel({
         <Button
           variant="outline"
           size="sm"
-          className="relative h-10 w-full sm:w-auto"
+          className="relative h-9 text-xs"
         >
           <Filter data-icon="inline-start" />
           Filters

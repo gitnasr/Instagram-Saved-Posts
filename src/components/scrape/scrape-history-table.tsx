@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { StatusText } from "@/components/ui/status-text";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,13 @@ const ERROR_KIND_LABEL: Record<string, string> = {
   fatal: "unexpected error",
 };
 
+const STATUS_TONE = {
+  completed: "success",
+  running: "warn",
+  failed: "danger",
+  interrupted: "warn",
+} as const;
+
 export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
   const router = useRouter();
   const resumeMutation = useResumeScrape();
@@ -35,14 +43,14 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
 
   if (runs.length === 0) {
     return (
-      <p className="py-12 text-center text-xs font-mono text-ink-muted">
+      <p className="py-12 text-center text-sm text-ink-muted">
         No sync runs recorded yet. Click &quot;Run Sync&quot; to fetch your saved posts.
       </p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-hairline">
+    <div className="rounded-lg border border-hairline">
       <Table
         containerProps={{
           role: "region",
@@ -51,51 +59,41 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
           className: "focus-visible:outline-2 focus-visible:outline-primary/50",
         }}
       >
-        <TableHeader className="bg-surface-2/60">
+        <TableHeader>
           <TableRow className="border-hairline hover:bg-transparent">
             <TableHead className="text-eyebrow text-ink-subtle">Run</TableHead>
             <TableHead className="text-eyebrow text-ink-subtle">Started</TableHead>
             <TableHead className="text-eyebrow text-ink-subtle">Status</TableHead>
-            <TableHead className="text-eyebrow text-right text-ink-subtle">Pages</TableHead>
-            <TableHead className="text-eyebrow text-right text-ink-subtle">Found</TableHead>
-            <TableHead className="text-eyebrow text-right text-ink-subtle">New Posts</TableHead>
-            <TableHead className="text-eyebrow text-right text-ink-subtle">New Creators</TableHead>
+            <TableHead className="text-eyebrow text-right text-ink-subtle">Added</TableHead>
             <TableHead className="text-eyebrow text-right text-ink-subtle">Duration</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {runs.map((run) => {
             const started = new Date(run.startedAt);
-            const completed = run.completedAt
-              ? new Date(run.completedAt)
-              : null;
+            const completed = run.completedAt ? new Date(run.completedAt) : null;
             const duration = completed
-              ? Math.round(
-                  (completed.getTime() - started.getTime()) / 1000
-                )
+              ? Math.round((completed.getTime() - started.getTime()) / 1000)
               : null;
             const isFailed = run.status === "failed";
             const isInterrupted = run.status === "interrupted";
             const isRunning = run.status === "running";
             const canResume =
-              !isRunning &&
-              run.status !== "completed" &&
-              Boolean(run.checkpointMaxId);
-            const errorKindLabel = run.errorKind
-              ? ERROR_KIND_LABEL[run.errorKind]
-              : null;
+              !isRunning && run.status !== "completed" && Boolean(run.checkpointMaxId);
+            const errorKindLabel = run.errorKind ? ERROR_KIND_LABEL[run.errorKind] : null;
+            const tone = STATUS_TONE[run.status as keyof typeof STATUS_TONE] ?? "muted";
 
             return (
               <TableRow
                 key={run.id}
                 className={cn(
-                  "cursor-pointer hover:bg-surface-2 border-hairline transition-colors text-xs font-mono",
+                  "cursor-pointer border-hairline text-sm hover:bg-surface-2",
                   isFailed && "bg-red-500/5",
                   isInterrupted && "bg-amber-500/5"
                 )}
                 onClick={() => router.push(`/scrape/${run.id}`)}
               >
-                <TableCell className="font-bold text-ink">
+                <TableCell className="font-mono font-semibold text-ink">
                   {/* Real link so keyboard/AT users can open a run; row click stays as a mouse shortcut */}
                   <Link
                     href={`/scrape/${run.id}`}
@@ -106,48 +104,31 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                   </Link>
                 </TableCell>
                 <TableCell>
-                  <div>
-                    <span className="text-ink">{format(started, "MMM d, yyyy · HH:mm")}</span>
-                    {isFailed && run.errorMessage && (
-                      <p className="text-xs text-red-400 mt-0.5 max-w-56 truncate font-sans">
-                        {run.errorMessage}
-                      </p>
-                    )}
-                    {isInterrupted && (
-                      <p className="text-xs text-ink-muted mt-0.5 font-sans">
-                        Stopped at page {run.pagesScraped}
-                        {errorKindLabel ? ` — ${errorKindLabel}` : ""}
-                      </p>
-                    )}
-                    {(run.retryCount > 0 || run.resumeCount > 0) && (
-                      <p className="text-xs text-ink-subtle mt-0.5">
-                        {run.retryCount > 0 && `${run.retryCount} retries`}
-                        {run.retryCount > 0 && run.resumeCount > 0 && " · "}
-                        {run.resumeCount > 0 && `resumed ${run.resumeCount}×`}
-                      </p>
-                    )}
-                  </div>
+                  <span className="text-ink">{format(started, "MMM d, yyyy · HH:mm")}</span>
+                  {isFailed && run.errorMessage && (
+                    <p className="mt-0.5 max-w-56 truncate text-xs text-red-400">
+                      {run.errorMessage}
+                    </p>
+                  )}
+                  {isInterrupted && (
+                    <p className="mt-0.5 text-xs text-ink-muted">
+                      Stopped at page {run.pagesScraped}
+                      {errorKindLabel ? ` · ${errorKindLabel}` : ""}
+                    </p>
+                  )}
+                  {(run.retryCount > 0 || run.resumeCount > 0) && (
+                    <p className="mt-0.5 text-xs text-ink-subtle">
+                      {run.retryCount > 0 && `${run.retryCount} retries`}
+                      {run.retryCount > 0 && run.resumeCount > 0 && " · "}
+                      {run.resumeCount > 0 && `resumed ${run.resumeCount}×`}
+                    </p>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {run.status === "completed" ? (
-                      <span className="inline-flex items-center rounded-sm bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-emerald-400">
-                        Completed
-                      </span>
-                    ) : run.status === "running" ? (
-                      <span className="inline-flex items-center gap-1 rounded-sm bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-amber-400">
-                        <span className="size-1 rounded-full bg-amber-400 animate-ping" />
-                        Running
-                      </span>
-                    ) : run.status === "failed" ? (
-                      <span className="inline-flex items-center rounded-sm bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-red-400">
-                        Failed
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-sm bg-surface-2 border border-hairline px-2 py-0.5 text-xs uppercase text-ink-muted">
-                        {run.status}
-                      </span>
-                    )}
+                    <StatusText tone={tone} live={isRunning}>
+                      <span className="capitalize">{run.status}</span>
+                    </StatusText>
                     {canResume && (
                       <Button
                         size="xs"
@@ -159,7 +140,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                         }}
                         disabled={resumeMutation.isPending}
                       >
-                        <RotateCcw className="size-3 mr-1" />
+                        <RotateCcw className="mr-1 size-3" />
                         Resume
                       </Button>
                     )}
@@ -167,30 +148,22 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                       <Button
                         size="xs"
                         variant="outline"
-                        className="h-6 px-2 text-xs font-semibold text-red-400 border-red-500/30 hover:bg-red-500/10"
+                        className="h-6 border-red-500/30 px-2 text-xs font-semibold text-red-400 hover:bg-red-500/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           cancelMutation.mutate(run.id);
                         }}
                         disabled={cancelMutation.isPending}
                       >
-                        <Ban className="size-3 mr-1" />
+                        <Ban className="mr-1 size-3" />
                         Cancel
                       </Button>
                     )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right text-ink-muted">
-                  {run.pagesScraped}
-                </TableCell>
-                <TableCell className="text-right text-ink-muted">
-                  {run.totalPostsFound}
-                </TableCell>
-                <TableCell className="text-right font-bold text-amber-500">
-                  +{run.newPostsAdded}
-                </TableCell>
-                <TableCell className="text-right text-ink-muted">
-                  +{run.newAccountsFound}
+                  <span className="font-semibold text-amber-500">+{run.newPostsAdded}</span> posts
+                  <span className="text-ink-subtle"> · </span>+{run.newAccountsFound} creators
                 </TableCell>
                 <TableCell className="text-right text-ink-subtle">
                   {duration !== null ? `${duration}s` : "-"}

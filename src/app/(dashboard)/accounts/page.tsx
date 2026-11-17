@@ -18,7 +18,6 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  CheckSquare,
   PanelRightOpen,
 } from "lucide-react";
 import type { Account } from "@/types";
@@ -169,6 +168,9 @@ function AccountsContent() {
         filters={filters}
         onFiltersChange={setFilters}
         onExport={handleExport}
+        onToggleSelectPage={toggleSelectAllOnPage}
+        allOnPageSelected={allOnPageSelected}
+        canSelectPage={pageAccounts.length > 0}
       />
 
       {isLoading ? (
@@ -179,20 +181,8 @@ function AccountsContent() {
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleSelectAllOnPage}
-              disabled={pageAccounts.length === 0}
-              className="text-xs h-8"
-            >
-              <CheckSquare className="size-3.5" />
-              {allOnPageSelected ? "Deselect Page" : "Select Page"}
-            </Button>
-
-            {selectedPks.size > 0 && (
-              <>
+          {selectedPks.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-mono text-ink-muted bg-surface-2 px-2.5 py-1 rounded-sm border border-hairline">
                   {selectedPks.size} selected
                 </span>
@@ -234,9 +224,8 @@ function AccountsContent() {
                 >
                   Clear
                 </Button>
-              </>
+              </div>
             )}
-          </div>
 
           <AccountsGrid
             accounts={pageAccounts}
