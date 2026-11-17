@@ -61,7 +61,7 @@ export function AccountDetailView({
       <div className="py-16 text-center text-ink-muted">
         <p className="text-base font-semibold">Account not found</p>
         {showBreadcrumb && (
-          <Button asChild variant="outline" size="sm" className="mt-4">
+          <Button asChild variant="outline" className="mt-4">
             <Link href="/accounts">
               <ArrowLeft className="mr-1.5 size-3.5" /> Back to accounts
             </Link>
@@ -132,7 +132,6 @@ export function AccountDetailView({
             <Button
               asChild
               variant="outline"
-              size="sm"
               className="border-hairline hover:bg-surface-2 text-xs"
             >
               <a
@@ -148,7 +147,6 @@ export function AccountDetailView({
           <Button
             asChild
             variant="outline"
-            size="sm"
             className="border-hairline hover:bg-surface-2 text-xs"
           >
             <a href={igAccountUrl} target="_blank" rel="noopener noreferrer">
@@ -203,7 +201,6 @@ export function AccountDetailView({
           <div className="flex items-center justify-center gap-2 mt-6">
             <Button
               variant="outline"
-              size="sm"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
               className="text-xs"
@@ -216,7 +213,6 @@ export function AccountDetailView({
             </span>
             <Button
               variant="outline"
-              size="sm"
               disabled={page >= pagination.totalPages}
               onClick={() => setPage((p) => p + 1)}
               className="text-xs"

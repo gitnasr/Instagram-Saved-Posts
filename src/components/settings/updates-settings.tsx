@@ -59,7 +59,7 @@ function CopyCommand() {
   return (
     <div className="flex items-center justify-between gap-2 rounded-sm border border-hairline bg-surface-2/40 py-1.5 pl-3 pr-1.5">
       <code className="min-w-0 break-all font-mono text-xs text-foreground">{UPDATE_COMMAND}</code>
-      <Button variant="ghost" size="icon-xs" onClick={copy} aria-label="Copy update command">
+      <Button variant="ghost" size="icon" onClick={copy} aria-label="Copy update command">
         <Copy />
       </Button>
     </div>
@@ -136,7 +136,7 @@ export function UpdatesSettings() {
                 </span>
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={onCheck} disabled={disabled || isFetching} className="text-xs">
+            <Button variant="outline" onClick={onCheck} disabled={disabled || isFetching} className="text-xs">
               {isFetching ? <Loader2 className="motion-safe:animate-spin" /> : <RefreshCw />}
               {isFetching ? "Checking..." : "Check for updates"}
             </Button>

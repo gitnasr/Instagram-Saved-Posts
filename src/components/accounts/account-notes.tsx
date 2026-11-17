@@ -57,9 +57,8 @@ export function AccountNotes({ username }: AccountNotesProps) {
         </CardTitle>
         {!showForm && (
           <Button
-            size="sm"
             variant="outline"
-            className="text-xs h-8"
+            className="text-xs"
             onClick={() => setShowForm(true)}
           >
             <Plus className="mr-1 size-3.5" />
@@ -81,9 +80,8 @@ export function AccountNotes({ username }: AccountNotesProps) {
             />
             <div className="flex justify-end gap-2">
               <Button
-                size="sm"
                 variant="ghost"
-                className="text-xs h-7"
+                className="text-xs"
                 onClick={() => {
                   setShowForm(false);
                   setNewContent("");
@@ -93,8 +91,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
                 Cancel
               </Button>
               <Button
-                size="sm"
-                className="text-xs h-7 font-semibold"
+                className="text-xs font-semibold"
                 onClick={handleAdd}
                 disabled={!newContent.trim() || isAdding}
               >
@@ -122,9 +119,9 @@ export function AccountNotes({ username }: AccountNotesProps) {
                 </p>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <Button
-                    size="icon-xs"
+                    size="icon"
                     variant="ghost"
-                    className="h-6 w-6 text-destructive opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                    className="text-destructive opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                     onClick={() => handleDelete(note.id)}
                     disabled={isDeleting}
                     title="Delete note"

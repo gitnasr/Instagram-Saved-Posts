@@ -30,7 +30,7 @@ export function ThemeToggle({
     <Button
       type="button"
       variant="outline"
-      size={showLabel ? "sm" : "icon-sm"}
+      size={showLabel ? "default" : "icon"}
       className={cn(
         "border-hairline bg-surface-1/40 hover:bg-surface-2 text-ink-muted hover:text-foreground transition-all",
         showLabel && "w-full justify-start text-xs font-medium gap-2",

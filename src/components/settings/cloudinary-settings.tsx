@@ -154,7 +154,6 @@ export function CloudinarySettings() {
       onClick={handleSync}
       disabled={syncDisabled}
       variant="outline"
-      size="sm"
       className="text-xs font-semibold border-hairline hover:bg-surface-2"
     >
       {isSyncing ? (
@@ -192,7 +191,6 @@ export function CloudinarySettings() {
           <div className="flex justify-end">
             <Button
               variant="ghost"
-              size="sm"
               className="gap-1.5 text-xs text-ink-muted hover:text-ink"
               onClick={() => refetchConfig()}
               disabled={isConfigLoading}
@@ -286,8 +284,8 @@ export function CloudinarySettings() {
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-xs"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 size-7 text-ink-muted hover:text-ink"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
                   onClick={() => setShowSecret(!showSecret)}
                   aria-label={showSecret ? "Hide API secret" : "Show API secret"}
                 >
@@ -304,7 +302,6 @@ export function CloudinarySettings() {
               <Button
                 onClick={handleSaveCredentials}
                 disabled={saveConfig.isPending || !cloudName || !apiKey || !apiSecret}
-                size="sm"
                 className="text-xs font-semibold gap-1.5"
               >
                 {saveConfig.isPending ? (
@@ -320,7 +317,6 @@ export function CloudinarySettings() {
               {isEditing && (
                 <Button
                   variant="outline"
-                  size="sm"
                   className="text-xs"
                   onClick={() => {
                     setIsEditing(false);
@@ -340,7 +336,6 @@ export function CloudinarySettings() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              size="sm"
               className="text-xs font-semibold border-hairline hover:bg-surface-2"
               onClick={() => setIsEditing(true)}
             >
@@ -348,7 +343,6 @@ export function CloudinarySettings() {
             </Button>
             <Button
               variant="ghost"
-              size="sm"
               className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
               onClick={handleDisconnect}
               disabled={deleteConfig.isPending}

@@ -82,7 +82,7 @@ export function IndexCallouts({
           icon={<Database className="size-4 text-ink-muted" />}
           title="Vector Search is not enabled"
           action={
-            <Button asChild size="sm" variant="outline" className="shrink-0 gap-1.5 text-xs">
+            <Button asChild variant="outline" className="shrink-0 gap-1.5 text-xs">
               <a href={VECTOR_SEARCH_DOCS_URL} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-3.5" />
                 How to enable it
@@ -103,7 +103,6 @@ export function IndexCallouts({
           title="Last index run failed"
           action={
             <Button
-              size="sm"
               variant="outline"
               onClick={onReindex}
               disabled={reindexPending || running}
@@ -124,7 +123,7 @@ export function IndexCallouts({
           icon={<Database className="size-4 text-amber-400" />}
           title="Archive not indexed yet"
           action={
-            <Button size="sm" onClick={onReindex} disabled={reindexPending || running} className="shrink-0 gap-1.5">
+            <Button onClick={onReindex} disabled={reindexPending || running} className="shrink-0 gap-1.5">
               <Sparkles className="size-3.5" />
               Index archive
             </Button>

@@ -188,9 +188,8 @@ function AccountsContent() {
                 </span>
                 <Button
                   variant="secondary"
-                  size="sm"
                   onClick={handleBulkOpen}
-                  className="text-xs h-8 gap-1.5"
+                  className="text-xs gap-1.5"
                   title="Inspect selected accounts without leaving the page"
                 >
                   <PanelRightOpen className="size-3.5" />
@@ -198,29 +197,26 @@ function AccountsContent() {
                 </Button>
                 <Button
                   variant="secondary"
-                  size="sm"
                   disabled={isBulkPending}
                   onClick={() => handleBulkIgnore(true)}
-                  className="text-xs h-8"
+                  className="text-xs"
                 >
                   <EyeOff className="size-3.5" />
                   Ignore
                 </Button>
                 <Button
                   variant="secondary"
-                  size="sm"
                   disabled={isBulkPending}
                   onClick={() => handleBulkIgnore(false)}
-                  className="text-xs h-8"
+                  className="text-xs"
                 >
                   <Eye className="size-3.5" />
                   Un-ignore
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={() => setSelectedPks(new Set())}
-                  className="text-xs h-8"
+                  className="text-xs"
                 >
                   Clear
                 </Button>
@@ -238,7 +234,6 @@ function AccountsContent() {
             <div className="flex items-center justify-center gap-2 pt-4">
               <Button
                 variant="outline"
-                size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
                 className="text-xs"
@@ -251,7 +246,6 @@ function AccountsContent() {
               </span>
               <Button
                 variant="outline"
-                size="sm"
                 disabled={page >= data.pagination.totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 className="text-xs"

@@ -119,7 +119,7 @@ export function AccountSearch({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 text-xs">
+            <Button variant="outline" className="text-xs">
               <ArrowUpDown className="size-3.5" />
               <span className="hidden sm:inline">{SORT_LABELS[sort] ?? "Sort"}</span>
               <span className="sr-only sm:hidden">Sort: {SORT_LABELS[sort] ?? "Sort"}</span>
@@ -138,8 +138,7 @@ export function AccountSearch({
 
         <Button
           variant="outline"
-          size="icon-sm"
-          className="size-9"
+          size="icon"
           onClick={() => onOrderChange(order === "desc" ? "asc" : "desc")}
           aria-label={order === "desc" ? "Descending. Switch to ascending" : "Ascending. Switch to descending"}
           title={order === "desc" ? "Descending" : "Ascending"}
@@ -149,7 +148,7 @@ export function AccountSearch({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon-sm" className="size-9" aria-label="More actions">
+            <Button variant="outline" size="icon" aria-label="More actions">
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>

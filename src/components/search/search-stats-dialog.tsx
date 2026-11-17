@@ -116,7 +116,7 @@ export function SearchStatsDialog({ open, onOpenChange, status, isLoading }: Sea
 
         <DialogFooter className="flex w-full justify-between sm:justify-between">
           {dashboardUrl ? (
-            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Button asChild variant="outline" className="gap-1.5 text-xs">
               <a href={dashboardUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-3.5" />
                 Qdrant dashboard
@@ -125,7 +125,7 @@ export function SearchStatsDialog({ open, onOpenChange, status, isLoading }: Sea
           ) : (
             <div />
           )}
-          <Button size="sm" onClick={() => onOpenChange(false)}>
+          <Button onClick={() => onOpenChange(false)}>
             Close
           </Button>
         </DialogFooter>

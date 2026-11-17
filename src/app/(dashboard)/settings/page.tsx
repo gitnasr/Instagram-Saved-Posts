@@ -175,7 +175,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <Button onClick={handleSave} disabled={disabled} size="sm" className="text-xs font-semibold">
+              <Button onClick={handleSave} disabled={disabled} className="text-xs font-semibold">
                 <Save className="mr-1.5 size-3.5" />
                 {update.isPending ? "Saving…" : "Save profile"}
               </Button>

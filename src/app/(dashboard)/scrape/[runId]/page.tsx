@@ -80,7 +80,6 @@ export default function RunDetailPage({
     Boolean(run.checkpointMaxId);
   const resumeButton = (
     <Button
-      size="sm"
       variant="secondary"
       onClick={() => resumeMutation.mutate(run.id)}
       disabled={resumeMutation.isPending}

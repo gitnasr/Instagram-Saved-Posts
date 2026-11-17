@@ -81,13 +81,12 @@ export default function SearchPage() {
                     : "Qdrant offline"}
               </StatusText>
             )}
-            <Button variant="outline" size="sm" onClick={() => setShowStatsModal(true)} className="gap-1.5 text-xs">
+            <Button variant="outline" onClick={() => setShowStatsModal(true)} className="gap-1.5 text-xs">
               <BarChart3 className="size-3.5" />
               Statistics
             </Button>
             <Button
               variant="outline"
-              size="sm"
               onClick={handleReindex}
               disabled={reindexMutation.isPending || isIndexRunning || isLoadingStatus}
               className="gap-1.5 text-xs"
@@ -178,10 +177,10 @@ export default function SearchPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" size="sm" onClick={() => setShowIndexModal(false)}>
+            <Button variant="ghost" onClick={() => setShowIndexModal(false)}>
               Cancel
             </Button>
-            <Button size="sm" onClick={handleReindex} className="gap-1.5">
+            <Button onClick={handleReindex} className="gap-1.5">
               <Sparkles className="size-3.5" />
               Index saved posts now
             </Button>

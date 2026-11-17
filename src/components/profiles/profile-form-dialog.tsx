@@ -155,7 +155,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
         </div>
 
         <DialogFooter>
-          <Button type="submit" disabled={pending} size="sm" className="text-xs font-semibold">
+          <Button type="submit" disabled={pending} className="text-xs font-semibold">
             {pending
               ? "Saving..."
               : isEdit

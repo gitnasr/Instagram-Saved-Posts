@@ -112,7 +112,6 @@ export function ProfilePicker() {
                       <Button
                         size="icon"
                         variant="outline"
-                        className="size-8"
                         aria-label={`Edit profile ${p.name}`}
                       >
                         <Pencil className="size-4" />
@@ -120,9 +119,9 @@ export function ProfilePicker() {
                     }
                   />
                   <Button
-                    size="icon-xs"
+                    size="icon"
                     variant="outline"
-                    className="size-7 rounded-sm border-hairline text-red-400 hover:bg-red-500/10"
+                    className="rounded-sm border-hairline text-red-400 hover:bg-red-500/10"
                     onClick={() => handleDelete(p)}
                     disabled={del.isPending}
                     aria-label={`Delete profile ${p.name}`}
@@ -156,7 +155,6 @@ export function ProfilePicker() {
         <div className="relative z-10">
           <Button
             variant="outline"
-            size="sm"
             className="text-xs font-mono border-hairline text-ink-muted hover:text-ink"
             onClick={() => setManage((m) => !m)}
           >

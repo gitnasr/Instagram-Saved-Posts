@@ -380,7 +380,6 @@ export function OnboardingWizard({
                   <Label htmlFor="cookie">Instagram session cookie</Label>
                   <Button
                     variant="ghost"
-                    size="sm"
                     className="h-auto p-0 text-xs text-primary hover:underline gap-1"
                     onClick={() => setShowCookieGuide(!showCookieGuide)}
                   >
@@ -453,7 +452,6 @@ export function OnboardingWizard({
                   <Button
                     type="button"
                     variant="secondary"
-                    size="sm"
                     onClick={handleValidateCookie}
                     disabled={isValidating || !cookie.trim()}
                     className="gap-1.5"
@@ -474,7 +472,6 @@ export function OnboardingWizard({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
                     className="text-xs text-muted-foreground"
                     onClick={() => setShowUa(!showUa)}
                   >
@@ -571,8 +568,7 @@ export function OnboardingWizard({
                     </div>
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs text-muted-foreground"
+                      className="px-2 text-xs text-muted-foreground"
                       onClick={handleClearCloudinary}
                     >
                       <X className="size-3 mr-1" /> Disconnect
@@ -662,8 +658,7 @@ export function OnboardingWizard({
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 p-0"
                         onClick={() => setShowSecret(!showSecret)}
                       >
                         {showSecret ? (

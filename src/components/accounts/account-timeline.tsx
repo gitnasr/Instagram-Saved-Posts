@@ -231,8 +231,8 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
           </Badge>
           <Button
             variant="ghost"
-            size="icon-xs"
-            className="size-6 rounded-sm border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
+            size="icon"
+            className="rounded-sm border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
             onClick={() => setIsExtendedWidth((v) => !v)}
             title={isExtendedWidth ? "Restore split view" : "Extend to full width"}
             aria-label={isExtendedWidth ? "Restore split view" : "Extend to full width"}
@@ -245,8 +245,8 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
           </Button>
           <Button
             variant="ghost"
-            size="icon-xs"
-            className="size-6 rounded-sm border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
+            size="icon"
+            className="rounded-sm border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
             onClick={() => setIsCardCollapsed((v) => !v)}
             title={isCardCollapsed ? "Expand card" : "Collapse card"}
             aria-label={isCardCollapsed ? "Expand card" : "Collapse card"}
@@ -312,7 +312,6 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                   {!isExtendedEvents ? (
                     <Button
                       variant="outline"
-                      size="sm"
                       className="text-xs font-semibold hover:bg-surface-2"
                       onClick={() => setIsExtendedEvents(true)}
                     >
@@ -323,7 +322,6 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                     <>
                       <Button
                         variant="outline"
-                        size="sm"
                         className="text-xs font-semibold hover:bg-surface-2"
                         onClick={() => setIsExtendedEvents(false)}
                       >
@@ -333,7 +331,6 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                       {visible < events.length && (
                         <Button
                           variant="outline"
-                          size="sm"
                           className="text-xs font-semibold hover:bg-surface-2"
                           onClick={() => setVisible((v) => v + PAGE_SIZE)}
                         >

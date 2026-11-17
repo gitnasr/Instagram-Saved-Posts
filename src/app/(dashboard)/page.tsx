@@ -20,13 +20,13 @@ export default function OverviewPage() {
         title="Overview"
         description="Archive totals and the latest sync"
       >
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline">
           <Link href="/accounts">
             <Users className="size-3.5" />
             Accounts
           </Link>
         </Button>
-        <Button asChild size="sm">
+        <Button asChild>
           <Link href="/scrape">
             <Play className="size-3.5 fill-current" />
             Sync Now

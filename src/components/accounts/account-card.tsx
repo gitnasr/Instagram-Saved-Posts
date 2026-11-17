@@ -87,7 +87,7 @@ export function AccountCard({
         {onToggleIgnore && (
           <Button
             variant="ghost"
-            size="icon-xs"
+            size="icon"
             className="pointer-events-auto shrink-0 text-ink-muted hover:text-ink hover:bg-surface-3"
             aria-label={
               isIgnored

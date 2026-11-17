@@ -97,8 +97,7 @@ export function AccountFiltersPanel({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
-          className="relative h-9 text-xs"
+          className="relative text-xs"
         >
           <Filter data-icon="inline-start" />
           Filters
@@ -122,7 +121,6 @@ export function AccountFiltersPanel({
             {activeCount > 0 && (
               <Button
                 variant="ghost"
-                size="sm"
                 className="h-auto px-2 py-1 text-xs"
                 onClick={clearAll}
               >

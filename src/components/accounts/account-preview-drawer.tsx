@@ -67,10 +67,9 @@ export function AccountPreviewDrawer() {
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     disabled={activeIndex <= 0}
                     onClick={() => setAccountDrawerIndex(activeIndex - 1)}
-                    className="h-7 px-2 text-xs"
+                    className="px-2 text-xs"
                     aria-label="Previous selected account"
                   >
                     <ChevronLeft className="size-3.5" />
@@ -82,10 +81,9 @@ export function AccountPreviewDrawer() {
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     disabled={activeIndex >= usernames.length - 1}
                     onClick={() => setAccountDrawerIndex(activeIndex + 1)}
-                    className="h-7 px-2 text-xs"
+                    className="px-2 text-xs"
                     aria-label="Next selected account"
                   >
                     Next
@@ -99,7 +97,7 @@ export function AccountPreviewDrawer() {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon-xs"
+                size="icon"
                 className="text-ink-muted hover:text-ink"
                 aria-label="Close account drawer"
               >

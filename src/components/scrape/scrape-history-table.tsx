@@ -131,9 +131,8 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                     </StatusText>
                     {canResume && (
                       <Button
-                        size="xs"
                         variant="secondary"
-                        className="h-6 px-2 text-xs font-semibold"
+                        className="px-2 text-xs font-semibold"
                         onClick={(e) => {
                           e.stopPropagation();
                           resumeMutation.mutate(run.id);
@@ -146,9 +145,8 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                     )}
                     {isRunning && (
                       <Button
-                        size="xs"
                         variant="outline"
-                        className="h-6 border-red-500/30 px-2 text-xs font-semibold text-red-400 hover:bg-red-500/10"
+                        className="border-red-500/30 px-2 text-xs font-semibold text-red-400 hover:bg-red-500/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           cancelMutation.mutate(run.id);
