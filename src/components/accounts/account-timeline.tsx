@@ -225,14 +225,14 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
         <div className="flex items-center gap-1.5 shrink-0 h-6">
           <Badge
             variant="secondary"
-            className="font-mono text-[10px] h-6 px-2 flex items-center justify-center"
+            className="font-mono text-xs h-6 px-2 flex items-center justify-center"
           >
             {events.length} events
           </Badge>
           <Button
             variant="ghost"
             size="icon-xs"
-            className="size-6 rounded-[4px] border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
+            className="size-6 rounded-sm border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
             onClick={() => setIsExtendedWidth((v) => !v)}
             title={isExtendedWidth ? "Restore split view" : "Extend to full width"}
             aria-label={isExtendedWidth ? "Restore split view" : "Extend to full width"}
@@ -246,7 +246,7 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
           <Button
             variant="ghost"
             size="icon-xs"
-            className="size-6 rounded-[4px] border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
+            className="size-6 rounded-sm border border-hairline bg-surface-2/40 hover:bg-surface-2 text-ink-muted hover:text-ink flex items-center justify-center p-0 transition-colors"
             onClick={() => setIsCardCollapsed((v) => !v)}
             title={isCardCollapsed ? "Expand card" : "Collapse card"}
             aria-label={isCardCollapsed ? "Expand card" : "Collapse card"}
@@ -263,14 +263,14 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
       {!isCardCollapsed && (
         <CardContent className="space-y-4">
           {events.length === 0 ? (
-            <p className="rounded-[6px] border border-dashed border-hairline px-3 py-4 text-xs text-ink-muted text-center font-mono">
+            <p className="rounded-lg border border-dashed border-hairline px-3 py-4 text-xs text-ink-muted text-center font-mono">
               No timeline entries recorded yet.
             </p>
           ) : (
             <>
               {groups.map(([day, dayEvents]) => (
                 <div key={day} className="space-y-2">
-                  <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-ink-subtle">
+                  <p className="text-eyebrow text-ink-subtle">
                     {format(new Date(day), "MMMM d, yyyy")}
                   </p>
 
@@ -283,16 +283,16 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                       return (
                         <div
                           key={event.id}
-                          className="flex items-start gap-3 rounded-[6px] border border-hairline bg-surface-1/50 hover:bg-surface-2 px-3 py-2 transition-all"
+                          className="flex items-start gap-3 rounded-lg border border-hairline bg-surface-1/50 hover:bg-surface-2 px-3 py-2 transition-all"
                         >
-                          <div className="size-6 rounded-[4px] bg-surface-2 border border-hairline shrink-0 flex items-center justify-center">
+                          <div className="size-6 rounded-sm bg-surface-2 border border-hairline shrink-0 flex items-center justify-center">
                             <Icon className={`size-3.5 ${meta.tone}`} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="min-h-6 flex flex-wrap items-center justify-between gap-2">
                               <span className="text-xs font-semibold text-ink leading-tight">{meta.label}</span>
                               <span
-                                className="text-[10px] font-mono text-ink-subtle leading-tight"
+                                className="text-xs font-mono text-ink-subtle leading-tight"
                                 title={timestamp.absolute}
                               >
                                 {timestamp.relative || timestamp.absolute}
@@ -346,7 +346,7 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
               )}
 
               {isExtendedEvents && visible >= events.length && truncatedByServer && (
-                <p className="text-center text-[11px] font-mono text-ink-subtle">
+                <p className="text-center text-xs font-mono text-ink-subtle">
                   Showing the {eventsLimit} most recent entries.
                 </p>
               )}

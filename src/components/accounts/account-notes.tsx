@@ -50,7 +50,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
           <StickyNote className="size-4 text-amber-500" />
           Notes & Annotations
           {notes && notes.length > 0 && (
-            <span className="text-[10px] font-mono text-ink-subtle">
+            <span className="text-xs font-mono text-ink-subtle">
               ({notes.length})
             </span>
           )}
@@ -70,7 +70,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
 
       <CardContent className="space-y-3">
         {showForm && (
-          <div className="space-y-2 rounded-[6px] border border-hairline bg-surface-1 p-3">
+          <div className="space-y-2 rounded-lg border border-hairline bg-surface-1 p-3">
             <Textarea
               placeholder="Write a note about this creator or saved content..."
               value={newContent}
@@ -107,15 +107,15 @@ export function AccountNotes({ username }: AccountNotesProps) {
 
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-16 w-full rounded-[6px]" />
-            <Skeleton className="h-16 w-full rounded-[6px]" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
           </div>
         ) : notes && notes.length > 0 ? (
           <div className="space-y-2">
             {notes.map((note) => (
               <div
                 key={note.id}
-                className="group flex gap-3 rounded-[6px] border border-hairline bg-surface-1/40 hover:bg-surface-2 p-3 transition-all"
+                className="group flex gap-3 rounded-lg border border-hairline bg-surface-1/40 hover:bg-surface-2 p-3 transition-all"
               >
                 <p className="flex-1 text-xs text-ink whitespace-pre-wrap break-words leading-relaxed">
                   {note.content}
@@ -131,7 +131,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
                   >
                     <Trash2 className="size-3" />
                   </Button>
-                  <span className="text-[10px] font-mono text-ink-subtle">
+                  <span className="text-xs font-mono text-ink-subtle">
                     {formatDistanceToNow(new Date(note.createdAt), {
                       addSuffix: true,
                     })}

@@ -33,7 +33,7 @@ export function BrandLogo({
           <span className={cn("font-semibold text-sm tracking-tight text-foreground truncate", textClassName)}>
             Saved Posts
           </span>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-amber-500 dark:text-amber-400 font-medium">
+          <span className="text-eyebrow text-amber-500 dark:text-amber-400">
             Archive
           </span>
         </div>

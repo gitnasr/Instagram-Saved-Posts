@@ -63,7 +63,7 @@ export function NavigationSettings() {
     <Card className="border border-hairline bg-surface-1 shadow-sm">
       <CardHeader className="pb-4 border-b border-hairline">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-[6px] border border-hairline bg-surface-2 text-amber-500">
+          <div className="flex size-10 items-center justify-center rounded-lg border border-hairline bg-surface-2 text-amber-500">
             <Compass className="size-5" />
           </div>
           <div>
@@ -86,7 +86,7 @@ export function NavigationSettings() {
                 type="button"
                 onClick={() => handleSelect(option)}
                 className={cn(
-                  "flex flex-col items-start gap-2 rounded-[8px] border p-4 text-left transition-all",
+                  "flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all",
                   selected
                     ? "border-primary bg-surface-2 ring-1 ring-primary/40 shadow-sm"
                     : "border-hairline bg-surface-1 hover:border-hairline-strong hover:bg-surface-2/60"
@@ -101,7 +101,7 @@ export function NavigationSettings() {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "font-mono text-[9px] uppercase tracking-wider",
+                        "text-eyebrow",
                         option.badgeClassName
                       )}
                     >

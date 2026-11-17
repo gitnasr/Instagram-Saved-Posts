@@ -25,7 +25,7 @@ const navItems = [
 export function Sidebar() {
   return (
     <>
-      <aside className="hidden h-dvh w-64 flex-col border-r border-hairline bg-surface-1/50 backdrop-blur-md md:flex select-none">
+      <aside className="hidden h-dvh w-64 flex-col border-r border-hairline bg-surface-1 md:flex select-none">
         {/* Brand Header */}
         <div className="flex h-16 items-center px-4 border-b border-hairline">
           <BrandLogo size={24} />
@@ -42,7 +42,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-1 px-3 py-1">
-          <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-subtle">
+          <div className="text-eyebrow px-2 py-1.5 text-ink-subtle">
             Workspace
           </div>
           {navItems.map(({ href, label, icon: Icon }) => (
@@ -55,7 +55,7 @@ export function Sidebar() {
         {/* Bottom Panel */}
         <div className="p-3 border-t border-hairline bg-surface-1/30 flex flex-col gap-2">
           <ThemeToggle showLabel />
-          <div className="flex items-center justify-between px-1 text-[11px] text-ink-subtle font-mono">
+          <div className="flex items-center justify-between px-1 text-xs text-ink-subtle font-mono">
             <a
               href="https://gitnasr.com"
               target="_blank"
@@ -71,7 +71,7 @@ export function Sidebar() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title="View Releases on GitHub"
-                className="rounded bg-surface-2/60 hover:bg-surface-3/80 px-1.5 py-0.5 text-[10px] text-ink-muted hover:text-foreground transition-colors border border-hairline"
+                className="rounded bg-surface-2/60 hover:bg-surface-3/80 px-1.5 py-0.5 text-xs text-ink-muted hover:text-foreground transition-colors border border-hairline"
               >
                 {APP_VERSION.startsWith("v") ? APP_VERSION : `v${APP_VERSION}`}
               </a>
@@ -87,7 +87,7 @@ export function Sidebar() {
             key={href}
             href={href}
             icon={<Icon className="size-4" />}
-            className="min-h-12 flex-col justify-center gap-1 rounded-[4px] px-1 py-2 text-[10px]"
+            className="min-h-12 flex-col justify-center gap-1 rounded-sm px-1 py-2 text-xs"
           >
             {label}
           </NavLink>

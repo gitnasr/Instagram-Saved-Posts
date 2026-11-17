@@ -190,6 +190,15 @@
   --chart-5: #d4d4d8;
 }
 
+/* The one small label style (section headings, table heads). Body text never goes below 12px. */
+@utility text-eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

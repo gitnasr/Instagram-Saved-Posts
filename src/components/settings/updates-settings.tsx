@@ -43,7 +43,7 @@ function LevelBadge({ level }: { level: ReleaseInfo["upgrade"] }) {
 function Flags({ r }: { r: ReleaseInfo }) {
   const flags = [r.schema && "database", r.env && "env vars", r.compose && "compose file"].filter(Boolean);
   if (!flags.length) return null;
-  return <span className="text-[11px] text-ink-subtle">Changes {flags.join(", ")}</span>;
+  return <span className="text-xs text-ink-subtle">Changes {flags.join(", ")}</span>;
 }
 
 function CopyCommand() {
@@ -56,7 +56,7 @@ function CopyCommand() {
     }
   };
   return (
-    <div className="flex items-center justify-between gap-2 rounded-[4px] border border-hairline bg-surface-2/40 py-1.5 pl-3 pr-1.5">
+    <div className="flex items-center justify-between gap-2 rounded-sm border border-hairline bg-surface-2/40 py-1.5 pl-3 pr-1.5">
       <code className="min-w-0 break-all font-mono text-xs text-foreground">{UPDATE_COMMAND}</code>
       <Button variant="ghost" size="icon-xs" onClick={copy} aria-label="Copy update command">
         <Copy />
@@ -160,7 +160,7 @@ function UpdateDetails({ data }: { data: OkResponse }) {
 
   return (
     <div className="space-y-4">
-      <section aria-label="What to expect" className="space-y-2 rounded-[6px] border border-hairline bg-surface-2/30 p-3">
+      <section aria-label="What to expect" className="space-y-2 rounded-lg border border-hairline bg-surface-2/30 p-3">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <LevelBadge level={level} />
           <Flags r={latest} />
@@ -187,13 +187,13 @@ function UpdateDetails({ data }: { data: OkResponse }) {
           <h3 className="text-xs font-semibold text-foreground">
             Also included ({older.length} earlier {older.length === 1 ? "release" : "releases"})
           </h3>
-          <ul className="divide-y divide-hairline rounded-[6px] border border-hairline">
+          <ul className="divide-y divide-hairline rounded-lg border border-hairline">
             {older.map((r) => (
               <li key={r.version} className="flex items-start justify-between gap-3 px-3 py-2">
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-mono text-xs font-medium text-foreground">{v(r.version)}</span>
-                    <span className="text-[11px] text-ink-subtle">{day(r.publishedAt)}</span>
+                    <span className="text-xs text-ink-subtle">{day(r.publishedAt)}</span>
                     {r.upgrade !== "unknown" && <LevelBadge level={r.upgrade} />}
                   </div>
                   <p className="text-xs text-ink-muted line-clamp-2">{summaryLine(r)}</p>

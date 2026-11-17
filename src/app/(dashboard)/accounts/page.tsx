@@ -174,7 +174,7 @@ function AccountsContent() {
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-[8px]" />
+            <Skeleton key={i} className="h-20 rounded-lg" />
           ))}
         </div>
       ) : (
@@ -193,7 +193,7 @@ function AccountsContent() {
 
             {selectedPks.size > 0 && (
               <>
-                <span className="text-xs font-mono text-ink-muted bg-surface-2 px-2.5 py-1 rounded-[4px] border border-hairline">
+                <span className="text-xs font-mono text-ink-muted bg-surface-2 px-2.5 py-1 rounded-sm border border-hairline">
                   {selectedPks.size} selected
                 </span>
                 <Button
@@ -283,11 +283,11 @@ export default function AccountsPage() {
     <Suspense
       fallback={
         <div className="flex flex-col gap-6">
-          <Skeleton className="h-10 w-48 rounded-[8px]" />
-          <Skeleton className="h-10 w-full max-w-md rounded-[8px]" />
+          <Skeleton className="h-10 w-48 rounded-lg" />
+          <Skeleton className="h-10 w-full max-w-md rounded-lg" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 rounded-[8px]" />
+              <Skeleton key={i} className="h-20 rounded-lg" />
             ))}
           </div>
         </div>

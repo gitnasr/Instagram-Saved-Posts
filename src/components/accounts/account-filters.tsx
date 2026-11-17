@@ -135,7 +135,7 @@ export function AccountFiltersPanel({
           {groupsOf(ACCOUNT_FILTERS as readonly AccountFilter[]).map(([group, descriptors]) => (
             <div key={group} className="flex flex-col gap-4">
               <Separator />
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="text-eyebrow text-muted-foreground">
                 {group}
               </p>
               {descriptors.map((d) => (
@@ -169,7 +169,7 @@ function FilterControl({
   onChange,
 }: FilterControlProps) {
   const hint = d.hint ? (
-    <p className="text-[10px] text-muted-foreground">{d.hint}</p>
+    <p className="text-xs text-muted-foreground">{d.hint}</p>
   ) : null;
 
   switch (d.kind) {
@@ -236,7 +236,7 @@ function FilterControl({
             {selected.length > 0 && (
               <button
                 type="button"
-                className="text-[10px] text-muted-foreground hover:text-foreground"
+                className="text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => onChange(undefined)}
               >
                 Clear
@@ -244,7 +244,7 @@ function FilterControl({
             )}
           </div>
           {options.length === 0 ? (
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               No values recorded yet.
             </p>
           ) : (
@@ -373,7 +373,7 @@ function FilterControl({
               onChange={(e) => set({ to: e.target.value || undefined })}
             />
           </div>
-          <p className="text-[10px] text-muted-foreground">From – To</p>
+          <p className="text-xs text-muted-foreground">From – To</p>
           {hint}
         </div>
       );

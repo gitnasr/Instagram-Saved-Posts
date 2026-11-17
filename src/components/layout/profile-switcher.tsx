@@ -30,23 +30,23 @@ export function ProfileSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-1.5 text-left outline-none transition-all bg-surface-1/60 hover:bg-surface-2 border border-hairline focus-visible:ring-2 focus-visible:ring-primary/20">
+      <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left outline-none transition-all bg-surface-1/60 hover:bg-surface-2 border border-hairline focus-visible:ring-2 focus-visible:ring-primary/20">
         <ProfileAvatar
           name={active?.name ?? "?"}
           avatarUrl={active?.avatarUrl}
           avatarColor={active?.avatarColor}
-          className="size-7 rounded-[4px]"
+          className="size-7 rounded-sm"
         />
         <div className="flex flex-col min-w-0 flex-1 leading-tight">
           <span className="truncate text-xs font-semibold text-foreground">
             {active?.name ?? "Select profile"}
           </span>
-          <span className="text-[10px] text-ink-muted">Active profile</span>
+          <span className="text-xs text-ink-muted">Active profile</span>
         </div>
         <ChevronsUpDown className="size-3.5 shrink-0 text-ink-subtle" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 bg-surface-1 border border-hairline shadow-xl">
-        <DropdownMenuLabel className="text-xs uppercase tracking-wider text-ink-subtle font-semibold">
+        <DropdownMenuLabel className="text-eyebrow text-ink-subtle">
           Profiles
         </DropdownMenuLabel>
         {profiles?.map((p) => (
@@ -59,7 +59,7 @@ export function ProfileSwitcher() {
               name={p.name}
               avatarUrl={p.avatarUrl}
               avatarColor={p.avatarColor}
-              className="size-6 rounded-[3px]"
+              className="size-6 rounded-sm"
             />
             <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
             {p.isActive && <Check className="size-3.5 shrink-0 text-primary" />}

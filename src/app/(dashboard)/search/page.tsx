@@ -215,7 +215,7 @@ export default function SearchPage() {
           {/* Qdrant Liveness Badge */}
           {liveness && (
             <div
-              className={`flex items-center gap-1.5 rounded-[4px] border px-2 py-1 text-[11px] font-mono ${
+              className={`flex items-center gap-1.5 rounded-sm border px-2 py-1 text-xs font-mono ${
                 liveness.status === "healthy"
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
                   : liveness.status === "degraded"
@@ -286,7 +286,7 @@ export default function SearchPage() {
 
       {/* Feature switched off — nothing below this point can do anything useful. */}
       {!isLoadingStatus && !searchEnabled && (
-        <Card className="flex flex-col items-center gap-4 rounded-[8px] border border-hairline bg-surface-1 p-8 text-center">
+        <Card className="flex flex-col items-center gap-4 rounded-lg border border-hairline bg-surface-1 p-8 text-center">
           <div className="rounded-full bg-surface-3/80 p-3 text-ink-muted">
             <Database className="size-6" />
           </div>
@@ -311,7 +311,7 @@ export default function SearchPage() {
 
       {/* Failed Index Run Callout */}
       {lastRunFailed && (
-        <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[8px] border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-100">
+        <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-100">
           <div className="flex items-start gap-3">
             <AlertCircle className="size-5 shrink-0 text-red-400" />
             <div>
@@ -336,7 +336,7 @@ export default function SearchPage() {
 
       {/* Unindexed Archive Warning Callout */}
       {hasNeverIndexed && (
-        <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-[8px] border border-amber-500/40 bg-amber-500/10 p-4 text-xs text-amber-100">
+        <Card className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-xs text-amber-100">
           <div className="flex items-center gap-3">
             <Database className="size-5 shrink-0 text-amber-400" />
             <div>
@@ -360,7 +360,7 @@ export default function SearchPage() {
 
       {/* Search Error Callout Banner */}
       {searchErrorMessage && (
-        <Card className="flex items-center justify-between gap-3 rounded-[8px] border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-200">
+        <Card className="flex items-center justify-between gap-3 rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-200">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="size-4 shrink-0 text-red-400" />
             <span className="font-mono">{searchErrorMessage}</span>
@@ -377,7 +377,7 @@ export default function SearchPage() {
 
       {/* Index progress banner */}
       {isIndexRunning && currentIndex && (
-        <Card className="flex flex-col gap-2 rounded-[8px] border border-hairline bg-surface-1 p-4 text-xs">
+        <Card className="flex flex-col gap-2 rounded-lg border border-hairline bg-surface-1 p-4 text-xs">
           <div className="flex items-center justify-between font-mono">
             <span className="flex items-center gap-1.5 text-foreground">
               <Database className="size-3.5 text-amber-500 animate-pulse" />
@@ -388,7 +388,7 @@ export default function SearchPage() {
             </span>
           </div>
           <Progress value={indexProgressPct} className="h-1.5 bg-surface-3" />
-          <div className="flex justify-between text-[11px] text-ink-subtle font-mono">
+          <div className="flex justify-between text-xs text-ink-subtle font-mono">
             <span>Faces detected: {currentIndex.facesIndexed}</span>
             {currentIndex.failedItems > 0 && (
               <span className="text-red-400">Failures: {currentIndex.failedItems}</span>
@@ -399,7 +399,7 @@ export default function SearchPage() {
 
       {/* Search Input Controls */}
       {searchEnabled && (
-      <Card className="flex flex-col gap-4 rounded-[8px] border border-hairline bg-surface-1 p-4 sm:p-6 shadow-xs">
+      <Card className="flex flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-4 sm:p-6 shadow-xs">
         <Tabs
           value={mode}
           onValueChange={(v) => handleModeChange(v as SearchMode)}
@@ -430,7 +430,7 @@ export default function SearchPage() {
                   placeholder="Describe what you want to find (e.g. sunset skyline, architecture sketch, funny cat)..."
                   value={textQuery}
                   onChange={(e) => setTextQuery(e.target.value)}
-                  className="pl-9 pr-8 h-10 rounded-[6px] bg-surface-2 border-hairline text-sm"
+                  className="pl-9 pr-8 h-10 rounded-lg bg-surface-2 border-hairline text-sm"
                 />
                 {textQuery && (
                   <button
@@ -445,7 +445,7 @@ export default function SearchPage() {
               <Button
                 type="submit"
                 disabled={!textQuery.trim() || isPending}
-                className="h-10 px-4 rounded-[6px] gap-1.5"
+                className="h-10 px-4 rounded-lg gap-1.5"
               >
                 <SearchIcon className="size-3.5" />
                 Search
@@ -453,7 +453,7 @@ export default function SearchPage() {
             </form>
 
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-subtle">
-              <span className="font-mono text-[11px]">Suggestions:</span>
+              <span className="font-mono text-xs">Suggestions:</span>
               {EXAMPLE_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
@@ -462,7 +462,7 @@ export default function SearchPage() {
                     setTextQuery(prompt);
                     triggerTextSearch(prompt);
                   }}
-                  className="rounded-[4px] border border-hairline bg-surface-2/60 px-2 py-0.5 text-[11px] text-ink-muted hover:border-hairline-strong hover:text-foreground transition-colors font-mono"
+                  className="rounded-sm border border-hairline bg-surface-2/60 px-2 py-0.5 text-xs text-ink-muted hover:border-hairline-strong hover:text-foreground transition-colors font-mono"
                 >
                   {prompt}
                 </button>
@@ -488,7 +488,7 @@ export default function SearchPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="group flex w-full flex-col items-center justify-center gap-3 rounded-[8px] border-2 border-dashed border-hairline bg-surface-2/40 p-8 text-center transition-all cursor-pointer hover:border-amber-500/60 hover:bg-surface-2/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+                className="group flex w-full flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-hairline bg-surface-2/40 p-8 text-center transition-all cursor-pointer hover:border-amber-500/60 hover:bg-surface-2/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
               >
                 {previewUrl ? (
                   <div className="relative flex flex-col items-center gap-2">
@@ -496,7 +496,7 @@ export default function SearchPage() {
                     <img
                       src={previewUrl}
                       alt="Query preview"
-                      className="max-h-48 rounded-[6px] object-contain border border-hairline shadow-md"
+                      className="max-h-48 rounded-lg object-contain border border-hairline shadow-md"
                     />
                     <span className="text-xs text-ink-subtle font-mono group-hover:text-foreground">
                       Click to choose a different photo
@@ -534,7 +534,7 @@ export default function SearchPage() {
           <div className="h-4 w-32 bg-surface-2 rounded animate-pulse" />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-square rounded-[8px]" />
+              <Skeleton key={i} className="aspect-square rounded-lg" />
             ))}
           </div>
         </div>
@@ -568,7 +568,7 @@ export default function SearchPage() {
                       thumbnailOverride={hit.matchedImageUrl}
                       matchedSlideIndex={hit.matchedSlideIndex}
                     />
-                    <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-[4px] bg-black/80 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-white backdrop-blur-xs border border-white/10">
+                    <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-sm bg-black/80 px-1.5 py-0.5 text-xs font-mono font-semibold text-white border border-white/10">
                       <span
                         className={
                           pct >= 85
@@ -581,7 +581,7 @@ export default function SearchPage() {
                         {pct}%
                       </span>
                       {hit.matchType && (
-                        <span className="text-[9px] text-zinc-400 uppercase tracking-wider font-normal">
+                        <span className="text-eyebrow text-zinc-400 font-normal">
                           {hit.matchType === "hybrid"
                             ? "Hybrid"
                             : hit.matchType === "caption"
@@ -616,7 +616,7 @@ export default function SearchPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-[6px] bg-surface-2/60 border border-hairline p-3 text-xs space-y-1.5 font-mono text-ink-muted">
+          <div className="rounded-lg bg-surface-2/60 border border-hairline p-3 text-xs space-y-1.5 font-mono text-ink-muted">
             <div className="flex items-center justify-between">
               <span>Required Collections:</span>
               <span className="text-foreground font-semibold">post_images, post_faces</span>
@@ -661,13 +661,13 @@ export default function SearchPage() {
           ) : (
             <div className="space-y-4 py-2 text-xs">
               {/* Profile Stats Card */}
-              <div className="rounded-[8px] border border-hairline bg-surface-2/40 p-3.5 space-y-2.5">
+              <div className="rounded-lg border border-hairline bg-surface-2/40 p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between font-mono font-semibold text-foreground border-b border-hairline pb-1.5">
                   <span className="flex items-center gap-1.5">
                     <Activity className="size-3.5 text-amber-500" />
                     Active Profile Index
                   </span>
-                  <span className="text-[11px] text-ink-subtle">
+                  <span className="text-xs text-ink-subtle">
                     {stats?.status === "failed" ? (
                       <span className="text-red-400">Failed</span>
                     ) : stats?.status === "completed" ? (
@@ -682,7 +682,7 @@ export default function SearchPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                <div className="grid grid-cols-2 gap-2 font-mono text-xs">
                   <div>
                     <span className="text-ink-subtle flex items-center gap-1">
                       <Clock className="size-3" /> Last Run:
@@ -723,7 +723,7 @@ export default function SearchPage() {
                 </div>
 
                 {stats?.lastError || (stats?.failedItems ?? 0) > 0 ? (
-                  <div className="rounded bg-red-500/10 border border-red-500/20 p-2 text-red-300 font-mono text-[11px] break-all">
+                  <div className="rounded bg-red-500/10 border border-red-500/20 p-2 text-red-300 font-mono text-xs break-all">
                     {(stats?.failedItems ?? 0) > 0 && `Failed Items: ${stats?.failedItems} — `}
                     {stats?.lastError || "Unknown error"}
                   </div>
@@ -731,18 +731,18 @@ export default function SearchPage() {
               </div>
 
               {/* Cluster & Global Stats Card */}
-              <div className="rounded-[8px] border border-hairline bg-surface-2/40 p-3.5 space-y-2.5">
+              <div className="rounded-lg border border-hairline bg-surface-2/40 p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between font-mono font-semibold text-foreground border-b border-hairline pb-1.5">
                   <span className="flex items-center gap-1.5">
                     <Database className="size-3.5 text-blue-400" />
                     Qdrant Database & Cluster
                   </span>
-                  <span className="text-[11px] text-ink-subtle">
+                  <span className="text-xs text-ink-subtle">
                     {liveness?.status ?? "unknown"}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                <div className="grid grid-cols-2 gap-2 font-mono text-xs">
                   <div>
                     <span className="text-ink-subtle">Image Vectors:</span>
                     <p className="text-foreground text-sm font-semibold">

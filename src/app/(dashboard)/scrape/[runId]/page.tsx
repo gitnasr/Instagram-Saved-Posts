@@ -234,7 +234,7 @@ export default function RunDetailPage({
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <h3 className="text-base font-semibold text-ink">Username Handle Shifts</h3>
-          <Badge variant={usernameChanges.length > 0 ? "default" : "secondary"} className="font-mono text-[10px]">
+          <Badge variant={usernameChanges.length > 0 ? "default" : "secondary"} className="font-mono text-xs">
             {usernameChanges.length}
           </Badge>
         </div>
@@ -244,11 +244,11 @@ export default function RunDetailPage({
               <ProfileLink
                 key={change.id}
                 username={change.account.username}
-                className="rounded-[8px] border border-hairline bg-surface-1 p-4 transition-all hover:border-hairline-strong hover:bg-surface-2 group"
+                className="rounded-lg border border-hairline bg-surface-1 p-4 transition-all hover:border-hairline-strong hover:bg-surface-2 group"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-sm text-ink group-hover:text-primary transition-colors">@{change.account.username}</span>
-                  <Badge variant="outline" className="font-mono text-[9px] text-ink-subtle">pk {change.accountPk}</Badge>
+                  <Badge variant="outline" className="font-mono text-xs text-ink-subtle">pk {change.accountPk}</Badge>
                 </div>
                 <div className="mt-2.5 text-xs font-mono">
                   <span className="text-ink-muted">was </span>
@@ -256,7 +256,7 @@ export default function RunDetailPage({
                   <span className="text-ink-muted"> &rarr; </span>
                   <span className="text-emerald-400 font-semibold">@{change.newUsername}</span>
                 </div>
-                <p className="mt-2 text-[10px] font-mono text-ink-subtle">
+                <p className="mt-2 text-xs font-mono text-ink-subtle">
                   Detected {format(new Date(change.changedAt), "MMM d, yyyy · HH:mm")}
                 </p>
               </ProfileLink>

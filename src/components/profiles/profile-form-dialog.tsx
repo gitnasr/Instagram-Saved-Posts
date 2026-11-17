@@ -89,7 +89,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-md bg-surface-1 border border-hairline rounded-[8px] p-6">
+      <DialogContent className="max-w-md bg-surface-1 border border-hairline rounded-lg p-6">
         <DialogHeader className="pb-2 border-b border-hairline">
           <DialogTitle className="text-base font-semibold">
             {isEdit ? "Edit Profile" : "Create New Profile"}
@@ -104,7 +104,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
         <form onSubmit={handleSubmit} className="space-y-4">
         <div className="min-w-0 space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+            <Label htmlFor="profile-name" className="text-eyebrow text-ink-subtle">
               Profile Name
             </Label>
             <Input
@@ -118,10 +118,10 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="profile-cookie" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+            <Label htmlFor="profile-cookie" className="text-eyebrow text-ink-subtle">
               Instagram Cookie{" "}
               {isEdit && (
-                <span className="text-ink-subtle text-[10px] font-normal">
+                <span className="text-ink-subtle text-xs font-normal">
                   (leave blank to retain current)
                 </span>
               )}
@@ -135,14 +135,14 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
               placeholder="sessionid=...; ds_user_id=..."
             />
             {isEdit && profile?.hasCookie && (
-              <p className="text-[11px] font-mono text-emerald-400">
+              <p className="text-xs font-mono text-emerald-400">
                 ✓ A session cookie is configured for this profile.
               </p>
             )}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="profile-ua" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle">
-              User-Agent <span className="text-ink-subtle text-[10px] font-normal font-mono">(optional)</span>
+            <Label htmlFor="profile-ua" className="text-eyebrow text-ink-subtle">
+              User-Agent <span className="text-ink-subtle text-xs font-normal font-mono">(optional)</span>
             </Label>
             <Input
               id="profile-ua"

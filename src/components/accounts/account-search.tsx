@@ -82,7 +82,7 @@ export function AccountSearch({
   }, [draftSearch, onSearchChange, search]);
 
   return (
-    <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 border-y border-hairline bg-surface-1/80 px-4 py-3 backdrop-blur-xl sm:mx-0 sm:rounded-[8px] sm:border md:top-0 shadow-sm">
+    <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 border-y border-hairline bg-surface-1 px-4 py-3 sm:mx-0 sm:rounded-lg sm:border md:top-0">
       <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-subtle" />
@@ -164,12 +164,12 @@ export function AccountSearch({
       {activeFilters.length > 0 && (
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {activeFilters.map((chip) => (
-            <Badge key={chip.key} variant="secondary" className="shrink-0 gap-1 text-[10px] bg-surface-2 border-hairline py-0.5">
+            <Badge key={chip.key} variant="secondary" className="shrink-0 gap-1 text-xs bg-surface-2 border-hairline py-0.5">
               {chip.label}
               <button
                 type="button"
                 aria-label={`Remove filter ${chip.label}`}
-                className="-mr-0.5 rounded-[2px] opacity-60 hover:opacity-100 hover:text-red-400 transition-colors"
+                className="-mr-0.5 rounded-sm opacity-60 hover:opacity-100 hover:text-red-400 transition-colors"
                 onClick={() => removeFilter(chip.key as AccountFilterKey)}
               >
                 <X className="h-3 w-3" />

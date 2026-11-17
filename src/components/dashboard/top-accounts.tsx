@@ -24,7 +24,7 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
         <CardTitle className="text-base font-semibold">Top Creators</CardTitle>
         <Link
           href="/accounts"
-          className="text-xs font-semibold text-primary hover:text-amber-400 flex items-center gap-0.5 transition-colors uppercase tracking-wider"
+          className="text-eyebrow text-primary hover:text-amber-400 flex items-center gap-0.5 transition-colors"
         >
           View all <ChevronRight className="size-3" />
         </Link>
@@ -35,16 +35,16 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
             <ProfileLink
               key={account.pk}
               username={account.username}
-              className="flex items-center gap-3 rounded-[6px] p-2 transition-all bg-surface-1/40 hover:bg-surface-2 border border-hairline/40 hover:border-hairline group"
+              className="flex items-center gap-3 rounded-lg p-2 transition-all bg-surface-1/40 hover:bg-surface-2 border border-hairline/40 hover:border-hairline group"
             >
-              <Avatar className="size-9 rounded-[4px] border border-hairline">
+              <Avatar className="size-9 rounded-sm border border-hairline">
                 <AvatarImage
                   src={proxyImageUrl(
                     account.cloudinaryProfilePicUrl ?? account.profilePicUrl
                   )}
                   className="object-cover"
                 />
-                <AvatarFallback className="rounded-[4px] text-xs font-semibold bg-surface-3 text-ink">
+                <AvatarFallback className="rounded-sm text-xs font-semibold bg-surface-3 text-ink">
                   {account.username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -54,7 +54,7 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
                     @{account.username}
                   </p>
                   {account.isVerified && (
-                    <Badge variant="default" className="text-[9px] px-1 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono">
+                    <Badge variant="default" className="text-xs px-1 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono">
                       Verified
                     </Badge>
                   )}
@@ -63,11 +63,11 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
                   {account.fullName || "No full name"}
                 </p>
               </div>
-              <div className="flex items-center gap-1 shrink-0 bg-surface-2 px-2 py-1 rounded-[4px] border border-hairline">
+              <div className="flex items-center gap-1 shrink-0 bg-surface-2 px-2 py-1 rounded-sm border border-hairline">
                 <span className="text-xs font-mono font-bold text-ink">
                   {account.savedPostCount}
                 </span>
-                <span className="text-[10px] text-ink-muted uppercase">posts</span>
+                <span className="text-xs text-ink-muted uppercase">posts</span>
               </div>
             </ProfileLink>
           ))}

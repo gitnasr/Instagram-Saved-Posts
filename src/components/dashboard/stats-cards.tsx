@@ -20,12 +20,11 @@ export function StatsCards({
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {/* Total Accounts */}
       <Card className="relative overflow-hidden group hover:border-hairline-strong transition-all">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xs uppercase font-semibold tracking-wider text-ink-subtle">
+          <CardTitle className="text-eyebrow text-ink-subtle">
             Total Accounts
           </CardTitle>
-          <div className="p-1.5 rounded-[4px] bg-surface-2 border border-hairline text-amber-500">
+          <div className="text-amber-500">
             <Users className="size-4" />
           </div>
         </CardHeader>
@@ -41,12 +40,11 @@ export function StatsCards({
 
       {/* Total Saved Posts */}
       <Card className="relative overflow-hidden group hover:border-hairline-strong transition-all">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xs uppercase font-semibold tracking-wider text-ink-subtle">
+          <CardTitle className="text-eyebrow text-ink-subtle">
             Archived Posts
           </CardTitle>
-          <div className="p-1.5 rounded-[4px] bg-surface-2 border border-hairline text-amber-500">
+          <div className="text-amber-500">
             <BookmarkCheck className="size-4" />
           </div>
         </CardHeader>
@@ -62,12 +60,11 @@ export function StatsCards({
 
       {/* Last Scrape */}
       <Card className="relative overflow-hidden group hover:border-hairline-strong transition-all sm:col-span-2 lg:col-span-1">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xs uppercase font-semibold tracking-wider text-ink-subtle">
+          <CardTitle className="text-eyebrow text-ink-subtle">
             Latest Sync
           </CardTitle>
-          <div className="p-1.5 rounded-[4px] bg-surface-2 border border-hairline text-amber-500">
+          <div className="text-amber-500">
             <Clock className="size-4" />
           </div>
         </CardHeader>

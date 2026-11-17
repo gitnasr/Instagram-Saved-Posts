@@ -79,15 +79,15 @@ export function ProfilePicker() {
               <button
                 onClick={() => handleSelect(p)}
                 disabled={selectingId !== null}
-                className="relative rounded-[8px] outline-none transition-all hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 cursor-pointer"
+                className="relative rounded-lg outline-none transition-all hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 cursor-pointer"
                 aria-label={`Use profile ${p.name}`}
               >
                 <ProfileAvatar
                   name={p.name}
                   avatarUrl={p.avatarUrl}
                   avatarColor={p.avatarColor}
-                  className="size-28 rounded-[8px] border-2 border-hairline transition-all group-hover:border-amber-500 shadow-lg"
-                  fallbackClassName="rounded-[8px] text-3xl font-bold font-mono"
+                  className="size-28 rounded-lg border-2 border-hairline transition-all group-hover:border-amber-500 shadow-lg"
+                  fallbackClassName="rounded-lg text-3xl font-bold font-mono"
                 />
                 {p.isActive && (
                   <div className="absolute -top-1.5 -right-1.5 p-1 rounded-full bg-amber-500 text-black shadow-md">
@@ -95,7 +95,7 @@ export function ProfilePicker() {
                   </div>
                 )}
                 {selectingId === p.id && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-[8px] bg-black/70 backdrop-blur-xs">
+                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/70 backdrop-blur-xs">
                     <Loader2 className="size-7 animate-spin text-amber-500" />
                   </div>
                 )}
@@ -122,7 +122,7 @@ export function ProfilePicker() {
                   <Button
                     size="icon-xs"
                     variant="outline"
-                    className="size-7 rounded-[4px] border-hairline text-red-400 hover:bg-red-500/10"
+                    className="size-7 rounded-sm border-hairline text-red-400 hover:bg-red-500/10"
                     onClick={() => handleDelete(p)}
                     disabled={del.isPending}
                     aria-label={`Delete profile ${p.name}`}
@@ -140,7 +140,7 @@ export function ProfilePicker() {
                 className="flex w-32 flex-col items-center gap-3 group cursor-pointer"
                 aria-label="Add profile"
               >
-                <span className="flex size-28 items-center justify-center rounded-[8px] border-2 border-dashed border-hairline-strong text-ink-subtle transition-all group-hover:border-amber-500 group-hover:text-amber-500 bg-surface-1/40">
+                <span className="flex size-28 items-center justify-center rounded-lg border-2 border-dashed border-hairline-strong text-ink-subtle transition-all group-hover:border-amber-500 group-hover:text-amber-500 bg-surface-1/40">
                   <Plus className="size-8 group-hover:scale-110 transition-transform" />
                 </span>
                 <span className="text-sm font-medium text-ink-muted group-hover:text-ink transition-colors">

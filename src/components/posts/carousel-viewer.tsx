@@ -79,7 +79,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
         role="group"
         aria-roledescription="slide"
         aria-label={`${currentIndex + 1} of ${items.length}`}
-        className="relative flex max-h-[46vh] w-full items-center justify-center overflow-hidden rounded-[6px] bg-surface-2 border border-hairline md:max-h-[75vh]"
+        className="relative flex max-h-[46vh] w-full items-center justify-center overflow-hidden rounded-lg bg-surface-2 border border-hairline md:max-h-[75vh]"
       >
         {items.length > 1 && (
           <p className="sr-only" role="status" aria-live="polite">
@@ -106,7 +106,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
 
         {/* Counter Badge */}
         {items.length > 1 && (
-          <div className="absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-black/70 px-2.5 py-1 text-xs font-semibold text-white shadow-md backdrop-blur-md">
+          <div className="absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-black/70 px-2.5 py-1 text-xs font-semibold text-white shadow-md">
             {currentIndex + 1} / {items.length}
           </div>
         )}
@@ -115,7 +115,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
         {currentIndex > 0 && (
           <button
             type="button"
-            className="absolute left-3 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
+            className="absolute left-3 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white shadow-lg transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
             onClick={goPrev}
             aria-label="Previous slide"
           >
@@ -125,7 +125,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
         {currentIndex < items.length - 1 && (
           <button
             type="button"
-            className="absolute right-3 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
+            className="absolute right-3 top-1/2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white shadow-lg transition-all hover:scale-105 hover:bg-black/80 active:scale-95"
             onClick={goNext}
             aria-label="Next slide"
           >
@@ -135,7 +135,7 @@ export function CarouselViewer({ postPk }: CarouselViewerProps) {
 
         {/* Indicator Dots */}
         {items.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 backdrop-blur-md">
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5">
             {items.map((_, idx) => (
               <button
                 key={idx}

@@ -42,7 +42,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-[6px] border border-hairline">
+    <div className="overflow-x-auto rounded-lg border border-hairline">
       <Table
         containerProps={{
           role: "region",
@@ -53,14 +53,14 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
       >
         <TableHeader className="bg-surface-2/60">
           <TableRow className="border-hairline hover:bg-transparent">
-            <TableHead className="text-[11px] font-mono uppercase tracking-wider text-ink-subtle">Run</TableHead>
-            <TableHead className="text-[11px] font-mono uppercase tracking-wider text-ink-subtle">Started</TableHead>
-            <TableHead className="text-[11px] font-mono uppercase tracking-wider text-ink-subtle">Status</TableHead>
-            <TableHead className="text-right text-[11px] font-mono uppercase tracking-wider text-ink-subtle">Pages</TableHead>
-            <TableHead className="text-right text-[11px] font-mono uppercase tracking-wider text-ink-subtle">Found</TableHead>
-            <TableHead className="text-right text-[11px] font-mono uppercase tracking-wider text-ink-subtle">New Posts</TableHead>
-            <TableHead className="text-right text-[11px] font-mono uppercase tracking-wider text-ink-subtle">New Creators</TableHead>
-            <TableHead className="text-right text-[11px] font-mono uppercase tracking-wider text-ink-subtle">Duration</TableHead>
+            <TableHead className="text-eyebrow text-ink-subtle">Run</TableHead>
+            <TableHead className="text-eyebrow text-ink-subtle">Started</TableHead>
+            <TableHead className="text-eyebrow text-ink-subtle">Status</TableHead>
+            <TableHead className="text-eyebrow text-right text-ink-subtle">Pages</TableHead>
+            <TableHead className="text-eyebrow text-right text-ink-subtle">Found</TableHead>
+            <TableHead className="text-eyebrow text-right text-ink-subtle">New Posts</TableHead>
+            <TableHead className="text-eyebrow text-right text-ink-subtle">New Creators</TableHead>
+            <TableHead className="text-eyebrow text-right text-ink-subtle">Duration</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -109,18 +109,18 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                   <div>
                     <span className="text-ink">{format(started, "MMM d, yyyy · HH:mm")}</span>
                     {isFailed && run.errorMessage && (
-                      <p className="text-[11px] text-red-400 mt-0.5 max-w-56 truncate font-sans">
+                      <p className="text-xs text-red-400 mt-0.5 max-w-56 truncate font-sans">
                         {run.errorMessage}
                       </p>
                     )}
                     {isInterrupted && (
-                      <p className="text-[11px] text-ink-muted mt-0.5 font-sans">
+                      <p className="text-xs text-ink-muted mt-0.5 font-sans">
                         Stopped at page {run.pagesScraped}
                         {errorKindLabel ? ` — ${errorKindLabel}` : ""}
                       </p>
                     )}
                     {(run.retryCount > 0 || run.resumeCount > 0) && (
-                      <p className="text-[10px] text-ink-subtle mt-0.5">
+                      <p className="text-xs text-ink-subtle mt-0.5">
                         {run.retryCount > 0 && `${run.retryCount} retries`}
                         {run.retryCount > 0 && run.resumeCount > 0 && " · "}
                         {run.resumeCount > 0 && `resumed ${run.resumeCount}×`}
@@ -131,20 +131,20 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {run.status === "completed" ? (
-                      <span className="inline-flex items-center rounded-[4px] bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-400">
+                      <span className="inline-flex items-center rounded-sm bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-emerald-400">
                         Completed
                       </span>
                     ) : run.status === "running" ? (
-                      <span className="inline-flex items-center gap-1 rounded-[4px] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-400">
+                      <span className="inline-flex items-center gap-1 rounded-sm bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-amber-400">
                         <span className="size-1 rounded-full bg-amber-400 animate-ping" />
                         Running
                       </span>
                     ) : run.status === "failed" ? (
-                      <span className="inline-flex items-center rounded-[4px] bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-400">
+                      <span className="inline-flex items-center rounded-sm bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-red-400">
                         Failed
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-[4px] bg-surface-2 border border-hairline px-2 py-0.5 text-[10px] uppercase text-ink-muted">
+                      <span className="inline-flex items-center rounded-sm bg-surface-2 border border-hairline px-2 py-0.5 text-xs uppercase text-ink-muted">
                         {run.status}
                       </span>
                     )}
@@ -152,7 +152,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                       <Button
                         size="xs"
                         variant="secondary"
-                        className="h-6 px-2 text-[10px] font-semibold"
+                        className="h-6 px-2 text-xs font-semibold"
                         onClick={(e) => {
                           e.stopPropagation();
                           resumeMutation.mutate(run.id);
@@ -167,7 +167,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                       <Button
                         size="xs"
                         variant="outline"
-                        className="h-6 px-2 text-[10px] font-semibold text-red-400 border-red-500/30 hover:bg-red-500/10"
+                        className="h-6 px-2 text-xs font-semibold text-red-400 border-red-500/30 hover:bg-red-500/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           cancelMutation.mutate(run.id);

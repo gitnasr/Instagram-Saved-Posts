@@ -543,7 +543,7 @@ export function OnboardingWizard({
               <CardTitle className="flex items-center gap-2">
                 <Cloud className="size-5 text-sky-500" />
                 Cloudinary CDN{" "}
-                <Badge variant="outline" className="ml-auto text-[10px]">
+                <Badge variant="outline" className="ml-auto text-xs">
                   Optional
                 </Badge>
               </CardTitle>
@@ -888,11 +888,11 @@ export function OnboardingWizard({
   const setupSummary = (
     <aside className="space-y-4 rounded-2xl border bg-card p-5">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your archive</p>
+        <p className="text-eyebrow text-muted-foreground">Your archive</p>
         <p className="mt-1 font-semibold">{profileName || "Name your profile"}</p>
       </div>
       <div className="border-t pt-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Instagram</p>
+        <p className="text-eyebrow text-muted-foreground">Instagram</p>
         <p className="mt-1 text-sm">
           {validatedUser
             ? "Connected as @" + validatedUser.username
@@ -902,7 +902,7 @@ export function OnboardingWizard({
         </p>
       </div>
       <div className="border-t pt-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Media storage</p>
+        <p className="text-eyebrow text-muted-foreground">Media storage</p>
         <p className="mt-1 text-sm">{cloudConnected ? "Cloudinary connected" : "Built-in proxy caching"}</p>
         <p className="mt-1 text-xs text-muted-foreground">Cloudinary is optional and can be configured later.</p>
       </div>

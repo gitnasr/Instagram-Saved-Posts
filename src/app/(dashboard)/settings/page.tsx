@@ -69,8 +69,8 @@ export default function SettingsPage() {
 
       {isLoading || !active ? (
         <div className="space-y-4">
-          <Skeleton className="h-64 w-full rounded-[8px]" />
-          <Skeleton className="h-32 w-full rounded-[8px]" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
         </div>
       ) : (
         <div className="space-y-6">
@@ -81,7 +81,7 @@ export default function SettingsPage() {
                   name={active.name}
                   avatarUrl={active.avatarUrl}
                   avatarColor={active.avatarColor}
-                  className="size-10 rounded-[6px] border border-hairline"
+                  className="size-10 rounded-lg border border-hairline"
                 />
                 <div>
                   <CardTitle className="text-base">Workspace Profile: {active.name}</CardTitle>
@@ -93,7 +93,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-5 pt-5">
               <div className="space-y-2">
-                <Label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle flex items-center gap-1.5">
+                <Label htmlFor="profile-name" className="text-eyebrow text-ink-subtle flex items-center gap-1.5">
                   <User className="size-3.5 text-amber-500" />
                   Profile Name
                 </Label>
@@ -107,7 +107,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cookie" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle flex items-center gap-1.5">
+                <Label htmlFor="cookie" className="text-eyebrow text-ink-subtle flex items-center gap-1.5">
                   <Key className="size-3.5 text-amber-500" />
                   Instagram Session Cookie
                 </Label>
@@ -132,9 +132,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="user-agent" className="text-xs font-semibold uppercase tracking-wider text-ink-subtle flex items-center gap-1.5">
+                <Label htmlFor="user-agent" className="text-eyebrow text-ink-subtle flex items-center gap-1.5">
                   <Globe className="size-3.5 text-amber-500" />
-                  Custom User-Agent <span className="text-[10px] text-ink-subtle font-mono">(Optional)</span>
+                  Custom User-Agent <span className="text-xs text-ink-subtle font-mono">(Optional)</span>
                 </Label>
                 <Input
                   id="user-agent"

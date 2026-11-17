@@ -32,8 +32,8 @@ export default function ScrapePage() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-40 w-full rounded-[8px]" />
-          <Skeleton className="h-64 w-full rounded-[8px]" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-64 w-full rounded-lg" />
         </div>
       ) : (
         <>

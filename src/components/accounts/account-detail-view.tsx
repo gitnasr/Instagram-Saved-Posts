@@ -46,10 +46,10 @@ export function AccountDetailView({
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-28 w-full rounded-[8px]" />
+        <Skeleton className="h-28 w-full rounded-lg" />
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-[8px]" />
+            <Skeleton key={i} className="aspect-square rounded-lg" />
           ))}
         </div>
       </div>
@@ -93,11 +93,11 @@ export function AccountDetailView({
       )}
 
       {/* Account Hero Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-[8px] border border-hairline bg-surface-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-lg border border-hairline bg-surface-1">
         <div className="flex items-center gap-4">
-          <Avatar className="size-16 rounded-[8px] border border-hairline">
+          <Avatar className="size-16 rounded-lg border border-hairline">
             <AvatarImage src={avatarSrc} className="object-cover" />
-            <AvatarFallback className="rounded-[8px] text-lg font-bold bg-surface-3 text-ink">
+            <AvatarFallback className="rounded-lg text-lg font-bold bg-surface-3 text-ink">
               {account.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -109,7 +109,7 @@ export function AccountDetailView({
               {account.isVerified && (
                 <Badge
                   variant="default"
-                  className="text-[9px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono"
+                  className="text-xs px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono"
                 >
                   Verified
                 </Badge>
@@ -117,7 +117,7 @@ export function AccountDetailView({
               {account.isPrivate && (
                 <Badge
                   variant="outline"
-                  className="text-[9px] px-1.5 py-0 h-4 border-hairline text-ink-muted"
+                  className="text-xs px-1.5 py-0 h-4 border-hairline text-ink-muted"
                 >
                   Private
                 </Badge>
@@ -125,7 +125,7 @@ export function AccountDetailView({
               {account.lostAt && (
                 <Badge
                   variant="destructive"
-                  className="text-[9px] px-1.5 py-0 h-4"
+                  className="text-xs px-1.5 py-0 h-4"
                 >
                   Lost
                 </Badge>
@@ -133,7 +133,7 @@ export function AccountDetailView({
               {account.ignoredAt && (
                 <Badge
                   variant="outline"
-                  className="text-[9px] px-1.5 py-0 h-4 border-hairline text-ink-subtle"
+                  className="text-xs px-1.5 py-0 h-4 border-hairline text-ink-subtle"
                 >
                   Ignored
                 </Badge>

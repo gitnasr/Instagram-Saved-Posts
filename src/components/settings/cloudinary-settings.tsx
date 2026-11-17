@@ -183,7 +183,7 @@ export function CloudinarySettings() {
       <CardHeader className="pb-4 border-b border-hairline">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-[6px] bg-surface-2 border border-hairline text-amber-500">
+            <div className="p-2 rounded-lg bg-surface-2 border border-hairline text-amber-500">
               <Cloud className="size-4" />
             </div>
             <div>
@@ -195,16 +195,16 @@ export function CloudinarySettings() {
           </div>
           <div className="flex items-center gap-2">
             {isConfigLoading ? (
-              <Badge variant="outline" className="text-[10px] font-mono">
+              <Badge variant="outline" className="text-xs font-mono">
                 <Loader2 className="size-3 mr-1 animate-spin" /> Checking...
               </Badge>
             ) : configured ? (
-              <Badge variant="default" className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+              <Badge variant="default" className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
                 <CheckCircle2 className="size-3 mr-1" />
                 Connected
               </Badge>
             ) : (
-              <Badge variant="destructive" className="text-[10px] px-2 py-0.5 font-mono">
+              <Badge variant="destructive" className="text-xs px-2 py-0.5 font-mono">
                 <AlertCircle className="size-3 mr-1" />
                 Not configured
               </Badge>
@@ -227,35 +227,35 @@ export function CloudinarySettings() {
       <CardContent className="space-y-4 pt-4">
         {/* Live Stats */}
         {configured && stats && !isEditing && (
-          <div className="rounded-[6px] border border-hairline bg-surface-2/40 p-3.5 space-y-3">
-            <p className="text-[10px] font-mono font-semibold text-ink-subtle uppercase tracking-wider">
+          <div className="rounded-lg border border-hairline bg-surface-2/40 p-3.5 space-y-3">
+            <p className="text-eyebrow text-ink-subtle">
               Cloudinary Account Usage ({configData?.cloudName})
             </p>
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-[6px] border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
+              <div className="rounded-lg border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
                 <HardDrive className="size-3.5 text-amber-500 mx-auto" />
-                <p className="text-[10px] font-mono text-ink-subtle">Storage</p>
+                <p className="text-xs font-mono text-ink-subtle">Storage</p>
                 <p className="text-xs font-mono font-bold text-ink">
                   {formatBytes(stats.storageUsed)}
                 </p>
               </div>
-              <div className="rounded-[6px] border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
+              <div className="rounded-lg border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
                 <ImageIcon className="size-3.5 text-amber-500 mx-auto" />
-                <p className="text-[10px] font-mono text-ink-subtle">Assets</p>
+                <p className="text-xs font-mono text-ink-subtle">Assets</p>
                 <p className="text-xs font-mono font-bold text-ink">
                   {stats.resources.toLocaleString()}
                 </p>
               </div>
-              <div className="rounded-[6px] border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
+              <div className="rounded-lg border border-hairline bg-surface-1 p-2.5 text-center space-y-0.5">
                 <Zap className="size-3.5 text-amber-500 mx-auto" />
-                <p className="text-[10px] font-mono text-ink-subtle">Plan</p>
+                <p className="text-xs font-mono text-ink-subtle">Plan</p>
                 <p className="text-xs font-mono font-bold text-ink capitalize">{stats.plan}</p>
               </div>
             </div>
 
             {stats.storageLimit > 0 && (
               <div className="space-y-1">
-                <div className="flex justify-between text-[11px] font-mono text-ink-muted">
+                <div className="flex justify-between text-xs font-mono text-ink-muted">
                   <span>Storage</span>
                   <span>
                     {formatBytes(stats.storageUsed)} / {formatBytes(stats.storageLimit)}
@@ -269,12 +269,12 @@ export function CloudinarySettings() {
 
         {/* Credentials Form */}
         {(!configured || isEditing) && !isViewer && (
-          <div className="space-y-3 p-3.5 rounded-[6px] border border-hairline bg-surface-2/40">
-            <p className="text-xs font-semibold text-ink uppercase tracking-wider font-mono">
+          <div className="space-y-3 p-3.5 rounded-lg border border-hairline bg-surface-2/40">
+            <p className="text-eyebrow text-ink">
               {configured ? "Update Credentials" : "Enter Cloudinary Credentials"}
             </p>
             <div className="space-y-1.5">
-              <Label htmlFor="cloud-name-settings" className="text-xs font-semibold text-ink-subtle uppercase tracking-wider">Cloud Name</Label>
+              <Label htmlFor="cloud-name-settings" className="text-eyebrow text-ink-subtle">Cloud Name</Label>
               <Input
                 id="cloud-name-settings"
                 placeholder="e.g. my-cloud"
@@ -284,7 +284,7 @@ export function CloudinarySettings() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="api-key-settings" className="text-xs font-semibold text-ink-subtle uppercase tracking-wider">API Key</Label>
+              <Label htmlFor="api-key-settings" className="text-eyebrow text-ink-subtle">API Key</Label>
               <Input
                 id="api-key-settings"
                 placeholder="123456789012345"
@@ -295,7 +295,7 @@ export function CloudinarySettings() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="api-secret-settings" className="text-xs font-semibold text-ink-subtle uppercase tracking-wider">API Secret</Label>
+              <Label htmlFor="api-secret-settings" className="text-eyebrow text-ink-subtle">API Secret</Label>
               <div className="relative">
                 <Input
                   id="api-secret-settings"
@@ -383,11 +383,11 @@ export function CloudinarySettings() {
         )}
 
         {/* Bulk Sync Box */}
-        <div className="p-3.5 rounded-[6px] border border-hairline bg-surface-2/40 space-y-3">
+        <div className="p-3.5 rounded-lg border border-hairline bg-surface-2/40 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <p className="text-xs font-semibold text-ink">Bulk Media Sync</p>
-              <p className="text-[11px] text-ink-subtle">
+              <p className="text-xs text-ink-subtle">
                 Uploads all historical account pictures and saved post carousels.
               </p>
             </div>
@@ -409,12 +409,12 @@ export function CloudinarySettings() {
 
           {isSyncing && syncState && (
             <div className="space-y-2 pt-2 border-t border-hairline">
-              <div className="flex justify-between text-[11px] font-mono text-ink-muted">
+              <div className="flex justify-between text-xs font-mono text-ink-muted">
                 <span>Progress: {syncPercent}%</span>
                 <span>{syncDone} of {syncTotal} items</span>
               </div>
               <Progress value={syncPercent} className="h-1.5 bg-surface-2 [&>div]:bg-amber-500" />
-              <div className="flex flex-wrap gap-4 text-[10px] font-mono text-ink-subtle">
+              <div className="flex flex-wrap gap-4 text-xs font-mono text-ink-subtle">
                 <span>Accounts: {syncState.uploadedAccounts}/{syncState.totalAccounts}</span>
                 <span>Posts: {syncState.uploadedPosts}/{syncState.totalPosts}</span>
                 <span>Carousel: {syncState.uploadedCarouselItems}/{syncState.totalCarouselItems}</span>
@@ -426,7 +426,7 @@ export function CloudinarySettings() {
           )}
 
           {syncState?.status === "completed" && (
-            <p className="text-[11px] font-mono text-ink-subtle pt-1 border-t border-hairline">
+            <p className="text-xs font-mono text-ink-subtle pt-1 border-t border-hairline">
               Latest sync: {syncState.uploadedAccounts + syncState.uploadedPosts + syncState.uploadedCarouselItems} items uploaded
               {syncState.failedUploads > 0 && ` · ${syncState.failedUploads} failed`}
             </p>

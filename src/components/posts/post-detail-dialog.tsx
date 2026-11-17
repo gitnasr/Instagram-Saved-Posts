@@ -46,11 +46,11 @@ export function PostDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-surface-1 border border-hairline rounded-[8px] p-5 overflow-y-auto">
+      <DialogContent className="max-w-lg bg-surface-1 border border-hairline rounded-lg p-5 overflow-y-auto">
         <DialogHeader className="pb-2 border-b border-hairline">
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             Post Archive
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+            <Badge variant="secondary" className="text-xs px-1.5 py-0 font-mono">
               {mediaTypeLabel(post.mediaType)}
             </Badge>
           </DialogTitle>
@@ -61,7 +61,7 @@ export function PostDetailDialog({
             <CarouselViewer key={post.pk} postPk={post.pk} />
           ) : (
             post.thumbnailUrl && (
-              <div className="relative overflow-hidden rounded-[6px] bg-surface-2 border border-hairline flex items-center justify-center max-h-[70vh]">
+              <div className="relative overflow-hidden rounded-lg bg-surface-2 border border-hairline flex items-center justify-center max-h-[70vh]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={
@@ -76,7 +76,7 @@ export function PostDetailDialog({
           )}
 
           {/* Stats Bar */}
-          <div className="flex items-center justify-between p-2.5 rounded-[6px] bg-surface-2/60 border border-hairline">
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface-2/60 border border-hairline">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-xs font-semibold font-mono text-ink">
                 <Heart className="size-3.5 text-amber-500 fill-amber-500" />
@@ -88,7 +88,7 @@ export function PostDetailDialog({
               </span>
             </div>
             {post.carouselMediaCount && (
-              <span className="flex items-center gap-1 text-[11px] font-mono text-ink-muted">
+              <span className="flex items-center gap-1 text-xs font-mono text-ink-muted">
                 <Layers className="size-3" />
                 {post.carouselMediaCount} slides
               </span>
@@ -97,7 +97,7 @@ export function PostDetailDialog({
 
           {/* Caption */}
           {post.captionText && (
-            <div className="max-h-36 overflow-y-auto rounded-[6px] bg-surface-2/40 border border-hairline p-3">
+            <div className="max-h-36 overflow-y-auto rounded-lg bg-surface-2/40 border border-hairline p-3">
               <p className="text-xs text-ink whitespace-pre-wrap leading-relaxed">
                 {post.captionText}
               </p>
