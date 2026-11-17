@@ -101,7 +101,7 @@ Heights: `default` 36px (the landing's `--btn-h-sm`), `lg` 44px (the landing's `
 
 ## Focus
 
-One ring for every control: `:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px }` in `globals.css`. Components do not draw their own ring, and they do not use `outline-none` on anything a keyboard can reach (menu items are the exception: the highlighted item is the indicator). The ring never animates: controls use `transition-colors`, never `transition-all`, and the ring rule sets `transition-property: none` so a focused control does not animate outline offset or width. Ring colour `highlight` is 9.3:1 on the dark canvas and 6.0:1 on the light, above the 3:1 required by WCAG 1.4.11.
+One ring for every control: `:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px }` in `globals.css`. Components do not draw their own ring, and they do not use `outline-none` on anything a keyboard can reach (menu items are the exception: the highlighted item is the indicator). The ring never animates: controls use `transition-colors`, never `transition-all`, and an unlayered `:focus-visible { transition-property: none }` beats any component transition so the ring does not tween. Ring colour `highlight` is 9.3:1 on the dark canvas and 6.0:1 on the light, above the 3:1 required by WCAG 1.4.11.
 
 ## Navigation
 
@@ -114,6 +114,7 @@ The landing nav is an opaque ground, one hairline, words with no pill or fill, a
 
 ## Surfaces and status
 
+- Fields (input, textarea, select) sit on `canvas` with a `hairline-strong` border, so they read as sunken inside a `surface-1` card.
 - Card, panel and settings section: `surface-1`, 1px `hairline`, `rounded-md`, no shadow. Hover on a clickable card steps the border to `hairline-strong`, not the fill.
 - Dialog: `surface-1`, `hairline`, `rounded-lg`, backdrop `scrim` with blur.
 - Table: header row is a label (12px, 500, `ink-muted`) on a hairline; rows are separated by hairlines, no zebra.

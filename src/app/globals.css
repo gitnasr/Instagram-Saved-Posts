@@ -187,13 +187,16 @@
   ::selection {
     background: color-mix(in oklab, var(--primary) 30%, transparent);
   }
-  /* The one focus ring (system.css :focus-visible). It never animates, so a
-     focused control does not tween outline width or offset. */
+  /* The one focus ring (system.css :focus-visible). */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
-    transition-property: none;
   }
+}
+
+/* Unlayered on purpose: it must beat a component's transition-colors so the ring never animates. */
+:focus-visible {
+  transition-property: none;
 }
 
 /* Pulse and ping mark live work; with reduced motion the dot and the word still say it. */
