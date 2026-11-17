@@ -25,26 +25,16 @@ const navItems = [
 export function Sidebar() {
   return (
     <>
-      <aside className="hidden h-dvh w-64 flex-col border-r border-hairline bg-surface-1 md:flex select-none">
-        {/* Brand Header */}
-        <div className="flex h-16 items-center px-4 border-b border-hairline">
+      <aside className="hidden h-dvh w-52 flex-col border-r border-hairline bg-surface-1 md:flex select-none">
+        <div className="flex h-14 items-center px-4">
           <BrandLogo size={24} />
         </div>
 
-        {/* Profile Switcher */}
-        <div className="p-3">
+        <div className="px-3 pb-3">
           <ProfileSwitcher />
         </div>
 
-        <div className="px-3 pb-2">
-          <div className="h-px w-full bg-hairline" />
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1 px-3 py-1">
-          <div className="text-eyebrow px-2 py-1.5 text-ink-subtle">
-            Workspace
-          </div>
+        <nav className="flex flex-1 flex-col gap-0.5 px-3">
           {navItems.map(({ href, label, icon: Icon }) => (
             <NavLink key={href} href={href} icon={<Icon className="size-4 shrink-0" />}>
               {label}
@@ -52,30 +42,19 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* Bottom Panel */}
-        <div className="p-3 border-t border-hairline bg-surface-1/30 flex flex-col gap-2">
-          <ThemeToggle showLabel />
-          <div className="flex items-center justify-between px-1 text-xs text-ink-subtle font-mono">
+        <div className="flex items-center justify-between gap-2 px-3 py-3">
+          <ThemeToggle />
+          <div className="flex items-center gap-1.5">
+            <UpdateIndicator />
             <a
-              href="https://gitnasr.com"
+              href={GITHUB_RELEASES_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-foreground hover:underline transition-colors"
+              title="View releases on GitHub"
+              className="font-mono text-xs text-ink-subtle transition-colors hover:text-foreground"
             >
-              gitnasr.com
+              {APP_VERSION.startsWith("v") ? APP_VERSION : `v${APP_VERSION}`}
             </a>
-            <div className="flex items-center gap-1.5">
-              <UpdateIndicator />
-              <a
-                href={GITHUB_RELEASES_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="View Releases on GitHub"
-                className="rounded bg-surface-2/60 hover:bg-surface-3/80 px-1.5 py-0.5 text-xs text-ink-muted hover:text-foreground transition-colors border border-hairline"
-              >
-                {APP_VERSION.startsWith("v") ? APP_VERSION : `v${APP_VERSION}`}
-              </a>
-            </div>
           </div>
         </div>
       </aside>

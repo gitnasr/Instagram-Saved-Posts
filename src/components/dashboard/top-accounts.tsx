@@ -2,10 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { proxyImageUrl } from "@/lib/proxy-image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { BadgeCheck, ChevronRight } from "lucide-react";
 import { ProfileLink } from "@/components/accounts/profile-link";
 import type { Account } from "@/types";
 
@@ -19,56 +18,49 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
   }
 
   return (
-    <Card className="hover:border-hairline-strong transition-all">
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base font-semibold">Top Creators</CardTitle>
+    <Card className="gap-2 py-4">
+      <CardHeader className="flex flex-row items-center justify-between px-4">
+        <CardTitle className="text-sm font-semibold">Top creators</CardTitle>
         <Link
           href="/accounts"
-          className="text-eyebrow text-primary hover:text-amber-400 flex items-center gap-0.5 transition-colors"
+          className="flex items-center gap-0.5 text-xs text-ink-muted transition-colors hover:text-foreground"
         >
           View all <ChevronRight className="size-3" />
         </Link>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
+      <CardContent className="px-2">
+        <div className="divide-y divide-hairline/60">
           {accounts.map((account) => (
             <ProfileLink
               key={account.pk}
               username={account.username}
-              className="flex items-center gap-3 rounded-lg p-2 transition-all bg-surface-1/40 hover:bg-surface-2 border border-hairline/40 hover:border-hairline group"
+              className="group flex items-center gap-3 rounded-sm px-2 py-2 transition-colors hover:bg-surface-2"
             >
-              <Avatar className="size-9 rounded-sm border border-hairline">
+              <Avatar className="size-8 rounded-sm">
                 <AvatarImage
                   src={proxyImageUrl(
                     account.cloudinaryProfilePicUrl ?? account.profilePicUrl
                   )}
                   className="object-cover"
                 />
-                <AvatarFallback className="rounded-sm text-xs font-semibold bg-surface-3 text-ink">
+                <AvatarFallback className="rounded-sm bg-surface-3 text-xs font-semibold text-ink">
                   {account.username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-semibold text-ink group-hover:text-primary transition-colors truncate">
-                    @{account.username}
-                  </p>
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-1 truncate text-sm font-medium text-ink">
+                  @{account.username}
                   {account.isVerified && (
-                    <Badge variant="default" className="text-xs px-1 py-0 h-4 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-mono">
-                      Verified
-                    </Badge>
+                    <BadgeCheck aria-label="Verified" className="size-3.5 shrink-0 text-amber-500" />
                   )}
-                </div>
-                <p className="text-xs text-ink-muted truncate">
+                </p>
+                <p className="truncate text-xs text-ink-muted">
                   {account.fullName || "No full name"}
                 </p>
               </div>
-              <div className="flex items-center gap-1 shrink-0 bg-surface-2 px-2 py-1 rounded-sm border border-hairline">
-                <span className="text-xs font-mono font-bold text-ink">
-                  {account.savedPostCount}
-                </span>
-                <span className="text-xs text-ink-muted uppercase">posts</span>
-              </div>
+              <span className="shrink-0 font-mono text-sm font-semibold text-ink">
+                {account.savedPostCount}
+              </span>
             </ProfileLink>
           ))}
         </div>

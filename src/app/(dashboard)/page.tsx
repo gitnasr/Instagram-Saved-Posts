@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { AccountBreakdownCard } from "@/components/dashboard/account-breakdown";
+import { ActivityCard } from "@/components/dashboard/activity-card";
 import { RecentScrapes } from "@/components/dashboard/recent-scrapes";
-import { ScrapesTrendChart } from "@/components/dashboard/scrapes-trend-chart";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { TopAccounts } from "@/components/dashboard/top-accounts";
 import { Header } from "@/components/layout/header";
@@ -37,17 +36,12 @@ export default function OverviewPage() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Skeleton className="h-28 rounded-lg" />
-            <Skeleton className="h-28 rounded-lg" />
-            <Skeleton className="h-28 rounded-lg" />
-          </div>
+          <Skeleton className="h-24 rounded-lg" />
           <div className="grid gap-4 lg:grid-cols-2">
             <Skeleton className="h-64 rounded-lg" />
             <Skeleton className="h-64 rounded-lg" />
           </div>
           <Skeleton className="h-64 rounded-lg" />
-          <Skeleton className="h-40 rounded-lg" />
         </div>
       ) : data ? (
         <>
@@ -60,8 +54,7 @@ export default function OverviewPage() {
             <TopAccounts accounts={data.topAccounts} />
             <RecentScrapes scrapes={data.recentScrapes} />
           </div>
-          <ScrapesTrendChart data={data.scrapesTrend} />
-          <AccountBreakdownCard breakdown={data.accountBreakdown} />
+          <ActivityCard trend={data.scrapesTrend} breakdown={data.accountBreakdown} />
         </>
       ) : null}
     </div>
