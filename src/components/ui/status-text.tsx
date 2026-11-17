@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 
 const TONE = {
-  success: { dot: "bg-emerald-500", text: "text-emerald-400" },
-  warn: { dot: "bg-amber-500", text: "text-amber-400" },
-  danger: { dot: "bg-red-500", text: "text-red-400" },
+  success: { dot: "bg-success", text: "text-success" },
+  warn: { dot: "bg-primary", text: "text-highlight" },
+  danger: { dot: "bg-danger", text: "text-danger" },
   muted: { dot: "bg-ink-subtle", text: "text-ink-muted" },
 } as const;
 

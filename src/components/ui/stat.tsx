@@ -12,7 +12,7 @@ export function Stat({ label, value, hint, className }: StatProps) {
   return (
     <div className={cn("min-w-0", className)}>
       <p className="text-xs text-ink-muted">{label}</p>
-      <p className="truncate text-2xl font-semibold tracking-tight text-ink">{value}</p>
+      <p className="truncate text-2xl font-medium text-ink">{value}</p>
       {hint && <div className="mt-0.5 text-xs text-ink-subtle">{hint}</div>}
     </div>
   );

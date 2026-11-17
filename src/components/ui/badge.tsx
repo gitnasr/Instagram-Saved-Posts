@@ -9,15 +9,15 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-black border-transparent font-semibold",
+        default: "bg-primary text-primary-foreground border-transparent",
         secondary:
-          "bg-surface-2 text-foreground border-hairline hover:bg-surface-3",
+          "bg-tonal text-foreground border-transparent",
         destructive:
-          "bg-red-500/10 text-red-400 border-red-500/20",
+          "bg-danger/10 text-danger border-danger/20",
         outline:
           "border-hairline text-ink-muted bg-transparent",
-        ghost: "hover:bg-surface-2 text-ink-muted",
-        link: "text-primary underline-offset-4 hover:underline",
+        ghost: "hover:bg-tonal text-ink-muted",
+        link: "text-highlight underline-offset-4 hover:underline",
       },
     },
     defaultVariants: {
