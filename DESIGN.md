@@ -141,7 +141,7 @@ Media overlays on photographs (post tiles, the carousel) keep white text on a bl
 
 Two more raw-colour exceptions, both data and not chrome: the eight tile colours a profile can be given (`src/lib/profile-avatar.ts`, they tell profiles apart), and the `#ccc` selector string in `chart.tsx` that targets a Recharts attribute.
 
-Known gaps on 2026-11-17: a few buttons still carry a local height or `text-xs` override (`accounts/page.tsx`, `account-notes.tsx`, `scrape-history-table.tsx`, `profile-picker.tsx`), the onboarding wizard keeps its own card sizes, and no lint rule forbids raw hex, palette colours or `rounded-xl`; the rules in this file are checked by hand.
+Known gaps on 2026-11-17: a few buttons still carry a local `text-xs` or `h-auto` override (`accounts/page.tsx`, `account-filters.tsx`, `account-notes.tsx`, `scrape-history-table.tsx`, `onboarding-wizard.tsx`), the onboarding wizard keeps its own card sizes, and no lint rule forbids raw hex, palette colours or `rounded-xl`; the rules in this file are checked by hand.
 
 ## Landing sync
 
