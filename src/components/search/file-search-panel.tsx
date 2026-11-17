@@ -31,7 +31,7 @@ export function FileSearchPanel({ mode, previewUrl, onFile }: FileSearchPanelPro
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="group flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-hairline-strong bg-surface-2/40 p-6 text-center transition-colors hover:border-amber-500/60 hover:bg-surface-2/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+        className="group flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-dashed border-hairline-strong bg-surface-2/40 p-6 text-center transition-colors hover:border-primary/60 hover:bg-surface-2/70"
       >
         {previewUrl ? (
           <div className="flex flex-col items-center gap-2">
@@ -39,7 +39,7 @@ export function FileSearchPanel({ mode, previewUrl, onFile }: FileSearchPanelPro
             <img
               src={previewUrl}
               alt="Query preview"
-              className="max-h-48 rounded-lg border border-hairline object-contain"
+              className="max-h-48 rounded-md border border-hairline object-contain"
             />
             <span className="text-xs text-ink-subtle group-hover:text-foreground">
               Click to choose a different photo
@@ -47,7 +47,7 @@ export function FileSearchPanel({ mode, previewUrl, onFile }: FileSearchPanelPro
           </div>
         ) : (
           <>
-            <Upload className="size-6 text-ink-muted transition-colors group-hover:text-amber-500" />
+            <Upload className="size-6 text-ink-muted transition-colors group-hover:text-highlight" />
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium text-foreground">
                 {mode === "image"

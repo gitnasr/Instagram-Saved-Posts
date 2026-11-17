@@ -7,9 +7,9 @@ type Flags = Pick<Account, "isVerified" | "isPrivate" | "lostAt" | "ignoredAt">;
 /** Account status as small icons (verified, private, lost, ignored). One place for every list and header. */
 export function AccountFlags({ account, className }: { account: Flags; className?: string }) {
   const flags = [
-    { on: account.isVerified, Icon: BadgeCheck, label: "Verified", tone: "text-amber-500" },
+    { on: account.isVerified, Icon: BadgeCheck, label: "Verified", tone: "text-highlight" },
     { on: account.isPrivate, Icon: Lock, label: "Private", tone: "text-ink-muted" },
-    { on: Boolean(account.lostAt), Icon: Unlink, label: "Lost", tone: "text-red-400" },
+    { on: Boolean(account.lostAt), Icon: Unlink, label: "Lost", tone: "text-danger" },
     { on: Boolean(account.ignoredAt), Icon: EyeOff, label: "Ignored", tone: "text-ink-subtle" },
   ].filter((f) => f.on);
 

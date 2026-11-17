@@ -36,12 +36,12 @@ export default function OverviewPage() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-24 rounded-lg" />
+          <Skeleton className="h-24 rounded-md" />
           <div className="grid gap-4 lg:grid-cols-2">
-            <Skeleton className="h-64 rounded-lg" />
-            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-64 rounded-md" />
+            <Skeleton className="h-64 rounded-md" />
           </div>
-          <Skeleton className="h-64 rounded-lg" />
+          <Skeleton className="h-64 rounded-md" />
         </div>
       ) : data ? (
         <>

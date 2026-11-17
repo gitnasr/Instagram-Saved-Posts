@@ -40,7 +40,7 @@ export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
       onClick={handleClick}
       disabled={buttonDisabled}
       size="default"
-      className="font-semibold text-xs px-4 shadow-none"
+      className="font-medium text-xs px-4 shadow-none"
     >
       {isRunning ? (
         <>

@@ -50,13 +50,13 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
   }
 
   return (
-    <div className="rounded-lg border border-hairline">
+    <div className="rounded-md border border-hairline">
       <Table
         containerProps={{
           role: "region",
           "aria-label": "Sync run history",
           tabIndex: 0,
-          className: "focus-visible:outline-2 focus-visible:outline-primary/50",
+          className: "",
         }}
       >
         <TableHeader>
@@ -88,12 +88,12 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                 key={run.id}
                 className={cn(
                   "cursor-pointer border-hairline text-sm hover:bg-surface-2",
-                  isFailed && "bg-red-500/5",
-                  isInterrupted && "bg-amber-500/5"
+                  isFailed && "bg-danger/5",
+                  isInterrupted && "bg-primary/5"
                 )}
                 onClick={() => router.push(`/scrape/${run.id}`)}
               >
-                <TableCell className="font-mono font-semibold text-ink">
+                <TableCell className="font-mono font-medium text-ink">
                   {/* Real link so keyboard/AT users can open a run; row click stays as a mouse shortcut */}
                   <Link
                     href={`/scrape/${run.id}`}
@@ -106,7 +106,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                 <TableCell>
                   <span className="text-ink">{format(started, "MMM d, yyyy · HH:mm")}</span>
                   {isFailed && run.errorMessage && (
-                    <p className="mt-0.5 max-w-56 truncate text-xs text-red-400">
+                    <p className="mt-0.5 max-w-56 truncate text-xs text-danger">
                       {run.errorMessage}
                     </p>
                   )}
@@ -132,7 +132,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                     {canResume && (
                       <Button
                         variant="secondary"
-                        className="px-2 text-xs font-semibold"
+                        className="px-2 text-xs font-medium"
                         onClick={(e) => {
                           e.stopPropagation();
                           resumeMutation.mutate(run.id);
@@ -146,7 +146,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                     {isRunning && (
                       <Button
                         variant="outline"
-                        className="border-red-500/30 px-2 text-xs font-semibold text-red-400 hover:bg-red-500/10"
+                        className="border-danger/30 px-2 text-xs font-medium text-danger hover:bg-danger/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           cancelMutation.mutate(run.id);
@@ -160,7 +160,7 @@ export function ScrapeHistoryTable({ runs }: ScrapeHistoryTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="text-right text-ink-muted">
-                  <span className="font-semibold text-amber-500">+{run.newPostsAdded}</span> posts
+                  <span className="font-medium text-highlight">+{run.newPostsAdded}</span> posts
                   <span className="text-ink-subtle"> · </span>+{run.newAccountsFound} creators
                 </TableCell>
                 <TableCell className="text-right text-ink-subtle">

@@ -10,8 +10,8 @@ type Tone = "neutral" | "warn" | "danger";
 
 const TONE: Record<Tone, string> = {
   neutral: "border-hairline bg-surface-1",
-  warn: "border-amber-500/30 bg-amber-500/5",
-  danger: "border-red-500/30 bg-red-500/5",
+  warn: "border-primary/30 bg-primary/5",
+  danger: "border-danger/30 bg-danger/5",
 };
 
 /** One banner shape for every search notice: icon, title and detail, optional action. */
@@ -31,7 +31,7 @@ function Callout({
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
-      className={`flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${TONE[tone]}`}
+      className={`flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between ${TONE[tone]}`}
     >
       <div className="flex items-start gap-3">
         <span className="mt-0.5 shrink-0">{icon}</span>
@@ -91,7 +91,7 @@ export function IndexCallouts({
           }
         >
           It&apos;s an optional beta feature that needs a Qdrant service and the{" "}
-          <code className="rounded bg-black/30 px-1 py-0.5 font-mono">QDRANT_URL</code> variable. The
+          <code className="rounded-sm bg-black/30 px-1 py-0.5 font-mono">QDRANT_URL</code> variable. The
           embedding models are a heavy addition most archives don&apos;t need.
         </Callout>
       )}
@@ -99,7 +99,7 @@ export function IndexCallouts({
       {failed && (
         <Callout
           tone="danger"
-          icon={<AlertCircle className="size-4 text-red-400" />}
+          icon={<AlertCircle className="size-4 text-danger" />}
           title="Last index run failed"
           action={
             <Button
@@ -120,7 +120,7 @@ export function IndexCallouts({
       {neverIndexed && (
         <Callout
           tone="warn"
-          icon={<Database className="size-4 text-amber-400" />}
+          icon={<Database className="size-4 text-highlight" />}
           title="Archive not indexed yet"
           action={
             <Button onClick={onReindex} disabled={reindexPending || running} className="shrink-0 gap-1.5">
@@ -136,7 +136,7 @@ export function IndexCallouts({
       {errorMessage && (
         <Callout
           tone="danger"
-          icon={<AlertCircle className="size-4 text-red-400" />}
+          icon={<AlertCircle className="size-4 text-danger" />}
           title={errorMessage}
           action={
             <button
@@ -152,13 +152,13 @@ export function IndexCallouts({
       )}
 
       {running && current && (
-        <Callout icon={<Database className="size-4 animate-pulse text-amber-500" />} title="Indexing archive…">
+        <Callout icon={<Database className="size-4 animate-pulse text-highlight" />} title="Indexing archive…">
           <div className="mt-1 space-y-1.5">
             <Progress value={progress} className="h-1.5 bg-surface-3" />
             <p className="font-mono">
               {current.indexedItems} / {current.totalItems} items ({progress}%) · faces{" "}
               {current.facesIndexed}
-              {current.failedItems > 0 && <span className="text-red-400"> · failures {current.failedItems}</span>}
+              {current.failedItems > 0 && <span className="text-danger"> · failures {current.failedItems}</span>}
             </p>
           </div>
         </Callout>

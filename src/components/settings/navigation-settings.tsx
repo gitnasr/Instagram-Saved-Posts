@@ -75,15 +75,15 @@ export function NavigationSettings() {
                 type="button"
                 onClick={() => handleSelect(option)}
                 className={cn(
-                  "flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all",
+                  "flex flex-col items-start gap-2 rounded-md border p-4 text-left transition-colors",
                   selected
                     ? "border-primary bg-surface-2 ring-1 ring-primary/40 shadow-sm"
                     : "border-hairline bg-surface-1 hover:border-hairline-strong hover:bg-surface-2/60"
                 )}
               >
                 <div className="flex w-full items-center justify-between">
-                  <span className="flex items-center gap-2 font-semibold text-sm text-ink">
-                    <Icon className="size-4 text-amber-500" />
+                  <span className="flex items-center gap-2 font-medium text-sm text-ink">
+                    <Icon className="size-4 text-highlight" />
                     {option.title}
                   </span>
                   <div className="flex items-center gap-1.5">

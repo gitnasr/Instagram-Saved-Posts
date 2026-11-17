@@ -43,15 +43,15 @@ export function SearchResults({ results, label, onSelect }: SearchResultsProps) 
                   thumbnailOverride={hit.matchedImageUrl}
                   matchedSlideIndex={hit.matchedSlideIndex}
                 />
-                <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-sm bg-black/80 px-1.5 py-0.5 font-mono text-xs font-semibold text-white">
+                <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-sm bg-black/80 px-1.5 py-0.5 font-mono text-xs font-medium text-white">
                   <span
                     className={
-                      pct >= 85 ? "text-amber-400" : pct >= 70 ? "text-emerald-400" : "text-zinc-300"
+                      pct >= 85 ? "text-highlight" : pct >= 70 ? "text-success" : "text-white/80"
                     }
                   >
                     {pct}%
                   </span>
-                  <span className="text-xs font-normal text-zinc-400">
+                  <span className="text-xs font-normal text-white/60">
                     {hit.matchType ? (MATCH_LABEL[hit.matchType] ?? "Visual") : null}
                   </span>
                 </div>

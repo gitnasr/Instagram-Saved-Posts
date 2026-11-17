@@ -22,11 +22,11 @@ interface ScrapesTrendChartProps {
 const chartConfig = {
   newPostsAdded: {
     label: "New Posts",
-    color: "#f59e0b",
+    color: "var(--chart-1)",
   },
   newAccountsFound: {
     label: "New Accounts",
-    color: "#71717a",
+    color: "var(--chart-2)",
   },
 };
 
@@ -41,11 +41,11 @@ export function ScrapesTrendChart({ data }: ScrapesTrendChartProps) {
     <div>
       <div className="mb-2 flex items-center gap-4 text-xs text-ink-muted">
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-amber-500" />
+          <span className="size-2 rounded-full bg-chart-1" />
           New posts
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-zinc-500" />
+          <span className="size-2 rounded-full bg-chart-2" />
           New creators
         </span>
       </div>
@@ -54,12 +54,12 @@ export function ScrapesTrendChart({ data }: ScrapesTrendChartProps) {
           <BarChart data={chartData} barGap={4}>
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 12, fill: "#71717a" }}
+              tick={{ fontSize: 12, fill: "var(--ink-muted)" }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "#71717a" }}
+              tick={{ fontSize: 12, fill: "var(--ink-muted)" }}
               tickLine={false}
               axisLine={false}
               allowDecimals={false}
@@ -74,8 +74,8 @@ export function ScrapesTrendChart({ data }: ScrapesTrendChartProps) {
                 />
               }
             />
-            <Bar dataKey="newPostsAdded" fill="#f59e0b" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="newAccountsFound" fill="#71717a" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="newPostsAdded" fill="var(--chart-1)" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="newAccountsFound" fill="var(--chart-2)" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartContainer>

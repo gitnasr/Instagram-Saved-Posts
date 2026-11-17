@@ -277,7 +277,7 @@ export function AccountMetadata({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 rounded-lg border px-3 py-3">
+        <div className="flex items-center justify-between gap-4 rounded-md border px-3 py-3">
           <div className="space-y-0.5">
             <Label htmlFor="ignore-account" className="text-sm font-medium">
               Ignore account

@@ -47,19 +47,19 @@ export function AccountPreviewDrawer() {
     >
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
-          className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/75 backdrop-blur-sm"
+          className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-scrim backdrop-blur-sm"
         />
         <DialogPrimitive.Content
           aria-describedby={undefined}
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex w-full max-w-4xl flex-col border-l border-hairline bg-canvas text-foreground shadow-2xl outline-none duration-200",
+            "fixed inset-y-0 right-0 z-50 flex w-full max-w-4xl flex-col border-l border-hairline bg-canvas text-foreground outline-none duration-200",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
           )}
         >
           {/* Sticky Drawer Header */}
           <div className="flex items-center justify-between gap-3 border-b border-hairline bg-surface-1 px-4 py-3 sm:px-6">
             <div className="flex items-center gap-3 min-w-0">
-              <DialogPrimitive.Title className="text-sm font-semibold text-ink truncate">
+              <DialogPrimitive.Title className="text-sm font-medium text-ink truncate">
                 {activeUsername ? `@${activeUsername}` : "Account details"}
               </DialogPrimitive.Title>
               {hasMultiple && (

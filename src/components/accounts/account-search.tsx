@@ -177,7 +177,7 @@ export function AccountSearch({
               <button
                 type="button"
                 aria-label={`Remove filter ${chip.label}`}
-                className="-mr-0.5 rounded-sm opacity-60 transition-colors hover:text-red-400 hover:opacity-100"
+                className="-mr-0.5 rounded-sm opacity-60 transition-colors hover:text-danger hover:opacity-100"
                 onClick={() => removeFilter(chip.key as AccountFilterKey)}
               >
                 <X className="h-3 w-3" />

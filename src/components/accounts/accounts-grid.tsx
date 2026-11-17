@@ -18,7 +18,7 @@ export function AccountsGrid({
 }: AccountsGridProps) {
   if (accounts.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed px-4 py-12 text-center">
+      <div className="rounded-md border border-dashed px-4 py-12 text-center">
         <p className="font-medium">No accounts found</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Try changing the search or filters.

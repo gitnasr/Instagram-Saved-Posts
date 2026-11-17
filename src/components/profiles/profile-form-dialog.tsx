@@ -91,7 +91,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-md bg-surface-1 border border-hairline rounded-lg p-6">
         <DialogHeader className="pb-2 border-b border-hairline">
-          <DialogTitle className="text-base font-semibold">
+          <DialogTitle className="text-base font-medium">
             {isEdit ? "Edit Profile" : "Create New Profile"}
           </DialogTitle>
           <DialogDescription className="text-xs text-ink-muted">
@@ -135,7 +135,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
               placeholder="sessionid=...; ds_user_id=..."
             />
             {isEdit && profile?.hasCookie && (
-              <p className="text-xs font-mono text-emerald-400">
+              <p className="text-xs font-mono text-success">
                 ✓ A session cookie is configured for this profile.
               </p>
             )}
@@ -155,7 +155,7 @@ export function ProfileFormDialog({ profile, trigger }: ProfileFormDialogProps) 
         </div>
 
         <DialogFooter>
-          <Button type="submit" disabled={pending} className="text-xs font-semibold">
+          <Button type="submit" disabled={pending} className="text-xs font-medium">
             {pending
               ? "Saving..."
               : isEdit

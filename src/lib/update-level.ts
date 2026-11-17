@@ -5,20 +5,20 @@ export const LEVEL_UI: Record<UpgradeLevel, { label: string; text: string; dot: 
   routine: {
     label: "Routine update",
     text: "text-ink-muted",
-    dot: "bg-emerald-500",
+    dot: "bg-success",
     badge: "border-hairline bg-transparent text-ink-muted",
   },
   attention: {
     label: "Needs attention",
-    text: "text-amber-700 dark:text-amber-400",
-    dot: "bg-amber-500",
-    badge: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    text: "text-highlight",
+    dot: "bg-primary",
+    badge: "border-primary/30 bg-primary/10 text-highlight",
   },
   breaking: {
     label: "Breaking change",
-    text: "text-red-700 dark:text-red-400",
-    dot: "bg-red-500",
-    badge: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400",
+    text: "text-danger",
+    dot: "bg-danger",
+    badge: "border-danger/30 bg-danger/10 text-danger",
   },
   unknown: {
     label: "No summary",

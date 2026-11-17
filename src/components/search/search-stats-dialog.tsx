@@ -89,7 +89,7 @@ export function SearchStatsDialog({ open, onOpenChange, status, isLoading }: Sea
                 <Row label="Faces found" value={stats?.facesIndexed ?? 0} />
               </dl>
               {stats?.lastError || (stats?.failedItems ?? 0) > 0 ? (
-                <p className="mt-2 break-all rounded-sm bg-red-500/10 p-2 font-mono text-xs text-red-300">
+                <p className="mt-2 break-all rounded-sm bg-danger/10 p-2 font-mono text-xs text-danger">
                   {(stats?.failedItems ?? 0) > 0 && `Failed items: ${stats?.failedItems} · `}
                   {stats?.lastError || "Unknown error"}
                 </p>

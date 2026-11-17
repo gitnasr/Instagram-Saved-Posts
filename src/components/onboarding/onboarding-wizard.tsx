@@ -268,12 +268,12 @@ export function OnboardingWizard({
   const stepContent = (
     <>        {/* STEP 1: WELCOME & SYSTEM CHECK */}
         {step === 1 && (
-          <Card className="border-border/60 shadow-lg">
+          <Card className="border-border/60">
             <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <Sparkles className="size-6" />
               </div>
-              <CardTitle className="text-2xl font-bold">
+              <CardTitle className="text-2xl font-medium">
                 Welcome to Saved Posts Tracker
               </CardTitle>
               <CardDescription>
@@ -283,13 +283,13 @@ export function OnboardingWizard({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-xl border bg-card/50 p-4 space-y-3">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
+              <div className="rounded-md border bg-card/50 p-4 space-y-3">
+                <h3 className="text-sm font-medium flex items-center gap-2">
                   <Database className="size-4 text-primary" />
                   System diagnostics
                 </h3>
 
-                <div className="flex items-center justify-between rounded-lg bg-background p-3 border">
+                <div className="flex items-center justify-between rounded-md bg-background p-3 border">
                   <div className="flex items-center gap-3">
                     <Database className="size-5 text-muted-foreground" />
                     <div>
@@ -306,7 +306,7 @@ export function OnboardingWizard({
                   {dbStatus === "connected" && (
                     <Badge
                       variant="default"
-                      className="bg-emerald-600 hover:bg-emerald-600 gap-1"
+                      className="bg-success text-canvas hover:bg-success gap-1"
                     >
                       <CheckCircle2 className="size-3.5" /> Connected
                     </Badge>
@@ -323,7 +323,7 @@ export function OnboardingWizard({
                   )}
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg bg-background p-3 border">
+                <div className="flex items-center justify-between rounded-md bg-background p-3 border">
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="size-5 text-muted-foreground" />
                     <div>
@@ -353,7 +353,7 @@ export function OnboardingWizard({
 
         {/* STEP 2: CONNECT INSTAGRAM */}
         {step === 2 && (
-          <Card className="border-border/60 shadow-lg">
+          <Card className="border-border/60">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Instagram className="size-5 text-pink-500" />
@@ -389,8 +389,8 @@ export function OnboardingWizard({
                 </div>
 
                 {showCookieGuide && (
-                  <div className="rounded-lg border bg-muted/40 p-4 text-xs space-y-2.5 text-muted-foreground">
-                    <p className="font-semibold text-foreground">
+                  <div className="rounded-md border bg-muted/40 p-4 text-xs space-y-2.5 text-muted-foreground">
+                    <p className="font-medium text-foreground">
                       How to extract your session cookie:
                     </p>
                     <ol className="list-decimal list-inside space-y-1.5 leading-relaxed">
@@ -408,9 +408,9 @@ export function OnboardingWizard({
                       </li>
                       <li>
                         Open Developer Tools (
-                        <kbd className="rounded border px-1 bg-muted">F12</kbd>{" "}
+                        <kbd className="rounded-sm border px-1 bg-muted">F12</kbd>{" "}
                         or{" "}
-                        <kbd className="rounded border px-1 bg-muted">
+                        <kbd className="rounded-sm border px-1 bg-muted">
                           Ctrl+Shift+I
                         </kbd>
                         ).
@@ -421,11 +421,11 @@ export function OnboardingWizard({
                       </li>
                       <li>
                         Click any request to{" "}
-                        <code className="rounded bg-muted px-1">
+                        <code className="rounded-sm bg-muted px-1">
                           instagram.com
                         </code>{" "}
                         (or filter by{" "}
-                        <code className="rounded bg-muted px-1">graphql</code>
+                        <code className="rounded-sm bg-muted px-1">graphql</code>
                         ).
                       </li>
                       <li>
@@ -482,16 +482,16 @@ export function OnboardingWizard({
 
               {/* Live Validated Account Preview */}
               {validatedUser && (
-                <div className="flex items-center gap-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 transition-all">
+                <div className="flex items-center gap-4 rounded-md border border-success/30 bg-success/10 p-4 transition-colors">
                   <ProfileAvatar
                     name={validatedUser.username}
                     avatarUrl={validatedUser.profilePicUrl}
-                    className="size-12 rounded-full border border-emerald-500/40"
+                    className="size-12 rounded-full border border-success/40"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate flex items-center gap-1.5">
+                    <p className="font-medium text-sm truncate flex items-center gap-1.5">
                       @{validatedUser.username}
-                      <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                      <CheckCircle2 className="size-4 text-success shrink-0" />
                     </p>
                     <p className="text-xs text-muted-foreground">
                       User PK: {validatedUser.pk} &bull; Authentication
@@ -542,7 +542,7 @@ export function OnboardingWizard({
 
         {/* STEP 3: CLOUDINARY SETUP */}
         {step === 3 && (
-          <Card className="border-border/60 shadow-lg">
+          <Card className="border-border/60">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Cloud className="size-5 text-sky-500" />
@@ -560,9 +560,9 @@ export function OnboardingWizard({
             <CardContent className="space-y-4">
               {cloudConnected && cloudStats ? (
                 /* Connected stats panel */
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+                <div className="rounded-md border border-success/30 bg-success/5 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+                    <div className="flex items-center gap-2 text-success font-medium text-sm">
                       <CheckCircle2 className="size-4" />
                       Connected to Cloudinary
                     </div>
@@ -576,24 +576,24 @@ export function OnboardingWizard({
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+                    <div className="rounded-md border bg-background p-3 text-center space-y-1">
                       <HardDrive className="size-4 text-muted-foreground mx-auto" />
                       <p className="text-xs text-muted-foreground">Storage</p>
-                      <p className="text-xs font-semibold">
+                      <p className="text-xs font-medium">
                         {formatBytes(cloudStats.storageUsed)}
                       </p>
                     </div>
-                    <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+                    <div className="rounded-md border bg-background p-3 text-center space-y-1">
                       <ImageIcon className="size-4 text-muted-foreground mx-auto" />
                       <p className="text-xs text-muted-foreground">Assets</p>
-                      <p className="text-xs font-semibold">
+                      <p className="text-xs font-medium">
                         {cloudStats.resources.toLocaleString()}
                       </p>
                     </div>
-                    <div className="rounded-lg border bg-background p-3 text-center space-y-1">
+                    <div className="rounded-md border bg-background p-3 text-center space-y-1">
                       <Zap className="size-4 text-muted-foreground mx-auto" />
                       <p className="text-xs text-muted-foreground">Plan</p>
-                      <p className="text-xs font-semibold capitalize">
+                      <p className="text-xs font-medium capitalize">
                         {cloudStats.plan}
                       </p>
                     </div>
@@ -684,7 +684,7 @@ export function OnboardingWizard({
                   </p>
 
                   {cloudError && (
-                    <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                       <AlertCircle className="size-3.5 shrink-0" />
                       {cloudError}
                     </div>
@@ -717,7 +717,7 @@ export function OnboardingWizard({
 
               {/* Fallback option info */}
               {!cloudConnected && (
-                <div className="rounded-lg border bg-muted/30 p-3">
+                <div className="rounded-md border bg-muted/30 p-3">
                   <p className="text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">
                       No Cloudinary?
@@ -747,12 +747,12 @@ export function OnboardingWizard({
 
         {/* STEP 4: LAUNCH */}
         {step === 4 && (
-          <Card className="border-border/60 shadow-lg text-center">
+          <Card className="border-border/60 text-center">
             <CardHeader>
-              <div className="mx-auto mb-2 flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
+              <div className="mx-auto mb-2 flex size-14 items-center justify-center rounded-md bg-success/10 text-success">
                 <CheckCircle2 className="size-8" />
               </div>
-              <CardTitle className="text-2xl font-bold">
+              <CardTitle className="text-2xl font-medium">
                 You&apos;re All Set!
               </CardTitle>
               <CardDescription>
@@ -761,14 +761,14 @@ export function OnboardingWizard({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="mx-auto max-w-sm rounded-xl border bg-muted/30 p-4 flex items-center gap-3 text-left">
+              <div className="mx-auto max-w-sm rounded-md border bg-muted/30 p-4 flex items-center gap-3 text-left">
                 <ProfileAvatar
                   name={profileName}
                   avatarUrl={validatedUser?.profilePicUrl}
-                  className="size-12 rounded-xl"
+                  className="size-12 rounded-md"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{profileName}</p>
+                  <p className="font-medium text-sm truncate">{profileName}</p>
                   <p className="text-xs text-muted-foreground">
                     {cookie ? "Instagram Session Active" : "No Session Configured"}
                   </p>
@@ -781,7 +781,7 @@ export function OnboardingWizard({
                   variant={cookie ? "default" : "outline"}
                   className={
                     cookie
-                      ? "bg-emerald-600 hover:bg-emerald-600 gap-1"
+                      ? "bg-success text-canvas hover:bg-success gap-1"
                       : "gap-1 text-muted-foreground"
                   }
                 >
@@ -847,10 +847,10 @@ export function OnboardingWizard({
       ];
   const prototypeIntro = prototypeVariant ? (
     <div className="mb-8">
-      <p className="text-sm font-medium uppercase tracking-[0.16em] text-primary">
+      <p className="text-sm font-medium text-primary">
         Setup prototype - Variant {prototypeVariant}
       </p>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight">
+      <h1 className="mt-2 text-3xl font-medium ">
         Build your saved-post archive
       </h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">
@@ -861,8 +861,8 @@ export function OnboardingWizard({
   ) : null;
 
   const setupChecklist = (
-    <aside className="rounded-2xl border bg-card p-5">
-      <h2 className="font-semibold">Setup checklist</h2>
+    <aside className="rounded-md border bg-card p-5">
+      <h2 className="font-medium">Setup checklist</h2>
       <ol className="mt-4 space-y-2">
         {steps.map((item) => (
           <li key={item.num}>
@@ -871,9 +871,9 @@ export function OnboardingWizard({
               onClick={() => setStep(item.num)}
               disabled={item.num > maxStep}
               aria-current={step === item.num ? "step" : undefined}
-              className={"flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 " + (step === item.num ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted")}
+              className={"flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 " + (step === item.num ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted")}
             >
-              <span className={"flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold " + (step > item.num ? "bg-emerald-600 text-white" : step === item.num ? "bg-primary text-primary-foreground" : "bg-muted")}>
+              <span className={"flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium " + (step > item.num ? "bg-success text-canvas" : step === item.num ? "bg-primary text-primary-foreground" : "bg-muted")}>
                 {step > item.num ? <CheckCircle2 className="size-4" /> : item.num}
               </span>
               <span className="min-w-0 flex-1">{item.label}</span>
@@ -882,17 +882,17 @@ export function OnboardingWizard({
           </li>
         ))}
       </ol>
-      <p className="mt-4 rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
+      <p className="mt-4 rounded-md bg-muted/60 p-3 text-sm text-muted-foreground">
         Cloudinary is optional. Skip it and your archive still works with built-in proxy caching.
       </p>
     </aside>
   );
 
   const setupSummary = (
-    <aside className="space-y-4 rounded-2xl border bg-card p-5">
+    <aside className="space-y-4 rounded-md border bg-card p-5">
       <div>
         <p className="text-eyebrow text-muted-foreground">Your archive</p>
-        <p className="mt-1 font-semibold">{profileName || "Name your profile"}</p>
+        <p className="mt-1 font-medium">{profileName || "Name your profile"}</p>
       </div>
       <div className="border-t pt-4">
         <p className="text-eyebrow text-muted-foreground">Instagram</p>
@@ -909,8 +909,8 @@ export function OnboardingWizard({
         <p className="mt-1 text-sm">{cloudConnected ? "Cloudinary connected" : "Built-in proxy caching"}</p>
         <p className="mt-1 text-xs text-muted-foreground">Cloudinary is optional and can be configured later.</p>
       </div>
-      <div className="rounded-lg bg-primary/10 p-3">
-        <p className="text-sm font-semibold">Next: start your first scrape</p>
+      <div className="rounded-md bg-primary/10 p-3">
+        <p className="text-sm font-medium">Next: start your first scrape</p>
         <p className="mt-1 text-xs text-muted-foreground">Your saved posts will begin appearing in the archive.</p>
       </div>
     </aside>
@@ -921,15 +921,15 @@ export function OnboardingWizard({
       {steps.map((item, idx) => (
         <div key={item.num} className="flex flex-1 items-center">
           <div className="flex flex-col items-center">
-            <div className={"flex size-9 items-center justify-center rounded-full text-sm font-semibold transition-all " + (
-              step === item.num ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20" :
-              step > item.num ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"
+            <div className={"flex size-9 items-center justify-center rounded-full text-sm font-medium transition-colors " + (
+              step === item.num ? "bg-primary text-primary-foreground ring-4 ring-primary/20" :
+              step > item.num ? "bg-success text-canvas" : "bg-muted text-muted-foreground"
             )}>
               {step > item.num ? <CheckCircle2 className="size-5" /> : item.num}
             </div>
             <span className="mt-1 hidden text-xs font-medium text-muted-foreground sm:block">{item.label}</span>
           </div>
-          {idx < steps.length - 1 && <div className={"mx-2 h-0.5 flex-1 " + (step > item.num ? "bg-emerald-600" : "bg-muted")} />}
+          {idx < steps.length - 1 && <div className={"mx-2 h-0.5 flex-1 " + (step > item.num ? "bg-success" : "bg-muted")} />}
         </div>
       ))}
     </div>

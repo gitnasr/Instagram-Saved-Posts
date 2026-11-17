@@ -83,9 +83,9 @@ export default function SettingsPage() {
 
       {isLoading || !active ? (
         <div className="space-y-3">
-          <Skeleton className="h-64 w-full rounded-lg" />
-          <Skeleton className="h-14 w-full rounded-lg" />
-          <Skeleton className="h-14 w-full rounded-lg" />
+          <Skeleton className="h-64 w-full rounded-md" />
+          <Skeleton className="h-14 w-full rounded-md" />
+          <Skeleton className="h-14 w-full rounded-md" />
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[9rem_minmax(0,1fr)]">
@@ -175,7 +175,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <Button onClick={handleSave} disabled={disabled} className="text-xs font-semibold">
+              <Button onClick={handleSave} disabled={disabled} className="text-xs font-medium">
                 <Save className="mr-1.5 size-3.5" />
                 {update.isPending ? "Saving…" : "Save profile"}
               </Button>

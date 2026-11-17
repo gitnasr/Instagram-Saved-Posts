@@ -22,9 +22,9 @@ export function UpdateIndicator() {
       aria-label={`Update available: version ${data.latest.version}${summary}. Open settings.`}
       title={`v${data.latest.version} is available`}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-xs transition-colors hover:text-foreground hover:bg-surface-2/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        "inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 text-xs transition-colors hover:text-foreground hover:bg-surface-2/60",
         ui.text,
-        level !== "routine" && level !== "unknown" && "font-semibold",
+        level !== "routine" && level !== "unknown" && "font-medium",
       )}
     >
       <span aria-hidden className={cn("size-1.5 rounded-full", ui.dot)} />

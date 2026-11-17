@@ -15,7 +15,7 @@ import { worstLevel } from "@/lib/updates";
 import { cn } from "@/lib/utils";
 
 const UPDATE_COMMAND = "docker compose pull && docker compose up -d";
-const LINK = "text-amber-700 hover:underline dark:text-amber-400";
+const LINK = "text-highlight hover:underline";
 
 type OkResponse = Extract<UpdatesResponse, { status: "ok" }>;
 
@@ -156,7 +156,7 @@ function UpdateDetails({ data }: { data: OkResponse }) {
 
   return (
     <div className="space-y-4">
-      <section aria-label="What to expect" className="space-y-2 rounded-lg border border-hairline bg-surface-2/30 p-3">
+      <section aria-label="What to expect" className="space-y-2 rounded-md border border-hairline bg-surface-2/30 p-3">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <LevelBadge level={level} />
           <Flags r={latest} />
@@ -180,10 +180,10 @@ function UpdateDetails({ data }: { data: OkResponse }) {
 
       {older.length > 0 && (
         <div className="space-y-1.5">
-          <h3 className="text-xs font-semibold text-foreground">
+          <h3 className="text-xs font-medium text-foreground">
             Also included ({older.length} earlier {older.length === 1 ? "release" : "releases"})
           </h3>
-          <ul className="divide-y divide-hairline rounded-lg border border-hairline">
+          <ul className="divide-y divide-hairline rounded-md border border-hairline">
             {older.map((r) => (
               <li key={r.version} className="flex items-start justify-between gap-3 px-3 py-2">
                 <div className="min-w-0 space-y-0.5">
@@ -211,7 +211,7 @@ function UpdateDetails({ data }: { data: OkResponse }) {
       )}
 
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold text-foreground">How to update</h3>
+        <h3 className="text-xs font-medium text-foreground">How to update</h3>
         <p className="text-xs leading-relaxed text-ink-muted">
           This app runs in a container and cannot update itself. Run this on the host that runs it:
         </p>

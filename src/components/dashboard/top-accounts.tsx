@@ -21,7 +21,7 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
   return (
     <Card className="gap-2 py-4">
       <CardHeader className="flex flex-row items-center justify-between px-4">
-        <CardTitle className="text-sm font-semibold">Top creators</CardTitle>
+        <CardTitle className="text-sm font-medium">Top creators</CardTitle>
         <Link
           href="/accounts"
           className="flex items-center gap-0.5 text-xs text-ink-muted transition-colors hover:text-foreground"
@@ -44,7 +44,7 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
                   )}
                   className="object-cover"
                 />
-                <AvatarFallback className="rounded-sm bg-surface-3 text-xs font-semibold text-ink">
+                <AvatarFallback className="rounded-sm bg-surface-3 text-xs font-medium text-ink">
                   {account.username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -57,7 +57,7 @@ export function TopAccounts({ accounts }: TopAccountsProps) {
                   {account.fullName || "No full name"}
                 </p>
               </div>
-              <span className="shrink-0 font-mono text-sm font-semibold text-ink">
+              <span className="shrink-0 font-mono text-sm font-medium text-ink">
                 {account.savedPostCount}
               </span>
             </ProfileLink>

@@ -19,16 +19,27 @@ export function NavLink({ href, children, icon, className }: NavLinkProps) {
   return (
     <Link
       href={href}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+        "group flex min-h-9 items-center gap-2.5 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",
         isActive
-          ? "bg-surface-2 text-foreground [&_svg]:text-primary"
-          : "text-ink-muted hover:text-foreground hover:bg-surface-2/60 [&_svg]:text-ink-muted",
+          ? "text-foreground [&_svg]:text-highlight"
+          : "text-ink-muted hover:text-foreground [&_svg]:text-ink-muted",
         className
       )}
     >
       {icon}
-      <span>{children}</span>
+      {/* The landing's nav rule: no fill, a 2px line under the word for the current page, hover and focus. */}
+      <span
+        className={cn(
+          "underline decoration-2 underline-offset-[6px] transition-colors",
+          isActive
+            ? "decoration-current"
+            : "decoration-transparent group-hover:decoration-current group-focus-visible:decoration-current"
+        )}
+      >
+        {children}
+      </span>
     </Link>
   );
 }

@@ -44,10 +44,10 @@ export function AccountNotes({ username }: AccountNotesProps) {
   };
 
   return (
-    <Card className="h-fit self-start hover:border-hairline-strong transition-all">
+    <Card className="h-fit self-start hover:border-hairline-strong transition-colors">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 text-base font-semibold">
-          <StickyNote className="size-4 text-amber-500" />
+        <CardTitle className="flex items-center gap-2 text-base font-medium">
+          <StickyNote className="size-4 text-highlight" />
           Notes & Annotations
           {notes && notes.length > 0 && (
             <span className="text-xs font-mono text-ink-subtle">
@@ -69,7 +69,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
 
       <CardContent className="space-y-3">
         {showForm && (
-          <div className="space-y-2 rounded-lg border border-hairline bg-surface-1 p-3">
+          <div className="space-y-2 rounded-md border border-hairline bg-surface-1 p-3">
             <Textarea
               placeholder="Write a note about this creator or saved content..."
               value={newContent}
@@ -91,7 +91,7 @@ export function AccountNotes({ username }: AccountNotesProps) {
                 Cancel
               </Button>
               <Button
-                className="text-xs font-semibold"
+                className="text-xs font-medium"
                 onClick={handleAdd}
                 disabled={!newContent.trim() || isAdding}
               >
@@ -104,15 +104,15 @@ export function AccountNotes({ username }: AccountNotesProps) {
 
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-16 w-full rounded-lg" />
-            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
           </div>
         ) : notes && notes.length > 0 ? (
           <div className="space-y-2">
             {notes.map((note) => (
               <div
                 key={note.id}
-                className="group flex gap-3 rounded-lg border border-hairline bg-surface-1/40 hover:bg-surface-2 p-3 transition-all"
+                className="group flex gap-3 rounded-md border border-hairline bg-surface-1/40 hover:bg-surface-2 p-3 transition-colors"
               >
                 <p className="flex-1 text-xs text-ink whitespace-pre-wrap break-words leading-relaxed">
                   {note.content}

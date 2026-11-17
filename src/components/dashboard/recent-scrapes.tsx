@@ -34,7 +34,7 @@ export function RecentScrapes({ scrapes }: RecentScrapesProps) {
   return (
     <Card className="gap-2 py-4">
       <CardHeader className="flex flex-row items-center justify-between px-4">
-        <CardTitle className="text-sm font-semibold">Recent syncs</CardTitle>
+        <CardTitle className="text-sm font-medium">Recent syncs</CardTitle>
         <Link
           href="/scrape"
           className="flex items-center gap-0.5 text-xs text-ink-muted transition-colors hover:text-foreground"

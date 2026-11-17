@@ -8,7 +8,7 @@ export function Header({ title, description, children }: HeaderProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <h1 className="truncate text-xl font-bold tracking-tight text-ink sm:text-2xl">
+        <h1 className="truncate text-xl font-medium text-ink sm:text-2xl">
           {title}
         </h1>
         {description && (

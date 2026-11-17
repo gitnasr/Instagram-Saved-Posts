@@ -29,10 +29,10 @@ export function ThemeToggle({
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="secondary"
       size={showLabel ? "default" : "icon"}
       className={cn(
-        "border-hairline bg-surface-1/40 hover:bg-surface-2 text-ink-muted hover:text-foreground transition-all",
+        "text-ink-muted hover:text-foreground",
         showLabel && "w-full justify-start text-xs font-medium gap-2",
         className
       )}
@@ -41,7 +41,7 @@ export function ThemeToggle({
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       {isDark ? (
-        <Sun className="size-3.5 text-amber-400" />
+        <Sun className="size-3.5 text-highlight" />
       ) : (
         <Moon className="size-3.5 text-ink-muted" />
       )}

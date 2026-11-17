@@ -14,7 +14,7 @@ interface StatsCardsProps {
 /** One flat strip of headline figures instead of three separate cards. */
 export function StatsCards({ totalAccounts, totalPosts, lastScrape }: StatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 divide-y divide-hairline rounded-lg border border-hairline bg-surface-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+    <div className="grid grid-cols-1 divide-y divide-hairline rounded-md border border-hairline bg-surface-1 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
       <Stat
         className="p-4"
         label="Accounts"

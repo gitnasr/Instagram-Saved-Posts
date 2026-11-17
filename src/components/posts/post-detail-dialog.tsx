@@ -48,7 +48,7 @@ export function PostDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg bg-surface-1 border border-hairline rounded-lg p-5 overflow-y-auto">
         <DialogHeader className="pb-2 border-b border-hairline">
-          <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+          <DialogTitle className="flex items-center gap-2 text-base font-medium">
             Saved post
             <Badge variant="secondary" className="text-xs px-1.5 py-0 font-mono">
               {mediaTypeLabel(post.mediaType)}
@@ -61,7 +61,7 @@ export function PostDetailDialog({
             <CarouselViewer key={post.pk} postPk={post.pk} />
           ) : (
             post.thumbnailUrl && (
-              <div className="relative overflow-hidden rounded-lg bg-surface-2 border border-hairline flex items-center justify-center max-h-[70vh]">
+              <div className="relative overflow-hidden rounded-md bg-surface-2 border border-hairline flex items-center justify-center max-h-[70vh]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={
@@ -76,13 +76,13 @@ export function PostDetailDialog({
           )}
 
           {/* Stats Bar */}
-          <div className="flex items-center justify-between p-2.5 rounded-lg bg-surface-2/60 border border-hairline">
+          <div className="flex items-center justify-between p-2.5 rounded-md bg-surface-2/60 border border-hairline">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-xs font-semibold font-mono text-ink">
-                <Heart className="size-3.5 text-amber-500 fill-amber-500" />
+              <span className="flex items-center gap-1.5 text-xs font-medium font-mono text-ink">
+                <Heart className="size-3.5 text-highlight fill-primary" />
                 {post.likeCount.toLocaleString()} likes
               </span>
-              <span className="flex items-center gap-1.5 text-xs font-semibold font-mono text-ink">
+              <span className="flex items-center gap-1.5 text-xs font-medium font-mono text-ink">
                 <MessageCircle className="size-3.5 text-ink-muted" />
                 {post.commentCount.toLocaleString()} comments
               </span>
@@ -97,7 +97,7 @@ export function PostDetailDialog({
 
           {/* Caption */}
           {post.captionText && (
-            <div className="max-h-36 overflow-y-auto rounded-lg bg-surface-2/40 border border-hairline p-3">
+            <div className="max-h-36 overflow-y-auto rounded-md bg-surface-2/40 border border-hairline p-3">
               <p className="text-xs text-ink whitespace-pre-wrap leading-relaxed">
                 {post.captionText}
               </p>
@@ -113,7 +113,7 @@ export function PostDetailDialog({
           </div>
 
           {/* Instagram Link CTA */}
-          <Button asChild variant="outline" className="w-full text-xs font-semibold border-hairline hover:bg-surface-2">
+          <Button asChild variant="outline" className="w-full text-xs font-medium border-hairline hover:bg-surface-2">
             <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="mr-1.5 size-3.5" />
               Open Original on Instagram

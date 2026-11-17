@@ -46,10 +46,10 @@ export function AccountDetailView({
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-28 w-full rounded-lg" />
+        <Skeleton className="h-28 w-full rounded-md" />
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-lg" />
+            <Skeleton key={i} className="aspect-square rounded-md" />
           ))}
         </div>
       </div>
@@ -59,7 +59,7 @@ export function AccountDetailView({
   if (!data) {
     return (
       <div className="py-16 text-center text-ink-muted">
-        <p className="text-base font-semibold">Account not found</p>
+        <p className="text-base font-medium">Account not found</p>
         {showBreadcrumb && (
           <Button asChild variant="outline" className="mt-4">
             <Link href="/accounts">
@@ -88,22 +88,22 @@ export function AccountDetailView({
             <ArrowLeft className="size-3" /> Accounts
           </Link>
           <span>/</span>
-          <span className="text-ink font-semibold">@{account.username}</span>
+          <span className="text-ink font-medium">@{account.username}</span>
         </div>
       )}
 
       {/* Account Hero Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-lg border border-hairline bg-surface-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-md border border-hairline bg-surface-1">
         <div className="flex items-center gap-4">
-          <Avatar className="size-16 rounded-lg border border-hairline">
+          <Avatar className="size-16 rounded-md border border-hairline">
             <AvatarImage src={avatarSrc} className="object-cover" />
-            <AvatarFallback className="rounded-lg text-lg font-bold bg-surface-3 text-ink">
+            <AvatarFallback className="rounded-md text-lg font-medium bg-surface-3 text-ink">
               {account.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold tracking-tight text-ink">
+              <h1 className="text-xl font-medium text-ink">
                 @{account.username}
               </h1>
               <AccountFlags account={account} className="gap-1.5 [&_svg]:size-4" />
@@ -112,8 +112,8 @@ export function AccountDetailView({
               {account.fullName || "No full display name"}
             </p>
             <div className="flex items-center gap-3 mt-2 text-xs font-mono text-ink-subtle">
-              <span className="flex items-center gap-1 font-semibold text-ink">
-                <BookmarkCheck className="size-3 text-amber-500" />
+              <span className="flex items-center gap-1 font-medium text-ink">
+                <BookmarkCheck className="size-3 text-highlight" />
                 {account.savedPostCount} saved posts
               </span>
               {data.latestPostTakenAt && (
@@ -183,7 +183,7 @@ export function AccountDetailView({
       <div className="pt-4 border-t border-hairline">
         <div className="flex items-center justify-between pb-4">
           <div>
-            <h2 className="text-lg font-bold tracking-tight text-ink">
+            <h2 className="text-lg font-medium text-ink">
               Saved posts
             </h2>
             <p className="text-xs text-ink-muted">

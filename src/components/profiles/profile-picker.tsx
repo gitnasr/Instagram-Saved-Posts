@@ -56,7 +56,7 @@ export function ProfilePicker() {
       {/* Brand logo header */}
       <div className="relative z-10 flex flex-col items-center gap-3">
         <BrandLogo size={36} showText={false} />
-        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        <h1 className="text-3xl font-medium text-ink sm:text-4xl">
           Who&apos;s tracking?
         </h1>
         <p className="text-sm text-ink-muted font-mono">
@@ -66,7 +66,7 @@ export function ProfilePicker() {
 
       {isLoading ? (
         <div className="relative z-10 flex items-center gap-2 text-sm font-mono text-ink-muted">
-          <Loader2 className="size-5 animate-spin text-amber-500" />
+          <Loader2 className="size-5 animate-spin text-highlight" />
           Loading profiles...
         </div>
       ) : (
@@ -79,28 +79,28 @@ export function ProfilePicker() {
               <button
                 onClick={() => handleSelect(p)}
                 disabled={selectingId !== null}
-                className="relative rounded-lg outline-none transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 cursor-pointer"
+                className="relative rounded-md transition-colors disabled:opacity-60 cursor-pointer"
                 aria-label={`Use profile ${p.name}`}
               >
                 <ProfileAvatar
                   name={p.name}
                   avatarUrl={p.avatarUrl}
                   avatarColor={p.avatarColor}
-                  className="size-28 rounded-lg border-2 border-hairline transition-all group-hover:border-amber-500 shadow-lg"
-                  fallbackClassName="rounded-lg text-3xl font-bold font-mono"
+                  className="size-28 rounded-md border-2 border-hairline transition-colors group-hover:border-primary"
+                  fallbackClassName="rounded-md text-3xl font-medium font-mono"
                 />
                 {p.isActive && (
-                  <div className="absolute -top-1.5 -right-1.5 p-1 rounded-full bg-amber-500 text-black shadow-md">
+                  <div className="absolute -top-1.5 -right-1.5 p-1 rounded-full bg-primary text-primary-foreground">
                     <UserCheck className="size-3.5" />
                   </div>
                 )}
                 {selectingId === p.id && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/70 backdrop-blur-xs">
-                    <Loader2 className="size-7 animate-spin text-amber-500" />
+                  <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/70 backdrop-blur-xs">
+                    <Loader2 className="size-7 animate-spin text-highlight" />
                   </div>
                 )}
               </button>
-              <span className="max-w-full truncate text-sm font-semibold text-ink group-hover:text-amber-500 transition-colors">
+              <span className="max-w-full truncate text-sm font-medium text-ink group-hover:text-highlight transition-colors">
                 {p.name}
               </span>
 
@@ -121,7 +121,7 @@ export function ProfilePicker() {
                   <Button
                     size="icon"
                     variant="outline"
-                    className="rounded-sm border-hairline text-red-400 hover:bg-red-500/10"
+                    className="rounded-sm border-hairline text-danger hover:bg-danger/10"
                     onClick={() => handleDelete(p)}
                     disabled={del.isPending}
                     aria-label={`Delete profile ${p.name}`}
@@ -139,7 +139,7 @@ export function ProfilePicker() {
                 className="flex w-32 flex-col items-center gap-3 group cursor-pointer"
                 aria-label="Add profile"
               >
-                <span className="flex size-28 items-center justify-center rounded-lg border-2 border-dashed border-hairline-strong text-ink-subtle transition-all group-hover:border-amber-500 group-hover:text-amber-500 bg-surface-1/40">
+                <span className="flex size-28 items-center justify-center rounded-md border-2 border-dashed border-hairline-strong text-ink-subtle transition-colors group-hover:border-primary group-hover:text-highlight bg-surface-1/40">
                   <Plus className="size-8" />
                 </span>
                 <span className="text-sm font-medium text-ink-muted group-hover:text-ink transition-colors">

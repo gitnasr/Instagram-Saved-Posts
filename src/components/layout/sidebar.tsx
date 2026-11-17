@@ -25,7 +25,7 @@ const navItems = [
 export function Sidebar() {
   return (
     <>
-      <aside className="hidden h-dvh w-52 flex-col border-r border-hairline bg-surface-1 md:flex select-none">
+      <aside className="hidden h-dvh w-52 flex-col border-r border-hairline bg-canvas md:flex select-none">
         <div className="flex h-14 items-center px-4">
           <BrandLogo size={24} />
         </div>
@@ -60,13 +60,13 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-hairline bg-surface-1/90 p-2 backdrop-blur-xl md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-hairline bg-canvas p-2 md:hidden">
         {navItems.map(({ href, label, icon: Icon }) => (
           <NavLink
             key={href}
             href={href}
             icon={<Icon className="size-4" />}
-            className="min-h-12 flex-col justify-center gap-1 rounded-sm px-1 py-2 text-xs"
+            className="min-h-12 flex-col justify-center gap-1 px-1 py-2 text-xs"
           >
             {label}
           </NavLink>

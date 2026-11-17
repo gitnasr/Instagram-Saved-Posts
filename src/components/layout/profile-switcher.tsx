@@ -30,7 +30,7 @@ export function ProfileSwitcher() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left outline-none transition-all bg-surface-1/60 hover:bg-surface-2 border border-hairline focus-visible:ring-2 focus-visible:ring-primary/20">
+      <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left transition-colors bg-tonal hover:bg-tonal-hover">
         <ProfileAvatar
           name={active?.name ?? "?"}
           avatarUrl={active?.avatarUrl}
@@ -38,14 +38,14 @@ export function ProfileSwitcher() {
           className="size-7 rounded-sm"
         />
         <div className="flex flex-col min-w-0 flex-1 leading-tight">
-          <span className="truncate text-xs font-semibold text-foreground">
+          <span className="truncate text-xs font-medium text-foreground">
             {active?.name ?? "Select profile"}
           </span>
           <span className="text-xs text-ink-muted">Active profile</span>
         </div>
         <ChevronsUpDown className="size-3.5 shrink-0 text-ink-subtle" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56 bg-surface-1 border border-hairline shadow-xl">
+      <DropdownMenuContent align="start" className="w-56 bg-surface-1 border border-hairline">
         <DropdownMenuLabel className="text-eyebrow text-ink-subtle">
           Profiles
         </DropdownMenuLabel>

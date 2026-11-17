@@ -38,42 +38,42 @@ const EVENT_META: Record<
   discovered: {
     label: "First discovered",
     icon: UserPlus,
-    tone: "text-emerald-400",
+    tone: "text-success",
   },
   new_post: {
     label: "New saved post",
     icon: ImageIcon,
-    tone: "text-amber-400",
+    tone: "text-highlight",
   },
   privacy_private: {
     label: "Went private",
     icon: Lock,
-    tone: "text-amber-500",
+    tone: "text-highlight",
   },
   privacy_public: {
     label: "Went public",
     icon: Unlock,
-    tone: "text-emerald-400",
+    tone: "text-success",
   },
   username_changed: {
     label: "Username changed",
     icon: AtSign,
-    tone: "text-purple-400",
+    tone: "text-ink-muted",
   },
   full_name_changed: {
     label: "Display name changed",
     icon: Sparkles,
-    tone: "text-purple-400",
+    tone: "text-ink-muted",
   },
   verified_gained: {
     label: "Became verified",
     icon: BadgeCheck,
-    tone: "text-blue-400",
+    tone: "text-ink-muted",
   },
   verified_lost: {
     label: "Lost verification",
     icon: BadgeX,
-    tone: "text-amber-500",
+    tone: "text-highlight",
   },
   profile_pic_changed: {
     label: "Profile picture changed",
@@ -83,12 +83,12 @@ const EVENT_META: Record<
   lost: {
     label: "Lost from saved posts",
     icon: UserX,
-    tone: "text-red-400",
+    tone: "text-danger",
   },
   recovered: {
     label: "Recovered",
     icon: UserPlus,
-    tone: "text-emerald-400",
+    tone: "text-success",
   },
   status_changed: {
     label: "Status changed",
@@ -124,7 +124,7 @@ function EventDetail({ event }: { event: AccountEvent }) {
   if (event.type === "username_changed") {
     return (
       <span className="text-xs font-mono">
-        @{event.fromValue} &rarr; <span className="font-semibold text-ink">@{event.toValue}</span>
+        @{event.fromValue} &rarr; <span className="font-medium text-ink">@{event.toValue}</span>
       </span>
     );
   }
@@ -133,7 +133,7 @@ function EventDetail({ event }: { event: AccountEvent }) {
     return (
       <span className="text-xs font-mono">
         {event.fromValue || "(empty)"} &rarr;{" "}
-        <span className="font-semibold text-ink">{event.toValue || "(empty)"}</span>
+        <span className="font-medium text-ink">{event.toValue || "(empty)"}</span>
       </span>
     );
   }
@@ -142,7 +142,7 @@ function EventDetail({ event }: { event: AccountEvent }) {
     return (
       <span className="text-xs font-mono">
         {event.fromValue ?? "No status"} &rarr;{" "}
-        <span className="font-semibold text-ink">{event.toValue ?? "No status"}</span>
+        <span className="font-medium text-ink">{event.toValue ?? "No status"}</span>
       </span>
     );
   }
@@ -163,7 +163,7 @@ function EventDetail({ event }: { event: AccountEvent }) {
               href={`https://www.instagram.com/p/${event.toValue}/`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-0.5 font-semibold text-ink hover:text-amber-500 hover:underline"
+              className="inline-flex items-center gap-0.5 font-medium text-ink hover:text-highlight hover:underline"
               title="View post on Instagram"
             >
               <span>{event.toValue}</span>
@@ -208,14 +208,14 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
   return (
     <Card
       className={cn(
-        "hover:border-hairline-strong transition-all",
+        "hover:border-hairline-strong transition-colors",
         isExtendedWidth && "lg:col-span-2"
       )}
     >
       <CardHeader className="pb-3 flex flex-row items-start justify-between gap-3">
         <div className="space-y-1 min-w-0">
           <CardTitle className="text-base flex items-center gap-2 h-6">
-            <History className="size-4 text-amber-500 shrink-0" />
+            <History className="size-4 text-highlight shrink-0" />
             <span className="truncate">Activity timeline</span>
           </CardTitle>
           <p className="text-xs text-ink-muted line-clamp-1">
@@ -263,7 +263,7 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
       {!isCardCollapsed && (
         <CardContent className="space-y-4">
           {events.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-hairline px-3 py-4 text-xs text-ink-muted text-center font-mono">
+            <p className="rounded-md border border-dashed border-hairline px-3 py-4 text-xs text-ink-muted text-center font-mono">
               No timeline entries recorded yet.
             </p>
           ) : (
@@ -283,14 +283,14 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                       return (
                         <div
                           key={event.id}
-                          className="flex items-start gap-3 rounded-lg border border-hairline bg-surface-1/50 hover:bg-surface-2 px-3 py-2 transition-all"
+                          className="flex items-start gap-3 rounded-md border border-hairline bg-surface-1/50 hover:bg-surface-2 px-3 py-2 transition-colors"
                         >
                           <div className="size-6 rounded-sm bg-surface-2 border border-hairline shrink-0 flex items-center justify-center">
                             <Icon className={`size-3.5 ${meta.tone}`} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="min-h-6 flex flex-wrap items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-ink leading-tight">{meta.label}</span>
+                              <span className="text-xs font-medium text-ink leading-tight">{meta.label}</span>
                               <span
                                 className="text-xs font-mono text-ink-subtle leading-tight"
                                 title={timestamp.absolute}
@@ -312,7 +312,7 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                   {!isExtendedEvents ? (
                     <Button
                       variant="outline"
-                      className="text-xs font-semibold hover:bg-surface-2"
+                      className="text-xs font-medium hover:bg-surface-2"
                       onClick={() => setIsExtendedEvents(true)}
                     >
                       <ChevronDown className="mr-1.5 size-3.5" />
@@ -322,7 +322,7 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                     <>
                       <Button
                         variant="outline"
-                        className="text-xs font-semibold hover:bg-surface-2"
+                        className="text-xs font-medium hover:bg-surface-2"
                         onClick={() => setIsExtendedEvents(false)}
                       >
                         <ChevronUp className="mr-1.5 size-3.5" />
@@ -331,7 +331,7 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
                       {visible < events.length && (
                         <Button
                           variant="outline"
-                          className="text-xs font-semibold hover:bg-surface-2"
+                          className="text-xs font-medium hover:bg-surface-2"
                           onClick={() => setVisible((v) => v + PAGE_SIZE)}
                         >
                           Load more events ({events.length - visible} remaining)

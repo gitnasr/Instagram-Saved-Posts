@@ -109,7 +109,7 @@ export default function RunDetailPage({
       <div className="flex flex-wrap items-start gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold">Run #{run.id}</h2>
+            <h2 className="text-2xl font-medium">Run #{run.id}</h2>
             <Badge variant={statusVariant(run.status)} className="text-sm">
               {run.status}
             </Badge>
@@ -190,7 +190,7 @@ export default function RunDetailPage({
               <summary className="cursor-pointer text-xs opacity-70 hover:opacity-100">
                 Instagram API response ▾
               </summary>
-              <pre className="mt-2 max-h-72 overflow-auto rounded bg-black/10 p-3 text-xs whitespace-pre-wrap break-all">
+              <pre className="mt-2 max-h-72 overflow-auto rounded-sm bg-black/10 p-3 text-xs whitespace-pre-wrap break-all">
                 {run.errorBody}
               </pre>
             </details>
@@ -215,7 +215,7 @@ export default function RunDetailPage({
       {/* New Accounts */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">New accounts</h3>
+          <h3 className="text-lg font-medium">New accounts</h3>
           <Badge variant="secondary">{newAccounts.length}</Badge>
         </div>
         {newAccounts.length > 0 ? (
@@ -232,7 +232,7 @@ export default function RunDetailPage({
       {/* Username Changes */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold text-ink">Username changes</h3>
+          <h3 className="text-base font-medium text-ink">Username changes</h3>
           <Badge variant={usernameChanges.length > 0 ? "default" : "secondary"} className="font-mono text-xs">
             {usernameChanges.length}
           </Badge>
@@ -243,17 +243,17 @@ export default function RunDetailPage({
               <ProfileLink
                 key={change.id}
                 username={change.account.username}
-                className="rounded-lg border border-hairline bg-surface-1 p-4 transition-all hover:border-hairline-strong hover:bg-surface-2 group"
+                className="rounded-md border border-hairline bg-surface-1 p-4 transition-colors hover:border-hairline-strong hover:bg-surface-2 group"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-sm text-ink group-hover:text-primary transition-colors">@{change.account.username}</span>
+                  <span className="font-medium text-sm text-ink group-hover:text-primary transition-colors">@{change.account.username}</span>
                   <Badge variant="outline" className="font-mono text-xs text-ink-subtle">pk {change.accountPk}</Badge>
                 </div>
                 <div className="mt-2.5 text-xs font-mono">
                   <span className="text-ink-muted">was </span>
-                  <span className="text-red-400">@{change.oldUsername}</span>
+                  <span className="text-danger">@{change.oldUsername}</span>
                   <span className="text-ink-muted"> &rarr; </span>
-                  <span className="text-emerald-400 font-semibold">@{change.newUsername}</span>
+                  <span className="text-success font-medium">@{change.newUsername}</span>
                 </div>
                 <p className="mt-2 text-xs font-mono text-ink-subtle">
                   Detected {format(new Date(change.changedAt), "MMM d, yyyy · HH:mm")}
@@ -273,7 +273,7 @@ export default function RunDetailPage({
       {/* New Posts */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">New posts</h3>
+          <h3 className="text-lg font-medium">New posts</h3>
           <Badge variant="secondary">{newPosts.length}</Badge>
         </div>
         {newPosts.length > 0 ? (
@@ -308,7 +308,7 @@ export default function RunDetailPage({
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Newly lost accounts</h3>
+              <h3 className="text-lg font-medium">Newly lost accounts</h3>
               <Badge variant={newlyLostAccounts.length > 0 ? "destructive" : "secondary"}>
                 {newlyLostAccounts.length}
               </Badge>
@@ -330,7 +330,7 @@ export default function RunDetailPage({
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Newly recovered accounts</h3>
+              <h3 className="text-lg font-medium">Newly recovered accounts</h3>
               <Badge variant={newlyRecoveredAccounts.length > 0 ? "default" : "secondary"}>
                 {newlyRecoveredAccounts.length}
               </Badge>
@@ -352,7 +352,7 @@ export default function RunDetailPage({
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">All lost accounts</h3>
+              <h3 className="text-lg font-medium">All lost accounts</h3>
               <Badge variant={lostAccounts.length > 0 ? "destructive" : "secondary"}>
                 {lostAccounts.length}
               </Badge>

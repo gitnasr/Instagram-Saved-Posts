@@ -18,7 +18,7 @@ export function PostCard({ post, onClick, thumbnailOverride, matchedSlideIndex }
 
   return (
     <Card
-      className="group cursor-pointer overflow-hidden rounded-lg border border-hairline bg-surface-1 p-0 transition-all hover:border-hairline-strong hover:-translate-y-0.5"
+      className="group cursor-pointer overflow-hidden rounded-md border border-hairline bg-surface-1 p-0 transition-colors hover:border-hairline-strong"
       onClick={onClick}
     >
       <div className="relative aspect-square bg-surface-2 overflow-hidden">
@@ -37,15 +37,15 @@ export function PostCard({ post, onClick, thumbnailOverride, matchedSlideIndex }
         )}
         
         {/* Subtle inner stroke */}
-        <div className="pointer-events-none absolute inset-0 rounded-lg" />
+        <div className="pointer-events-none absolute inset-0 rounded-md" />
 
         {/* Hover overlay with engagement stats */}
         <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <span className="flex items-center gap-1.5 text-xs font-semibold font-mono text-white">
-            <Heart className="size-3.5 fill-amber-500 text-amber-500" />
+          <span className="flex items-center gap-1.5 text-xs font-medium font-mono text-white">
+            <Heart className="size-3.5 fill-primary text-highlight" />
             {post.likeCount.toLocaleString()}
           </span>
-          <span className="flex items-center gap-1.5 text-xs font-semibold font-mono text-white">
+          <span className="flex items-center gap-1.5 text-xs font-medium font-mono text-white">
             <MessageCircle className="size-3.5 fill-white text-white" />
             {post.commentCount.toLocaleString()}
           </span>

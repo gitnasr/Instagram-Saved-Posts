@@ -32,7 +32,7 @@ export function AccountCard({
   return (
     <Card
       className={cn(
-        "relative rounded-lg py-0 [content-visibility:auto] [contain-intrinsic-size:auto_64px] transition-all border border-hairline bg-surface-1 hover:bg-surface-2 hover:border-hairline-strong",
+        "relative rounded-md py-0 [content-visibility:auto] [contain-intrinsic-size:auto_64px] transition-colors border border-hairline bg-surface-1 hover:bg-surface-2 hover:border-hairline-strong",
         isIgnored && "opacity-50",
         selected && "border-primary ring-1 ring-primary/40 bg-surface-2",
         isLastVisited && "border-primary/60 ring-1 ring-primary/25"
@@ -41,7 +41,7 @@ export function AccountCard({
       <ProfileLink
         username={account.username}
         ariaLabel={`Open @${account.username}`}
-        className="absolute inset-0 z-0 rounded-lg"
+        className="absolute inset-0 z-0 rounded-md"
       />
 
       <CardContent className="pointer-events-none relative z-10 flex items-center gap-3 p-3 sm:gap-3.5 sm:p-3.5">
@@ -50,25 +50,25 @@ export function AccountCard({
             checked={selected}
             onCheckedChange={() => onToggleSelect(account)}
             aria-label={`Select @${account.username}`}
-            className="pointer-events-auto shrink-0 border-hairline-strong data-[state=checked]:bg-primary data-[state=checked]:text-black"
+            className="pointer-events-auto shrink-0 border-hairline-strong data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
           />
         )}
 
-        <Avatar className="size-11 rounded-lg border border-hairline">
+        <Avatar className="size-11 rounded-md border border-hairline">
           <AvatarImage
             src={proxyImageUrl(
               account.cloudinaryProfilePicUrl ?? account.profilePicUrl
             )}
             className="object-cover"
           />
-          <AvatarFallback className="rounded-lg text-xs font-semibold bg-surface-3 text-ink">
+          <AvatarFallback className="rounded-md text-xs font-medium bg-surface-3 text-ink">
             {account.username.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
           <div className="flex min-w-0 items-center gap-1.5 flex-wrap">
-            <p className="font-semibold text-sm text-ink truncate">@{account.username}</p>
+            <p className="font-medium text-sm text-ink truncate">@{account.username}</p>
             <AccountFlags account={account} />
           </div>
           <p className="text-xs text-ink-muted truncate mt-0.5">
@@ -77,7 +77,7 @@ export function AccountCard({
         </div>
 
         <span
-          className="shrink-0 pr-1 font-mono text-sm font-semibold text-ink"
+          className="shrink-0 pr-1 font-mono text-sm font-medium text-ink"
           title="Saved posts"
           aria-label={`${account.savedPostCount} saved posts`}
         >

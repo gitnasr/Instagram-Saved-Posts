@@ -27,7 +27,7 @@ export function ProfileAvatar({
     <Avatar className={className}>
       {avatarUrl && <AvatarImage src={proxyImageUrl(avatarUrl)} alt={name} />}
       <AvatarFallback
-        className={cn("font-semibold text-white", fallbackClassName)}
+        className={cn("font-medium text-white", fallbackClassName)}
         style={{ backgroundColor: color }}
       >
         {profileInitials(name)}

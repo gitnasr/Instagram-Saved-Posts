@@ -32,8 +32,8 @@ export default function ScrapePage() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-40 w-full rounded-lg" />
-          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full rounded-md" />
+          <Skeleton className="h-64 w-full rounded-md" />
         </div>
       ) : (
         <>
@@ -44,8 +44,8 @@ export default function ScrapePage() {
           <Card className="border border-hairline bg-surface-1 shadow-sm">
             <CardHeader className="pb-4 border-b border-hairline flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <History className="size-4 text-amber-500" />
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <History className="size-4 text-highlight" />
                   Sync history
                 </CardTitle>
                 <CardDescription className="text-xs text-ink-muted mt-0.5">
@@ -53,7 +53,7 @@ export default function ScrapePage() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-1.5 text-xs font-mono text-ink-subtle">
-                <ShieldCheck className="size-3.5 text-emerald-400" />
+                <ShieldCheck className="size-3.5 text-success" />
                 <span>Resumable checkpoint enabled</span>
               </div>
             </CardHeader>
