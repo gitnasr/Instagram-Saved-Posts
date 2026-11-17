@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +9,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CloudinarySettings } from "@/components/settings/cloudinary-settings";
 import { NavigationSettings } from "@/components/settings/navigation-settings";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { UpdatesSettings } from "@/components/settings/updates-settings";
-import { ProfileAvatar } from "@/components/profiles/profile-avatar";
 import { useProfiles, useUpdateProfile } from "@/hooks/use-profiles";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { User, Key, Globe, Save } from "lucide-react";
+import { User, Save } from "lucide-react";
+
+const SECTIONS = [
+  { id: "profile", label: "Profile" },
+  { id: "navigation", label: "Navigation" },
+  { id: "cloudinary", label: "Cloudinary" },
+  { id: "updates", label: "Updates" },
+];
+
+/** Open the target section (they are <details>) and bring it into view. */
+function jumpTo(id: string) {
+  const section = document.getElementById(id);
+  const details = section?.querySelector("details");
+  if (details) details.open = true;
+  section?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 export default function SettingsPage() {
   const { data: profiles, isLoading } = useProfiles();
@@ -61,60 +75,72 @@ export default function SettingsPage() {
   const disabled = isViewer || isAuthLoading || update.isPending;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <Header
-        title="Settings & Credentials"
-        description="Configure active workspace profile credentials and external storage integrations."
+        title="Settings"
+        description="Profile credentials, navigation, storage and updates."
       />
 
       {isLoading || !active ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Skeleton className="h-64 w-full rounded-lg" />
-          <Skeleton className="h-32 w-full rounded-lg" />
+          <Skeleton className="h-14 w-full rounded-lg" />
+          <Skeleton className="h-14 w-full rounded-lg" />
         </div>
       ) : (
-        <div className="space-y-6">
-          <Card className="border border-hairline bg-surface-1 shadow-sm">
-            <CardHeader className="pb-4 border-b border-hairline">
-              <div className="flex items-center gap-3">
-                <ProfileAvatar
-                  name={active.name}
-                  avatarUrl={active.avatarUrl}
-                  avatarColor={active.avatarColor}
-                  className="size-10 rounded-lg border border-hairline"
-                />
-                <div>
-                  <CardTitle className="text-base">Workspace Profile: {active.name}</CardTitle>
-                  <CardDescription className="text-xs text-ink-muted">
-                    Active session identity for Instagram bookmark fetching
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-5 pt-5">
+        <div className="grid gap-6 lg:grid-cols-[9rem_minmax(0,1fr)]">
+          <nav aria-label="Settings sections" className="hidden lg:block">
+            <ul className="sticky top-6 space-y-0.5">
+              {SECTIONS.map(({ id, label }) => (
+                <li key={id}>
+                  <button
+                    type="button"
+                    onClick={() => jumpTo(id)}
+                    className="w-full rounded-sm px-2 py-1.5 text-left text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+                  >
+                    {label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="space-y-3">
+            <SettingsSection
+              id="profile"
+              title={`Profile: ${active.name}`}
+              description="Session identity used to fetch your Instagram bookmarks"
+              icon={User}
+              status={
+                <span className="hidden text-xs text-ink-muted sm:inline">
+                  {active.hasCookie ? "Cookie set" : "No cookie"}
+                </span>
+              }
+              defaultOpen
+            >
               <div className="space-y-2">
-                <Label htmlFor="profile-name" className="text-eyebrow text-ink-subtle flex items-center gap-1.5">
-                  <User className="size-3.5 text-amber-500" />
-                  Profile Name
+                <Label htmlFor="profile-name" className="text-xs text-ink-muted">
+                  Profile name
                 </Label>
                 <Input
                   id="profile-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isViewer}
-                  className="max-w-md text-xs font-medium"
+                  required
+                  autoComplete="off"
+                  className="max-w-md text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cookie" className="text-eyebrow text-ink-subtle flex items-center gap-1.5">
-                  <Key className="size-3.5 text-amber-500" />
-                  Instagram Session Cookie
+                <Label htmlFor="cookie" className="text-xs text-ink-muted">
+                  Instagram session cookie
                 </Label>
-                <p className="text-xs text-ink-muted leading-relaxed">
+                <p className="text-xs leading-relaxed text-ink-subtle">
                   {active.hasCookie
                     ? "A session cookie is configured. Paste a new cookie string below to update it."
-                    : "No cookie configured yet — Instagram scraping requires an authenticated session cookie."}
+                    : "No cookie configured yet. Scraping needs an authenticated Instagram session cookie."}
                 </p>
                 <Textarea
                   id="cookie"
@@ -126,15 +152,14 @@ export default function SettingsPage() {
                   value={cookie}
                   onChange={(e) => setCookie(e.target.value)}
                   rows={4}
-                  className="w-full min-w-0 break-all font-mono text-xs bg-surface-2/40"
+                  className="w-full min-w-0 break-all bg-surface-2/40 font-mono text-xs"
                   disabled={isViewer}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="user-agent" className="text-eyebrow text-ink-subtle flex items-center gap-1.5">
-                  <Globe className="size-3.5 text-amber-500" />
-                  Custom User-Agent <span className="text-xs text-ink-subtle font-mono">(Optional)</span>
+                <Label htmlFor="user-agent" className="text-xs text-ink-muted">
+                  Custom User-Agent <span className="text-ink-subtle">(optional)</span>
                 </Label>
                 <Input
                   id="user-agent"
@@ -145,25 +170,21 @@ export default function SettingsPage() {
                   }
                   value={userAgent}
                   onChange={(e) => setUserAgent(e.target.value)}
-                  className="font-mono text-xs max-w-2xl bg-surface-2/40"
+                  className="max-w-2xl bg-surface-2/40 font-mono text-xs"
                   disabled={isViewer}
                 />
               </div>
 
-              <div className="pt-2 flex justify-start">
-                <Button onClick={handleSave} disabled={disabled} size="sm" className="text-xs font-semibold">
-                  <Save className="mr-1.5 size-3.5" />
-                  {update.isPending ? "Saving Profile..." : "Save Profile Settings"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              <Button onClick={handleSave} disabled={disabled} size="sm" className="text-xs font-semibold">
+                <Save className="mr-1.5 size-3.5" />
+                {update.isPending ? "Saving…" : "Save profile"}
+              </Button>
+            </SettingsSection>
 
-          <NavigationSettings />
-
-          <CloudinarySettings />
-
-          <UpdatesSettings />
+            <NavigationSettings />
+            <CloudinarySettings />
+            <UpdatesSettings />
+          </div>
         </div>
       )}
     </div>

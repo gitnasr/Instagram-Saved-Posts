@@ -5,8 +5,9 @@ import { Copy, ExternalLink, Loader2, RefreshCw, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatusText } from "@/components/ui/status-text";
 import { useUpdates, type ReleaseInfo, type UpdatesResponse } from "@/hooks/use-updates";
 import { GITHUB_RELEASES_URL } from "@/lib/constants";
 import { LEVEL_UI } from "@/lib/update-level";
@@ -104,27 +105,22 @@ export function UpdatesSettings() {
   };
 
   return (
-    <Card className="border border-hairline bg-surface-1 shadow-sm">
-      <CardHeader className="pb-3 border-b border-hairline">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Tag className="size-4 text-amber-500" />
-              Updates
-            </CardTitle>
-            <CardDescription className="text-xs text-ink-muted mt-0.5">
-              Installed version compared with GitHub Releases
-            </CardDescription>
-          </div>
-          {data?.current && (
-            <span className="font-mono text-xs px-2.5 py-1 rounded bg-surface-2 border border-hairline text-foreground font-medium">
-              {v(data.current)}
-            </span>
+    <SettingsSection
+      id="updates"
+      title="Updates"
+      description="Installed version compared with GitHub Releases"
+      icon={Tag}
+      defaultOpen={data?.status === "ok" && data.updateAvailable}
+      status={
+        <span className="flex items-center gap-2">
+          {data?.status === "ok" && data.updateAvailable && (
+            <StatusText tone="warn">Update available</StatusText>
           )}
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4 pt-4" aria-busy={isFetching}>
+          {data?.current && <span className="font-mono text-xs text-ink-muted">{v(data.current)}</span>}
+        </span>
+      }
+    >
+      <div className="space-y-4" aria-busy={isFetching}>
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-4 w-2/3" />
@@ -148,8 +144,8 @@ export function UpdatesSettings() {
         )}
 
         {data?.status === "ok" && data.updateAvailable && <UpdateDetails data={data} />}
-      </CardContent>
-    </Card>
+      </div>
+    </SettingsSection>
   );
 }
 

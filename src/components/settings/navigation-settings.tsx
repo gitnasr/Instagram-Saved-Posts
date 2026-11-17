@@ -3,13 +3,7 @@
 import type { ComponentType } from "react";
 import { Check, Compass, ExternalLink, PanelRightOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SettingsSection } from "@/components/settings/settings-section";
 import {
   useAccountTabBehavior,
   type AccountTabBehavior,
@@ -60,22 +54,17 @@ export function NavigationSettings() {
   };
 
   return (
-    <Card className="border border-hairline bg-surface-1 shadow-sm">
-      <CardHeader className="pb-4 border-b border-hairline">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg border border-hairline bg-surface-2 text-amber-500">
-            <Compass className="size-5" />
-          </div>
-          <div>
-            <CardTitle className="text-base">Account Navigation & Tabs</CardTitle>
-            <CardDescription className="text-xs text-ink-muted">
-              Choose whether clicking an account card switches to a new tab or opens in place on the current page.
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-5">
+    <SettingsSection
+      id="navigation"
+      title="Account navigation"
+      description="Open accounts in a new tab or in a drawer on the current page"
+      icon={Compass}
+      status={
+        <span className="hidden text-xs text-ink-muted sm:inline">
+          {behavior === "stay-on-page" ? "Drawer" : "New tab"}
+        </span>
+      }
+    >
         <div className="grid gap-3 sm:grid-cols-2">
           {NAVIGATION_OPTIONS.map((option) => {
             const selected = behavior === option.value;
@@ -117,7 +106,6 @@ export function NavigationSettings() {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+    </SettingsSection>
   );
 }

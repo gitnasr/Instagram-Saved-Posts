@@ -5,20 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { StatusText } from "@/components/ui/status-text";
+import { SettingsSection } from "@/components/settings/settings-section";
 import { toast } from "sonner";
 import {
   Cloud,
   Upload,
   CheckCircle2,
-  AlertCircle,
   Loader2,
   Eye,
   EyeOff,
@@ -179,52 +172,36 @@ export function CloudinarySettings() {
   );
 
   return (
-    <Card className="border border-hairline bg-surface-1 shadow-sm">
-      <CardHeader className="pb-4 border-b border-hairline">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-surface-2 border border-hairline text-amber-500">
-              <Cloud className="size-4" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">Cloudinary Permanent Storage</CardTitle>
-              <CardDescription className="text-xs text-ink-muted">
-                Archive media assets with permanent, durable URLs independent of Instagram CDN expiration
-              </CardDescription>
-            </div>
+    <SettingsSection
+      id="cloudinary"
+      title="Cloudinary storage"
+      description="Permanent media URLs that outlive Instagram's CDN links"
+      icon={Cloud}
+      defaultOpen={!isConfigLoading && !configured}
+      status={
+        isConfigLoading ? (
+          <StatusText>Checking…</StatusText>
+        ) : configured ? (
+          <StatusText tone="success">Connected</StatusText>
+        ) : (
+          <StatusText tone="warn">Not configured</StatusText>
+        )
+      }
+    >
+        {configured && (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-ink-muted hover:text-ink"
+              onClick={() => refetchConfig()}
+              disabled={isConfigLoading}
+            >
+              <RefreshCw className="size-3" />
+              Refresh stats
+            </Button>
           </div>
-          <div className="flex items-center gap-2">
-            {isConfigLoading ? (
-              <Badge variant="outline" className="text-xs font-mono">
-                <Loader2 className="size-3 mr-1 animate-spin" /> Checking...
-              </Badge>
-            ) : configured ? (
-              <Badge variant="default" className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                <CheckCircle2 className="size-3 mr-1" />
-                Connected
-              </Badge>
-            ) : (
-              <Badge variant="destructive" className="text-xs px-2 py-0.5 font-mono">
-                <AlertCircle className="size-3 mr-1" />
-                Not configured
-              </Badge>
-            )}
-            {configured && (
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="size-7 text-ink-muted hover:text-ink"
-                onClick={() => refetchConfig()}
-                disabled={isConfigLoading}
-                title="Refresh stats"
-              >
-                <RefreshCw className="size-3" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4 pt-4">
+        )}
         {/* Live Stats */}
         {configured && stats && !isEditing && (
           <div className="rounded-lg border border-hairline bg-surface-2/40 p-3.5 space-y-3">
@@ -432,7 +409,6 @@ export function CloudinarySettings() {
             </p>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </SettingsSection>
   );
 }
