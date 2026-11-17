@@ -42,6 +42,7 @@ export async function PATCH(
   const now = new Date().toISOString();
   const updates: Prisma.AccountUpdateInput = {};
   const events: AccountEventDraft[] = [];
+  let newStatusForHistory: string | null = null;
 
   if ("notes" in body) {
     if (body.notes !== null && typeof body.notes !== "string") {
@@ -119,17 +120,9 @@ export async function PATCH(
 
     if (account.accountStatus !== nextStatus) {
       updates.statusChangedAt = nextStatus ? now : null;
-
-      if (nextStatus) {
-        await prisma.accountStatusHistory.create({
-          data: {
-            profileId: profile.id,
-            accountPk: account.pk,
-            status: nextStatus,
-            changedAt: now,
-          },
-        });
-      }
+      // Written after the whole body validates; a later 400 must not leave a
+      // history row for a status the account never took.
+      newStatusForHistory = nextStatus;
 
       events.push({
         type: "status_changed",
@@ -219,6 +212,17 @@ export async function PATCH(
     await prisma.account.update({
       where: { id: account.id },
       data: updates,
+    });
+  }
+
+  if (newStatusForHistory) {
+    await prisma.accountStatusHistory.create({
+      data: {
+        profileId: profile.id,
+        accountPk: account.pk,
+        status: newStatusForHistory,
+        changedAt: now,
+      },
     });
   }
 

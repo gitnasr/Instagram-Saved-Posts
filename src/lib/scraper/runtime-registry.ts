@@ -59,14 +59,41 @@ export async function detectAndMarkInterruptedRuns(
     .filter((r) => r.state.status === "running")
     .map((r) => r.state.runId);
 
-  await prisma.scrapeRun.updateMany({
+  const orphans = await prisma.scrapeRun.findMany({
     where: {
       status: "running",
       id: { notIn: liveRunIds },
       ...(profileId ? { profileId } : {}),
     },
-    data: { status: "interrupted" },
+    select: { id: true, checkpointMaxId: true },
   });
+  if (orphans.length === 0) return;
+
+  // "interrupted" promises the run can be resumed, which needs a checkpoint.
+  // One that died before saving its first page has nothing to resume from, so
+  // it is a dead end and must say so (filtered here: Mongo treats a missing
+  // field and an explicit null differently in where clauses).
+  const resumable = orphans.filter((r) => r.checkpointMaxId).map((r) => r.id);
+  const dead = orphans.filter((r) => !r.checkpointMaxId).map((r) => r.id);
+
+  if (resumable.length > 0) {
+    await prisma.scrapeRun.updateMany({
+      where: { id: { in: resumable }, status: "running" },
+      data: { status: "interrupted" },
+    });
+  }
+  if (dead.length > 0) {
+    await prisma.scrapeRun.updateMany({
+      where: { id: { in: dead }, status: "running" },
+      data: {
+        status: "failed",
+        completedAt: new Date().toISOString(),
+        errorMessage:
+          "The server restarted before the first page was saved, so there is nothing to resume.",
+        errorKind: "transient",
+      },
+    });
+  }
 }
 
 /**

@@ -49,10 +49,22 @@ export async function GET() {
     checkQdrantLiveness(profile.id),
   ]);
 
+  // The persisted row says "running" from the first write. If the server died
+  // mid-index there is no live state to correct it, so it would read "running"
+  // forever; report it as the interruption it is.
+  const orphaned = stats?.status === "running" && current?.status !== "running";
+
   return NextResponse.json({
     current,
     configured,
-    stats,
+    stats:
+      stats && orphaned
+        ? {
+            ...stats,
+            status: "failed" as const,
+            lastError: stats.lastError ?? "Interrupted by a server restart",
+          }
+        : stats,
     liveness,
   });
 }

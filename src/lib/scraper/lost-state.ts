@@ -104,6 +104,33 @@ export async function calculateAndUpdateLostState(
       data: { lostAt: runCompletedAt },
     });
     await recordBulkAccountEvents(profileId, newlyLostPks, "lost", runCompletedAt);
+
+    // "Recovered" is a scraper-set label; an account that is missing again
+    // can't also be recovered. Clear only that exact status, never one the
+    // user picked (Blocked, Account Closed, ...). History keeps the record.
+    const staleRecoveredPks = accounts
+      .filter(
+        (a) =>
+          newlyLostPks.includes(a.pk) &&
+          a.accountStatus === RECOVERED_ACCOUNT_STATUS
+      )
+      .map((a) => a.pk);
+    if (staleRecoveredPks.length > 0) {
+      await prisma.account.updateMany({
+        where: { profileId, pk: { in: staleRecoveredPks } },
+        data: { accountStatus: null, statusChangedAt: null },
+      });
+      await prisma.accountEvent.createMany({
+        data: staleRecoveredPks.map((pk) => ({
+          profileId,
+          accountPk: pk,
+          type: "status_changed" as const,
+          occurredAt: runCompletedAt,
+          fromValue: RECOVERED_ACCOUNT_STATUS,
+          toValue: null,
+        })),
+      });
+    }
   }
   if (newlyRecoveredPks.length > 0) {
     await prisma.account.updateMany({

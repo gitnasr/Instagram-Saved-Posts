@@ -21,6 +21,11 @@ export async function handleScrapeFailure(
   runtime: Runtime,
   error: unknown
 ): Promise<void> {
+  // Terminal states are final. Without this, an error thrown after
+  // `finalizeCompletedRun` (or a second call from the launcher's backstop
+  // `.catch`) would flip a completed/cancelled run to failed/interrupted.
+  if (runtime.state.status !== "running") return;
+
   const { runId, profileId } = runtime.state;
   const { errorMsg, errorBody } = extractErrorInfo(error);
   const kind: ScrapeErrorKind = classifyScrapeError(error);

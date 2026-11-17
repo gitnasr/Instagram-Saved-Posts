@@ -58,8 +58,10 @@ export async function POST(request: Request) {
     })
   ).map((account) => account.pk);
 
+  // Only the accounts that actually change: re-ignoring an already-ignored
+  // account must not move its original `ignoredAt` forward.
   const result = await prisma.account.updateMany({
-    where: { profileId: profile.id, pk: { in: pks } },
+    where: { profileId: profile.id, pk: { in: changingPks } },
     data: { ignoredAt: body.ignored ? now : null },
   });
 

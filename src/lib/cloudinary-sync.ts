@@ -22,45 +22,63 @@ export async function runCloudinarySync(profileId: string): Promise<void> {
     throw new Error("A Cloudinary sync is already in progress for this profile");
   }
 
-  const config = await getCloudinaryConfigFromDB();
-  if (!isCloudinaryConfigured(config)) {
-    throw new Error(
-      "Cloudinary credentials are not configured. Set them in Settings → Cloudinary."
-    );
-  }
-
-  // Query items that need uploading (cloudinary field is null, source URL is set)
-  const accountsToSync = await prisma.account.findMany({
-    where: {
-      profileId,
-      cloudinaryProfilePicUrl: null,
-      profilePicUrl: { not: null },
-    },
-  });
-
-  const postsToSync = await prisma.post.findMany({
-    where: {
-      profileId,
-      cloudinaryThumbnailUrl: null,
-      thumbnailUrl: { not: null },
-    },
-  });
-
-  const carouselToSync = await prisma.carouselMedia.findMany({
-    where: { profileId, cloudinaryUrl: null, mediaUrl: { not: "" } },
-  });
-
+  // Reserve the in-flight slot before any await: the auto-trigger after a
+  // scrape and a manual click can otherwise both pass the check above and
+  // upload everything twice.
+  const previous = syncStates.get(profileId);
   const state: CloudinarySyncProgress = {
     status: "running",
-    totalAccounts: accountsToSync.length,
-    totalPosts: postsToSync.length,
-    totalCarouselItems: carouselToSync.length,
+    totalAccounts: 0,
+    totalPosts: 0,
+    totalCarouselItems: 0,
     uploadedAccounts: 0,
     uploadedPosts: 0,
     uploadedCarouselItems: 0,
     failedUploads: 0,
   };
   syncStates.set(profileId, state);
+
+  let config: Awaited<ReturnType<typeof getCloudinaryConfigFromDB>>;
+  let accountsToSync;
+  let postsToSync;
+  let carouselToSync;
+  try {
+    config = await getCloudinaryConfigFromDB();
+    if (!isCloudinaryConfigured(config)) {
+      throw new Error(
+        "Cloudinary credentials are not configured. Set them in Settings → Cloudinary."
+      );
+    }
+
+    // Query items that need uploading (cloudinary field is null, source URL is set)
+    accountsToSync = await prisma.account.findMany({
+      where: {
+        profileId,
+        cloudinaryProfilePicUrl: null,
+        profilePicUrl: { not: null },
+      },
+    });
+    postsToSync = await prisma.post.findMany({
+      where: {
+        profileId,
+        cloudinaryThumbnailUrl: null,
+        thumbnailUrl: { not: null },
+      },
+    });
+    carouselToSync = await prisma.carouselMedia.findMany({
+      where: { profileId, cloudinaryUrl: null, mediaUrl: { not: "" } },
+    });
+  } catch (error) {
+    // Nothing started: put back what the UI last knew instead of leaving a
+    // phantom "running" (or erasing the previous result).
+    if (previous) syncStates.set(profileId, previous);
+    else syncStates.delete(profileId);
+    throw error;
+  }
+
+  state.totalAccounts = accountsToSync.length;
+  state.totalPosts = postsToSync.length;
+  state.totalCarouselItems = carouselToSync.length;
 
   try {
     // Sync account profile pics

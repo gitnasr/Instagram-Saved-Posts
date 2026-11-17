@@ -68,6 +68,13 @@ export function OnboardingWizard({
   const selectProfile = useSelectProfile();
 
   const [step, setStep] = useState<number>(1);
+  // Furthest step reached through the Continue buttons; the checklist may go
+  // back freely but never past it, so Launch can't be reached unconfigured.
+  const [maxStep, setMaxStep] = useState<number>(1);
+  const advanceTo = (next: number) => {
+    setMaxStep((current) => Math.max(current, next));
+    setStep(next);
+  };
   const [dbStatus, setDbStatus] = useState<"checking" | "connected" | "error">(
     "checking"
   );
@@ -334,7 +341,7 @@ export function OnboardingWizard({
             </CardContent>
             <CardFooter className="flex justify-end">
               <Button
-                onClick={() => setStep(2)}
+                onClick={() => advanceTo(2)}
                 disabled={dbStatus === "checking"}
                 className="gap-2"
               >
@@ -526,7 +533,7 @@ export function OnboardingWizard({
                     toast.error("Profile name is required");
                     return;
                   }
-                  setStep(3);
+                  advanceTo(3);
                 }}
                 className="gap-2"
               >
@@ -735,7 +742,7 @@ export function OnboardingWizard({
               >
                 <ArrowLeft className="size-4" /> Back
               </Button>
-              <Button onClick={() => setStep(4)} className="gap-2">
+              <Button onClick={() => advanceTo(4)} className="gap-2">
                 {cloudConnected ? "Continue" : "Skip for Now"}{" "}
                 <ArrowRight className="size-4" />
               </Button>
@@ -867,8 +874,9 @@ export function OnboardingWizard({
             <button
               type="button"
               onClick={() => setStep(item.num)}
+              disabled={item.num > maxStep}
               aria-current={step === item.num ? "step" : undefined}
-              className={"flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition-colors " + (step === item.num ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted")}
+              className={"flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 " + (step === item.num ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-muted")}
             >
               <span className={"flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold " + (step > item.num ? "bg-emerald-600 text-white" : step === item.num ? "bg-primary text-primary-foreground" : "bg-muted")}>
                 {step > item.num ? <CheckCircle2 className="size-4" /> : item.num}

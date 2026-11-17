@@ -12,10 +12,24 @@ import { scrapeAllPages } from "./page-loop";
 import { handleScrapeFailure } from "./run-state";
 import { createRuntime, getRuntime, registerRuntime } from "./runtime-registry";
 
-/** Shared guard: a profile may only have one scrape in flight. */
-function assertNoRunInFlight(profileId: string): void {
-  if (getRuntime(profileId)?.state.status === "running") {
+// Profiles whose start/resume is between the guard and runtime registration.
+// Both entry points await before registering, so without this two quick
+// requests (double click, auto + manual) would both pass the guard.
+const starting = new Set<string>();
+
+/** Shared guard: a profile may only have one scrape in flight or starting. */
+async function withStartLock<T>(
+  profileId: string,
+  start: () => Promise<T>
+): Promise<T> {
+  if (starting.has(profileId) || getRuntime(profileId)?.state.status === "running") {
     throw new Error("A scrape is already in progress for this profile");
+  }
+  starting.add(profileId);
+  try {
+    return await start();
+  } finally {
+    starting.delete(profileId);
   }
 }
 
@@ -41,40 +55,45 @@ async function loadScrapableProfile(
   };
 }
 
-export async function runScrape(profileId: string): Promise<number> {
-  assertNoRunInFlight(profileId);
+export function runScrape(profileId: string): Promise<number> {
+  return withStartLock(profileId, async () => {
+    const { cookie, userAgent } = await loadScrapableProfile(profileId);
 
-  const { cookie, userAgent } = await loadScrapableProfile(profileId);
+    const runId = await getNextScrapeRunId();
+    const startedAt = new Date().toISOString();
 
-  const runId = await getNextScrapeRunId();
-  const run = await prisma.scrapeRun.create({
-    data: {
-      id: runId,
-      profileId,
-      startedAt: new Date().toISOString(),
-      status: "running",
-    },
+    // Register before the row exists as "running": the orphan sweep treats any
+    // running row without a live runtime as interrupted, so the other order
+    // lets a concurrent status poll mislabel a run that is starting.
+    const runtime = createRuntime(runId, profileId);
+    registerRuntime(profileId, runtime);
+
+    try {
+      await prisma.scrapeRun.create({
+        data: { id: runId, profileId, startedAt, status: "running" },
+      });
+    } catch (error) {
+      // No row, no run: don't leave a phantom "running" runtime blocking the profile.
+      runtime.state.status = "failed";
+      throw error;
+    }
+
+    scrapeAllPages(runtime, cookie, userAgent, startedAt).catch((error) => {
+      void handleScrapeFailure(runtime, error);
+    });
+
+    return runId;
   });
-
-  const runtime = createRuntime(run.id, profileId);
-  registerRuntime(profileId, runtime);
-
-  scrapeAllPages(runtime, cookie, userAgent, run.startedAt).catch((error) => {
-    void handleScrapeFailure(runtime, error);
-  });
-
-  return run.id;
 }
 
 /**
  * Resume an interrupted scrape from its saved checkpoint cursor.
  */
-export async function resumeScrape(
-  profileId: string,
-  runId: number
-): Promise<void> {
-  assertNoRunInFlight(profileId);
+export function resumeScrape(profileId: string, runId: number): Promise<void> {
+  return withStartLock(profileId, () => doResume(profileId, runId));
+}
 
+async function doResume(profileId: string, runId: number): Promise<void> {
   const run = await prisma.scrapeRun.findFirst({
     where: { id: runId, profileId },
   });
@@ -110,15 +129,22 @@ export async function resumeScrape(
 
   registerRuntime(profileId, runtime);
 
-  await prisma.scrapeRun.update({
-    where: { id: run.id },
-    data: {
-      status: "running",
-      completedAt: null,
-      resumeCount: (run.resumeCount ?? 0) + 1,
-      lastResumedAt: new Date().toISOString(),
-    },
-  });
+  try {
+    await prisma.scrapeRun.update({
+      where: { id: run.id },
+      data: {
+        status: "running",
+        completedAt: null,
+        resumeCount: (run.resumeCount ?? 0) + 1,
+        lastResumedAt: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    // The row never left its stopped state; release the profile instead of
+    // leaving a "running" runtime with no loop behind it.
+    runtime.state.status = run.status;
+    throw error;
+  }
 
   scrapeAllPages(
     runtime,
