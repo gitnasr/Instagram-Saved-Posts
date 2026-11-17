@@ -79,7 +79,7 @@ export function ProfilePicker() {
               <button
                 onClick={() => handleSelect(p)}
                 disabled={selectingId !== null}
-                className="relative rounded-lg outline-none transition-all hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 cursor-pointer"
+                className="relative rounded-lg outline-none transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 cursor-pointer"
                 aria-label={`Use profile ${p.name}`}
               >
                 <ProfileAvatar
@@ -141,7 +141,7 @@ export function ProfilePicker() {
                 aria-label="Add profile"
               >
                 <span className="flex size-28 items-center justify-center rounded-lg border-2 border-dashed border-hairline-strong text-ink-subtle transition-all group-hover:border-amber-500 group-hover:text-amber-500 bg-surface-1/40">
-                  <Plus className="size-8 group-hover:scale-110 transition-transform" />
+                  <Plus className="size-8" />
                 </span>
                 <span className="text-sm font-medium text-ink-muted group-hover:text-ink transition-colors">
                   Add profile

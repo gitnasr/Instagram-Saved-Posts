@@ -109,7 +109,7 @@ export default function SettingsPage() {
             <SettingsSection
               id="profile"
               title={`Profile: ${active.name}`}
-              description="Session identity used to fetch your Instagram bookmarks"
+              description="Session used to fetch your saved posts"
               icon={User}
               status={
                 <span className="hidden text-xs text-ink-muted sm:inline">

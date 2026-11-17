@@ -216,7 +216,7 @@ export function AccountTimeline({ events, eventsLimit }: AccountTimelineProps) {
         <div className="space-y-1 min-w-0">
           <CardTitle className="text-base flex items-center gap-2 h-6">
             <History className="size-4 text-amber-500 shrink-0" />
-            <span className="truncate">Activity Timeline</span>
+            <span className="truncate">Activity timeline</span>
           </CardTitle>
           <p className="text-xs text-ink-muted line-clamp-1">
             State transitions and events recorded across all sync operations

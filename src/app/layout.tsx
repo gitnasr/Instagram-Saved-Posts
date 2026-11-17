@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     default: "Saved Posts Tracker",
     template: "%s · Saved Posts Tracker",
   },
-  description: "Archival permanence for your Instagram bookmarks. Your saved posts, permanently yours.",
+  description: "Keep your Instagram saved posts in your own database.",
   icons: {
     icon: "/icon.png",
     shortcut: "/favicon.ico",

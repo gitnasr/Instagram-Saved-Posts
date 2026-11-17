@@ -49,7 +49,7 @@ export function PostDetailDialog({
       <DialogContent className="max-w-lg bg-surface-1 border border-hairline rounded-lg p-5 overflow-y-auto">
         <DialogHeader className="pb-2 border-b border-hairline">
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
-            Post Archive
+            Saved post
             <Badge variant="secondary" className="text-xs px-1.5 py-0 font-mono">
               {mediaTypeLabel(post.mediaType)}
             </Badge>

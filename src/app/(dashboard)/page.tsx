@@ -18,7 +18,7 @@ export default function OverviewPage() {
     <div className="space-y-6">
       <Header
         title="Overview"
-        description="Unified archive metrics and synchronization status"
+        description="Archive totals and the latest sync"
       >
         <Button asChild variant="outline" size="sm">
           <Link href="/accounts">

@@ -8,7 +8,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Get Started | InstaSave Tracker",
+  title: "Get started | Saved Posts Tracker",
 };
 
 export default async function OnboardingPage({

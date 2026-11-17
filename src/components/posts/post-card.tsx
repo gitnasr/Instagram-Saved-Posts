@@ -18,7 +18,7 @@ export function PostCard({ post, onClick, thumbnailOverride, matchedSlideIndex }
 
   return (
     <Card
-      className="group cursor-pointer overflow-hidden rounded-lg border border-hairline bg-surface-1 p-0 transition-all hover:border-hairline-strong hover:scale-[1.01]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-hairline bg-surface-1 p-0 transition-all hover:border-hairline-strong hover:-translate-y-0.5"
       onClick={onClick}
     >
       <div className="relative aspect-square bg-surface-2 overflow-hidden">
@@ -27,7 +27,7 @@ export function PostCard({ post, onClick, thumbnailOverride, matchedSlideIndex }
           <img
             src={displayUrl.startsWith("http") && !displayUrl.includes("/api/proxy-image") && !thumbnailOverride?.includes("res.cloudinary.com") ? proxyImageUrl(displayUrl) : displayUrl}
             alt={post.captionText?.slice(0, 50) ?? "Post thumbnail"}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             loading="lazy"
           />
         ) : (
@@ -37,7 +37,7 @@ export function PostCard({ post, onClick, thumbnailOverride, matchedSlideIndex }
         )}
         
         {/* Subtle inner stroke */}
-        <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/10" />
+        <div className="pointer-events-none absolute inset-0 rounded-lg" />
 
         {/* Hover overlay with engagement stats */}
         <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">

@@ -60,7 +60,7 @@ export function AccountPreviewDrawer() {
           <div className="flex items-center justify-between gap-3 border-b border-hairline bg-surface-1 px-4 py-3 sm:px-6">
             <div className="flex items-center gap-3 min-w-0">
               <DialogPrimitive.Title className="text-sm font-semibold text-ink truncate">
-                {activeUsername ? `@${activeUsername}` : "Account Details"}
+                {activeUsername ? `@${activeUsername}` : "Account details"}
               </DialogPrimitive.Title>
               {hasMultiple && (
                 <div className="flex items-center gap-1.5">

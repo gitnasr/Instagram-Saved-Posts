@@ -24,8 +24,8 @@ export default function ScrapePage() {
   return (
     <div className="space-y-6">
       <Header
-        title="Sync Management"
-        description="Trigger Instagram bookmark synchronization and monitor archival jobs."
+        title="Sync"
+        description="Start a sync of your Instagram saved posts and follow its progress."
       >
         <ScrapeButton isRunning={isRunning} />
       </Header>
@@ -46,10 +46,10 @@ export default function ScrapePage() {
               <div>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <History className="size-4 text-amber-500" />
-                  Sync Job History
+                  Sync history
                 </CardTitle>
                 <CardDescription className="text-xs text-ink-muted mt-0.5">
-                  Complete audit log of all automated and manual bookmark ingestion runs
+                  Every sync run, automatic or manual
                 </CardDescription>
               </div>
               <div className="flex items-center gap-1.5 text-xs font-mono text-ink-subtle">

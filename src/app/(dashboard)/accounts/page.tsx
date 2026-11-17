@@ -150,11 +150,11 @@ function AccountsContent() {
   return (
     <div className="flex flex-col gap-6">
       <Header
-        title="Accounts Directory"
+        title="Accounts"
         description={
           data
-            ? `${data.pagination.total.toLocaleString()} unique creators discovered`
-            : "Scanning preserved accounts..."
+            ? `${data.pagination.total.toLocaleString()} creators in your saved posts`
+            : "Loading accounts…"
         }
       />
 

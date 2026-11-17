@@ -165,7 +165,7 @@ export function CloudinarySettings() {
       ) : (
         <>
           <Upload className="mr-1.5 size-3.5" />
-          Sync All Media to Cloudinary
+          Sync all media to Cloudinary
         </>
       )}
     </Button>
@@ -248,7 +248,7 @@ export function CloudinarySettings() {
         {(!configured || isEditing) && !isViewer && (
           <div className="space-y-3 p-3.5 rounded-lg border border-hairline bg-surface-2/40">
             <p className="text-eyebrow text-ink">
-              {configured ? "Update Credentials" : "Enter Cloudinary Credentials"}
+              {configured ? "Update credentials" : "Enter Cloudinary credentials"}
             </p>
             <div className="space-y-1.5">
               <Label htmlFor="cloud-name-settings" className="text-eyebrow text-ink-subtle">Cloud Name</Label>
@@ -313,7 +313,7 @@ export function CloudinarySettings() {
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="size-3.5" /> Save & Test Connection
+                    <CheckCircle2 className="size-3.5" /> Test and save connection
                   </>
                 )}
               </Button>
@@ -344,7 +344,7 @@ export function CloudinarySettings() {
               className="text-xs font-semibold border-hairline hover:bg-surface-2"
               onClick={() => setIsEditing(true)}
             >
-              Update Credentials
+              Update credentials
             </Button>
             <Button
               variant="ghost"
@@ -363,7 +363,7 @@ export function CloudinarySettings() {
         <div className="p-3.5 rounded-lg border border-hairline bg-surface-2/40 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-semibold text-ink">Bulk Media Sync</p>
+              <p className="text-xs font-semibold text-ink">Bulk media sync</p>
               <p className="text-xs text-ink-subtle">
                 Uploads all historical account pictures and saved post carousels.
               </p>

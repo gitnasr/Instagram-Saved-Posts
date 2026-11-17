@@ -141,7 +141,7 @@ export function AccountDetailView({
                 rel="noopener noreferrer"
               >
                 <ExternalLink className="mr-1.5 size-3.5" />
-                Open in New Tab
+                Open in new tab
               </a>
             </Button>
           )}
@@ -186,7 +186,7 @@ export function AccountDetailView({
         <div className="flex items-center justify-between pb-4">
           <div>
             <h2 className="text-lg font-bold tracking-tight text-ink">
-              Saved Posts Collection
+              Saved posts
             </h2>
             <p className="text-xs text-ink-muted">
               All preserved posts from @{account.username}

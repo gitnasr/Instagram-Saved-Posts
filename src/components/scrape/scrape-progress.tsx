@@ -48,7 +48,7 @@ export function ScrapeProgressCard({ progress }: ScrapeProgressProps) {
             <p className="text-xl font-bold text-ink mt-0.5">{progress.totalPostsFound}</p>
           </div>
           <div className="p-2 rounded-lg bg-surface-2 border border-hairline">
-            <p className="text-ink-subtle uppercase text-xs">New Posts Added</p>
+            <p className="text-ink-subtle uppercase text-xs">New posts</p>
             <p className="text-xl font-bold text-amber-500 mt-0.5">+{progress.newPostsAdded}</p>
           </div>
           <div className="p-2 rounded-lg bg-surface-2 border border-hairline">

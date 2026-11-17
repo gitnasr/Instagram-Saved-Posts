@@ -131,7 +131,7 @@ export default function RunDetailPage({
       {run.status === "interrupted" && (
         <Alert>
           <RotateCcw className="h-4 w-4" />
-          <AlertTitle>Scrape Interrupted</AlertTitle>
+          <AlertTitle>Scrape interrupted</AlertTitle>
           <AlertDescription className="flex items-center justify-between gap-4">
             <span>
               {run.errorKind === "rate_limited"
@@ -152,7 +152,7 @@ export default function RunDetailPage({
       {run.status === "cancelled" && (
         <Alert>
           <RotateCcw className="h-4 w-4" />
-          <AlertTitle>Scrape Cancelled</AlertTitle>
+          <AlertTitle>Scrape cancelled</AlertTitle>
           <AlertDescription className="flex items-center justify-between gap-4">
             <span>
               This scrape was cancelled at page {run.pagesScraped}. Its
@@ -216,7 +216,7 @@ export default function RunDetailPage({
       {/* New Accounts */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">New Accounts Discovered</h3>
+          <h3 className="text-lg font-semibold">New accounts</h3>
           <Badge variant="secondary">{newAccounts.length}</Badge>
         </div>
         {newAccounts.length > 0 ? (
@@ -233,7 +233,7 @@ export default function RunDetailPage({
       {/* Username Changes */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold text-ink">Username Handle Shifts</h3>
+          <h3 className="text-base font-semibold text-ink">Username changes</h3>
           <Badge variant={usernameChanges.length > 0 ? "default" : "secondary"} className="font-mono text-xs">
             {usernameChanges.length}
           </Badge>
@@ -274,7 +274,7 @@ export default function RunDetailPage({
       {/* New Posts */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">New Posts Added</h3>
+          <h3 className="text-lg font-semibold">New posts</h3>
           <Badge variant="secondary">{newPosts.length}</Badge>
         </div>
         {newPosts.length > 0 ? (
@@ -309,7 +309,7 @@ export default function RunDetailPage({
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Newly Lost Accounts</h3>
+              <h3 className="text-lg font-semibold">Newly lost accounts</h3>
               <Badge variant={newlyLostAccounts.length > 0 ? "destructive" : "secondary"}>
                 {newlyLostAccounts.length}
               </Badge>
@@ -331,7 +331,7 @@ export default function RunDetailPage({
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Newly Recovered Accounts</h3>
+              <h3 className="text-lg font-semibold">Newly recovered accounts</h3>
               <Badge variant={newlyRecoveredAccounts.length > 0 ? "default" : "secondary"}>
                 {newlyRecoveredAccounts.length}
               </Badge>
@@ -353,7 +353,7 @@ export default function RunDetailPage({
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">All Lost Accounts</h3>
+              <h3 className="text-lg font-semibold">All lost accounts</h3>
               <Badge variant={lostAccounts.length > 0 ? "destructive" : "secondary"}>
                 {lostAccounts.length}
               </Badge>

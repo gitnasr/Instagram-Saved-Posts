@@ -173,7 +173,7 @@ export function AccountMetadata({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           <div className="space-y-1">
-            <CardTitle className="text-base">Account Details</CardTitle>
+            <CardTitle className="text-base">Account details</CardTitle>
             <p className="text-sm text-muted-foreground">
               Track scrape dates, linked accounts, and a custom status timeline.
             </p>

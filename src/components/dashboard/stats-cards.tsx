@@ -25,7 +25,7 @@ export function StatsCards({ totalAccounts, totalPosts, lastScrape }: StatsCards
         className="p-4"
         label="Archived posts"
         value={totalPosts.toLocaleString()}
-        hint="Permanently preserved"
+        hint="Stored in your database"
       />
       <Stat
         className="p-4"

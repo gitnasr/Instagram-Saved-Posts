@@ -45,7 +45,7 @@ export function ScrapeButton({ isRunning }: ScrapeButtonProps) {
       {isRunning ? (
         <>
           <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-          Syncing Bookmarks...
+          Syncing saved posts…
         </>
       ) : (
         <>

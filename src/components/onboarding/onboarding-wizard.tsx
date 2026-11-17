@@ -188,7 +188,7 @@ export function OnboardingWizard({
       if (res.ok && data.ok) {
         setCloudStats(data.stats ?? null);
         setCloudConnected(true);
-        toast.success("Cloudinary connected successfully!");
+        toast.success("Cloudinary connected.");
       } else {
         setCloudError(data.error || "Connection failed");
         toast.error(data.error || "Cloudinary connection failed");
@@ -237,7 +237,7 @@ export function OnboardingWizard({
         onSuccess: (newProfile) => {
           selectProfile.mutate(newProfile.id, {
             onSuccess: async () => {
-              toast.success("Profile setup complete!");
+              toast.success("Profile setup complete.");
               await markOnboardingComplete();
               if (targetAction === "scrape") {
                 window.location.assign("/scrape");
@@ -274,7 +274,7 @@ export function OnboardingWizard({
                 <Sparkles className="size-6" />
               </div>
               <CardTitle className="text-2xl font-bold">
-                Welcome to InstaSave Tracker
+                Welcome to Saved Posts Tracker
               </CardTitle>
               <CardDescription>
                 Your self-hosted archive and intelligence dashboard for
@@ -286,7 +286,7 @@ export function OnboardingWizard({
               <div className="rounded-xl border bg-card/50 p-4 space-y-3">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
                   <Database className="size-4 text-primary" />
-                  System Diagnostics
+                  System diagnostics
                 </h3>
 
                 <div className="flex items-center justify-between rounded-lg bg-background p-3 border">
@@ -357,7 +357,7 @@ export function OnboardingWizard({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Instagram className="size-5 text-pink-500" />
-                Connect Your Instagram Account
+                Connect your Instagram account
               </CardTitle>
               <CardDescription>
                 Provide an Instagram session cookie to allow the scraper to
@@ -377,7 +377,7 @@ export function OnboardingWizard({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="cookie">Instagram Cookie String</Label>
+                  <Label htmlFor="cookie">Instagram session cookie</Label>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -465,7 +465,7 @@ export function OnboardingWizard({
                       </>
                     ) : (
                       <>
-                        <ShieldCheck className="size-3.5" /> Test & Verify
+                        <ShieldCheck className="size-3.5" /> Test and verify
                         Cookie
                       </>
                     )}
@@ -555,9 +555,9 @@ export function OnboardingWizard({
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Connect your free Cloudinary account to permanently store media
-                — preventing broken images when Instagram CDN links expire. You
-                can skip this and configure it later in Settings.
+                Connect a Cloudinary account to keep media after Instagram&apos;s
+                CDN links expire. You can skip this and set it up later in
+                Settings.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -713,7 +713,7 @@ export function OnboardingWizard({
                       </>
                     ) : (
                       <>
-                        <Cloud className="size-4" /> Test & Save Connection
+                        <Cloud className="size-4" /> Test and save connection
                       </>
                     )}
                   </Button>
@@ -813,7 +813,7 @@ export function OnboardingWizard({
                 disabled={createProfile.isPending || selectProfile.isPending}
                 className="w-full sm:w-auto"
               >
-                Go to Dashboard
+                Go to the dashboard
               </Button>
               <Button
                 onClick={() => handleCreateProfile("scrape")}
@@ -826,7 +826,7 @@ export function OnboardingWizard({
                   </>
                 ) : (
                   <>
-                    <Play className="size-4 fill-current" /> Start First Scrape
+                    <Play className="size-4 fill-current" /> Start the first scrape
                   </>
                 )}
               </Button>
